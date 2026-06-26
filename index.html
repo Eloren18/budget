@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232563eb'/%3E%3Cpath d='M5 8.5A2 2 0 0 1 7 6.5h9a2 2 0 0 1 2 2V9h.5a1 1 0 0 1 1 1v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8.5Z' fill='none' stroke='white' stroke-width='1.5'/%3E%3Ccircle cx='16' cy='13' r='1.3' fill='white'/%3E%3C/svg%3E">
 <title>Budget</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 <style>
   :root {
     --radius: 16px; --radius-sm: 10px;
@@ -275,7 +277,7 @@
   .inv-stat { background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius-sm); padding:11px 13px; }
   .inv-stat .sl { color:var(--muted); font-size:11.5px; font-weight:600; }
   .inv-stat .sv { font-size:18px; font-weight:750; margin-top:3px; }
-  .win-chips { display:inline-flex; gap:4px; background:var(--surface); border:1px solid var(--border); border-radius:999px; padding:3px; }
+  .win-chips { display:inline-flex; flex-wrap:wrap; gap:4px; background:var(--surface); border:1px solid var(--border); border-radius:999px; padding:3px; }
   .win-chips button { border:none; background:transparent; color:var(--muted); font-weight:600; font-size:12px; padding:5px 11px; border-radius:999px; cursor:pointer; }
   .win-chips button.on { background:var(--primary); color:var(--primary-ink); }
   .pos { color:var(--save); } .neg { color:var(--over); }
@@ -301,6 +303,10 @@
   .theme-swatch span { flex:1; }
   .theme-opt .tn { font-size:12.5px; font-weight:600; text-align:center; }
 
+  .auth-or { display:flex; align-items:center; gap:10px; color:var(--faint); font-size:12px; margin:14px 0; }
+  .auth-or::before, .auth-or::after { content:""; height:1px; background:var(--border); flex:1; }
+  .btn:disabled { opacity:.5; cursor:not-allowed; }
+  .btn:disabled:hover { background:var(--surface); filter:none; }
   @keyframes rise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
   @keyframes fade { from { opacity:0; } to { opacity:1; } }
   @keyframes pop { 0%{transform:scale(1);} 40%{transform:scale(1.18);} 100%{transform:scale(1);} }
@@ -483,9 +489,15 @@
       </div>
       <div><h3 style="margin:0">Sign in to your Budget</h3></div>
     </div>
-    <p class="note" id="authIntro">Enter your email and we'll send you a 6-digit code — no password needed. Your data syncs to your account across devices.</p>
+    <p class="note" id="authIntro">No passwords here. Sign in with your Google account — one tap, or a one-time code sent to your email. Your data syncs across devices.</p>
+    <div id="googleWrap" style="margin-bottom:6px">
+      <div id="googleBtn" style="display:flex;justify-content:center;min-height:42px"></div>
+      <p class="note" id="googleHint" style="display:none">Google sign-in isn't set up yet (see <b>SETUP-InstantDB.txt</b>, Part 3). You can still use an email code below.</p>
+    </div>
+    <div class="auth-or"><span>or use an email code</span></div>
     <div id="authStep1">
-      <div class="field"><label for="authEmail">Email</label><input class="text" type="email" id="authEmail" placeholder="you@example.com" autocomplete="email" style="flex:1;min-width:200px"></div>
+      <div class="field"><label for="authEmail">Email</label><input class="text" type="email" id="authEmail" placeholder="you@gmail.com" autocomplete="email" style="flex:1;min-width:200px"></div>
+      <div id="captcha" style="margin:4px 0 12px"></div>
       <div class="actions"><button class="btn primary" id="authSend">Send code →</button></div>
     </div>
     <div id="authStep2" style="display:none">
@@ -512,6 +524,10 @@ import { init, i, id } from "https://esm.sh/@instantdb/core";
 
 /* ===== InstantDB (auth + cloud db) — see SETUP-InstantDB.txt ===== */
 const INSTANT_APP_ID = "c8b1ae69-e6ba-4fe2-ba9e-25f751658170";
+// Optional extra sign-in methods — fill in after setup (see SETUP-InstantDB.txt, Part 3):
+const GOOGLE_CLIENT_ID = "";            // Google Cloud "Web" OAuth client ID (…apps.googleusercontent.com)
+const INSTANT_GOOGLE_CLIENT_NAME = "";  // the client name you register in the InstantDB dashboard → Auth tab
+const TURNSTILE_SITE_KEY = "";          // Cloudflare Turnstile site key (the captcha on the email-code form)
 const schema = i.schema({
   entities: {
     $users: i.entity({ email: i.string().unique().indexed() }),
@@ -541,7 +557,7 @@ const THEMES = [
 const curCfg = () => CURRENCIES[(data.settings && data.settings.currency)] || CURRENCIES.EUR;
 const eur = n => new Intl.NumberFormat(curCfg().locale, { style:"currency", currency:(data.settings&&data.settings.currency)||"EUR", maximumFractionDigits:2 }).format(Number(n)||0);
 const eur0 = n => new Intl.NumberFormat(curCfg().locale, { style:"currency", currency:(data.settings&&data.settings.currency)||"EUR", maximumFractionDigits:0 }).format(Number(n)||0);
-const pct = n => (Number(n)||0).toLocaleString(undefined,{maximumFractionDigits:1})+"%";
+const pct = n => { let r = Math.round((Number(n)||0)*10)/10; if (r === 0) r = 0; return r.toLocaleString(undefined,{maximumFractionDigits:1})+"%"; };
 const monthKey = d => d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
 const num = v => Number(v)||0;
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
@@ -991,7 +1007,9 @@ function windowReturn(name, months) {
     const invested = flowsAll.reduce((s,f) => s+f.amount, 0);
     return { rate: annualReturn(flowsAll, cur, asOf), gain: cur - invested, invested, from: flowsAll[0] ? flowsAll[0].date : null };
   }
-  const start = new Date(asOf); start.setMonth(start.getMonth() - months);
+  let start;
+  if (months === "ytd") start = new Date(asOf.getFullYear(), 0, 1);
+  else { start = new Date(asOf); start.setMonth(start.getMonth() - months); }
   const snaps = snapshotsOf(name); let startSnap = null;
   for (const s of snaps) if (s.date <= start) startSnap = s;
   if (!startSnap) return { insufficient: true };
@@ -1032,7 +1050,8 @@ function renderInvest() {
     const totInvested = investCashflows(name).reduce((s,f)=>s+f.amount, 0);
     const gain = cur != null ? cur - totInvested : null;
     const div = document.createElement("div"); div.className = "inv-card";
-    const rateTxt = wr && !wr.insufficient && wr.rate != null ? `<span class="${wr.rate>=0?"pos":"neg"}">${wr.rate>=0?"+":""}${pct(wr.rate*100)}<span class="hint" style="font-weight:500"> / yr</span></span>`
+    const rr = wr && wr.rate != null ? (Math.abs(wr.rate) < 0.0005 ? 0 : wr.rate) : null;
+    const rateTxt = wr && !wr.insufficient && rr != null ? `<span class="${rr>=0?"pos":"neg"}">${rr>=0?"+":""}${pct(rr*100)}<span class="hint" style="font-weight:500"> / yr</span></span>`
       : wr && wr.insufficient ? `<span class="hint">add a value update from that far back</span>` : "—";
     const winGainTxt = wr && !wr.insufficient && wr.gain != null ? `<span class="${wr.gain>=0?"pos":"neg"}">${wr.gain>=0?"+":""}${eur(wr.gain)}</span>` : "—";
     div.innerHTML = `
@@ -1041,15 +1060,15 @@ function renderInvest() {
           <div class="hint" style="margin-top:2px">${cur!=null ? "current value" : "no value yet — add one to see returns"}</div>
           <div class="inv-val">${cur!=null ? eur(cur) : "—"}</div></div>
         <div class="win-chips">
-          ${[["3M",3],["6M",6],["1Y",12],["All",null]].map(([l,mo]) => `<button data-win="${esc(name)}|${mo}" class="${(win??null)===mo?"on":""}">${l}</button>`).join("")}
+          ${[["1M",1],["3M",3],["6M",6],["YTD","ytd"],["1Y",12],["All",null]].map(([l,mo]) => `<button data-win="${esc(name)}|${mo}" class="${(win??null)===mo?"on":""}">${l}</button>`).join("")}
         </div>
       </div>
       <div class="inv-stats">
         <div class="inv-stat"><div class="sl">Invested (you put in)</div><div class="sv">${eur(totInvested)}</div></div>
         <div class="inv-stat"><div class="sl">Earned all-time</div><div class="sv ${gain>=0?"pos":"neg"}">${gain!=null ? (gain>=0?"+":"")+eur(gain) : "—"}</div></div>
-        <div class="inv-stat"><div class="sl">Return rate (${win?{3:"3 mo",6:"6 mo",12:"1 yr"}[win]:"all-time"})</div><div class="sv">${rateTxt}</div></div>
+        <div class="inv-stat"><div class="sl">Return rate (${win?({1:"1 mo",3:"3 mo",6:"6 mo",12:"1 yr",ytd:"YTD"})[win]:"all-time"})</div><div class="sv">${rateTxt}</div></div>
       </div>
-      <div class="hint">${win ? `Change over the last ${({3:"3 months",6:"6 months",12:"year"})[win]}: ${winGainTxt}` : `Money-weighted annual return since your first investment (${wr&&wr.from?wr.from.toLocaleDateString(undefined,{month:"short",year:"numeric"}):"—"}).`}</div>
+      <div class="hint">${win ? `Change over ${({1:"the last month",3:"the last 3 months",6:"the last 6 months",12:"the last year",ytd:"the year so far"})[win]}: ${winGainTxt}` : `Money-weighted annual return since your first investment (${wr&&wr.from?wr.from.toLocaleDateString(undefined,{month:"short",year:"numeric"}):"—"}).`}</div>
       ${sparkline(name)}
       <div class="inv-actions">
         <button class="btn sm primary" data-invupdate="${esc(name)}">Update current value</button>
@@ -1069,7 +1088,7 @@ function renderInvest() {
 }
 $("invList").addEventListener("click", e => {
   const t = e.target;
-  if (t.dataset.win !== undefined) { const [name, mo] = t.dataset.win.split("|"); invWindow[name] = mo === "null" ? null : Number(mo); renderInvest(); return; }
+  if (t.dataset.win !== undefined) { const [name, mo] = t.dataset.win.split("|"); invWindow[name] = mo === "null" ? null : (mo === "ytd" ? "ytd" : Number(mo)); renderInvest(); return; }
   if (t.dataset.invupdate !== undefined) {
     const name = t.dataset.invupdate, cur = currentValue(name);
     const v = prompt(`Current total value of "${name}" today:`, cur != null ? cur.toFixed(2) : "");
@@ -1247,13 +1266,50 @@ function startSync() {
 }
 const authGate = $("authGate");
 let pendingEmail = "";
-function openAuthGate() { authGate.classList.add("show"); showAuthStep(1); }
+function openAuthGate() { authGate.classList.add("show"); showAuthStep(1); setupGoogle(); setupCaptcha(); }
 function closeAuthGate() { authGate.classList.remove("show"); }
 function showAuthStep(n) { $("authStep1").style.display = n === 1 ? "" : "none"; $("authStep2").style.display = n === 2 ? "" : "none"; $("authError").style.display = "none"; }
 function authErr(msg) { const e = $("authError"); e.textContent = msg; e.style.display = ""; }
 function authMsg(e, fallback) { return (e && e.body && e.body.message) || (e && e.message) || fallback; }
+
+function waitFor(cond, ms = 8000) { return new Promise((res, rej) => { const t0 = Date.now(); (function c() { try { if (cond()) return res(); } catch {} if (Date.now()-t0 > ms) return rej(new Error("timeout")); setTimeout(c, 120); })(); }); }
+
+/* ---- Google sign-in (InstantDB ID-token flow) ---- */
+let gsiReady = false;
+async function setupGoogle() {
+  const wrap = $("googleBtn"), hint = $("googleHint");
+  if (!GOOGLE_CLIENT_ID || !INSTANT_GOOGLE_CLIENT_NAME) { hint.style.display = ""; wrap.style.display = "none"; return; }
+  hint.style.display = "none"; wrap.style.display = "flex";
+  try { await waitFor(() => window.google && google.accounts && google.accounts.id); }
+  catch { hint.textContent = "Google's library didn't load — check your connection."; hint.style.display = ""; return; }
+  if (gsiReady) return; gsiReady = true;
+  const nonce = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Math.random()).slice(2);
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID, ux_mode: "popup", nonce,
+    callback: async (resp) => {
+      try { await db.auth.signInWithIdToken({ clientName: INSTANT_GOOGLE_CLIENT_NAME, idToken: resp.credential, nonce }); }
+      catch (e) { authErr(authMsg(e, "Google sign-in failed — check the setup in SETUP-InstantDB.txt.")); }
+    },
+  });
+  google.accounts.id.renderButton(wrap, { theme: "filled_blue", size: "large", text: "continue_with", shape: "pill", width: 300 });
+}
+
+/* ---- Captcha (Cloudflare Turnstile) gating the email-code form ---- */
+let captchaOk = false, turnstileWidget = null;
+function updateSendState() { const b = $("authSend"); if (b) b.disabled = !!TURNSTILE_SITE_KEY && !captchaOk; }
+async function setupCaptcha() {
+  if (!TURNSTILE_SITE_KEY) { captchaOk = true; updateSendState(); return; }
+  captchaOk = false; updateSendState();
+  try { await waitFor(() => window.turnstile); } catch { return; }
+  if (turnstileWidget != null) { try { turnstile.reset(turnstileWidget); } catch {} return; }
+  turnstileWidget = turnstile.render("#captcha", { sitekey: TURNSTILE_SITE_KEY,
+    callback: () => { captchaOk = true; updateSendState(); },
+    "expired-callback": () => { captchaOk = false; updateSendState(); },
+    "error-callback": () => { captchaOk = false; updateSendState(); } });
+}
 $("authSend").addEventListener("click", async () => {
   if (!db) return; const email = $("authEmail").value.trim(); if (!email) return authErr("Enter your email.");
+  if (TURNSTILE_SITE_KEY && !captchaOk) return authErr("Please complete the captcha first.");
   try { await db.auth.sendMagicCode({ email }); pendingEmail = email; showAuthStep(2); $("authCode").focus(); }
   catch (e) { authErr(authMsg(e, "Couldn't send the code — check the email and try again.")); }
 });
