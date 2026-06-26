@@ -1,0 +1,117 @@
+==========================================================
+  BUDGET APP — SETUP (InstantDB sign-in + GitHub Pages hosting)
+==========================================================
+
+You'll do two short things, once:
+  PART 1 — Create a free InstantDB app (auth + database)   ~5 min
+  PART 2 — Put the app online with GitHub Pages            ~5 min
+
+No coding required. Your budget data is stored in InstantDB, tied to your
+email sign-in, and syncs across every device you open the app on.
+
+
+----------------------------------------------------------
+PART 1 — InstantDB (sign-in + database)
+----------------------------------------------------------
+1. Go to  https://instantdb.com  and sign in (it uses a magic code too).
+
+2. In the dashboard, click "Create app". Name it e.g. "Budget".
+   You'll see an "App ID" — a long code like
+   00000000-1111-2222-3333-444444444444.  COPY it.
+
+3. Open  index.html  (or budget.html) in a text editor (right-click →
+   Open with → Notepad). Near the TOP of the <script>, find:
+
+       const INSTANT_APP_ID = "";
+
+   Paste your App ID between the quotes, e.g.:
+
+       const INSTANT_APP_ID = "00000000-1111-2222-3333-444444444444";
+
+   Save the file.
+
+4. Set permissions so each person only sees their OWN data:
+   - In the InstantDB dashboard, open your app → "Permissions" tab.
+   - Replace the contents with this and click Save:
+
+{
+  "budgets": {
+    "allow": {
+      "view": "auth.id != null && auth.id in data.ref('owner.id')",
+      "create": "auth.id != null",
+      "update": "auth.id != null && auth.id in data.ref('owner.id')",
+      "delete": "auth.id != null && auth.id in data.ref('owner.id')"
+    }
+  }
+}
+
+   (That's important — without it, the database is open to everyone.)
+
+   You don't need to do anything for the schema: the app creates the
+   needed fields automatically the first time you save. (Advanced: you can
+   instead run "npx instant-cli@latest push schema" and "... push perms"
+   using the included instant.schema.ts / instant.perms.ts files.)
+
+5. Email sending works out of the box — InstantDB sends the 6-digit codes
+   for you. Nothing to configure.
+
+
+----------------------------------------------------------
+PART 2 — Host it free on GitHub Pages
+----------------------------------------------------------
+1. Make a free account at  https://github.com  (skip if you have one).
+
+2. Create a repository:
+   - Top-right "+" → "New repository".
+   - Repository name:  budget   (anything is fine).
+   - Visibility: Public.   (Pages needs Public on the free plan.)
+   - Click "Create repository".
+
+3. Upload the app file:
+   - On the new repo page, click "uploading an existing file"
+     (or "Add file" → "Upload files").
+   - IMPORTANT: rename your file to  index.html  first (so the web address
+     is clean). Then drag  index.html  onto the page.
+     (You can also drag the other files; only index.html matters for the site.)
+   - Make sure you uploaded the version that already has your App ID pasted in!
+   - Click "Commit changes".
+
+4. Turn on Pages:
+   - In the repo, go to "Settings" (top menu) → "Pages" (left menu).
+   - Under "Build and deployment" → Source: "Deploy from a branch".
+   - Branch: "main"  and  folder: "/ (root)"  →  Save.
+
+5. Wait ~1 minute, then refresh the Pages settings page. It will show:
+       "Your site is live at  https://YOUR-USERNAME.github.io/budget/"
+   That's your app's address. Bookmark it.
+
+6. Open that address → click "Sign in" → enter your email → type the
+   6-digit code from your inbox. Done! Your data now syncs to your account.
+
+
+----------------------------------------------------------
+USING IT ELSEWHERE / SHARING
+----------------------------------------------------------
+- Phone or another computer: open the SAME web address, sign in with the
+  SAME email. Your budget loads automatically. Most recent edit wins.
+- A friend: send them the web address. They sign in with THEIR email and
+  get their own private budget. (No extra setup — InstantDB has no
+  per-website approval step.)
+
+
+----------------------------------------------------------
+UPDATING THE APP LATER
+----------------------------------------------------------
+If you (or Claude) change index.html, upload the new version to the repo
+(Add file → Upload files → commit). GitHub Pages refreshes within a minute.
+
+
+----------------------------------------------------------
+TROUBLESHOOTING
+----------------------------------------------------------
+- "Set up sync" stuck / login won't open: the App ID isn't pasted in, or
+  you uploaded the file before pasting it. Re-check step 3 and re-upload.
+- Code email not arriving: check spam; make sure the email is typed right.
+- Data not syncing between devices: confirm the Permissions in Part 1 step 4
+  were saved, and that you're signed in with the same email on both.
+==========================================================
