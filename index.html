@@ -605,13 +605,31 @@ setTimeout(function () {
   if (window.__BUDGET_OK) return;
   var d = document.createElement("div");
   d.style.cssText = "position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;padding:24px;background:#0a0f1c;color:#eaf0fa;font-family:system-ui,'Segoe UI',sans-serif;text-align:center";
-  d.innerHTML = "<div style='max-width:470px'><h2 style='margin:0 0 10px'>Open this from its web address</h2><p style='color:#93a1bd;line-height:1.6'>This app loads its sign-in &amp; database from the internet, so it can't run from a double-clicked file. Open your <b>https://…github.io</b> link. If you're already online and still see this, check your connection.</p></div>";
+  d.innerHTML = "<div style='max-width:480px'><h2 style='margin:0 0 10px'>Couldn't finish loading</h2><p style='color:#93a1bd;line-height:1.6'>The app couldn't load its database library. This is usually a slow connection, a <b>VPN or ad-blocker</b>, or a network that blocks the service it loads from. Try reloading, switching networks (e.g. mobile data), or turning off any VPN/ad-blocker. If you opened a downloaded file directly, open your <b>https://…github.io</b> link instead.</p></div>";
   document.body.appendChild(d);
-}, 3500);
+}, 20000);
 </script>
 
 <script type="module">
-import { init, i, id } from "https://esm.sh/@instantdb/core";
+/* Load the InstantDB SDK from whichever CDN the user's network allows.
+   Some networks block esm.sh (net::ERR_CONNECTION_CLOSED), so we fall back
+   to jsDelivr / unpkg. Each attempt is time-boxed so a stalled CDN can't
+   hang the whole app. */
+function _imp(url, ms) {
+  return Promise.race([ import(url), new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms)) ]);
+}
+let _instant;
+for (const _u of [
+  "https://esm.sh/@instantdb/core",
+  "https://cdn.jsdelivr.net/npm/@instantdb/core/+esm",
+  "https://esm.run/@instantdb/core",
+  "https://unpkg.com/@instantdb/core?module"
+]) {
+  try { const _m = await _imp(_u, 6000); if (_m && _m.init) { _instant = _m; break; } }
+  catch (_e) { console.warn("InstantDB CDN unavailable:", _u, _e && _e.message); }
+}
+if (!_instant) throw new Error("Could not load the database library from any CDN.");
+const { init, i, id } = _instant;
 
 /* ===== InstantDB (auth + cloud db) — see SETUP-InstantDB.txt ===== */
 const INSTANT_APP_ID = "c8b1ae69-e6ba-4fe2-ba9e-25f751658170";
@@ -670,7 +688,7 @@ function load() {
   if (raw && raw.months) return normalize(raw);
   let v2; try { v2 = JSON.parse(localStorage.getItem("myBudgetData_v2")); } catch {}
   if (v2 && v2.months) return normalize(v2);
-  return seedExample();
+  return normalize(seedExample());
 }
 function save() {
   if (!booting) data.updatedAt = Date.now();
@@ -693,7 +711,7 @@ function seedExample() {
     { name:"Long-term savings", planned:200, target:0 },
     { name:"Holiday", planned:100, target:2000 },
   ];
-  return { months:{ [key]:m }, savings:{}, buffer:0, investments:{}, settings:{ seeded:true, currency:"EUR" }, updatedAt:0 };
+  return { months:{ [key]:m }, savings:{}, buffer:0, investments:{}, poolTx:{}, settings:{ seeded:true, currency:"EUR" }, updatedAt:0 };
 }
 function getMonth(key) {
   if (data.months[key]) { data.months[key].oneOff ??= []; return data.months[key]; }
