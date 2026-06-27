@@ -335,13 +335,18 @@
   .btn:disabled { opacity:.5; cursor:not-allowed; }
   .btn:disabled:hover { background:var(--surface); filter:none; }
 
-  /* month-change float + count-up */
-  .month-float { position:absolute; right:20px; top:44%; font-weight:800; font-size:19px; color:var(--save); opacity:0; pointer-events:none; }
-  .month-float.neg { color:var(--over); }
-  .month-float.go { animation:floatUp 1.15s var(--ease) forwards; }
-  @keyframes floatUp { 0%{opacity:0; transform:translateY(10px) scale(.85);} 18%{opacity:1; transform:translateY(2px) scale(1.05);} 65%{opacity:1; transform:translateY(-20px) scale(1);} 100%{opacity:0; transform:translateY(-44px) scale(1);} }
+  /* per-pool float + count-up */
+  .pool { position:relative; }
+  .pool-float { position:absolute; right:16px; top:42px; font-weight:800; font-size:16px; color:var(--save); opacity:0; pointer-events:none; }
+  .pool-float.neg { color:var(--over); }
+  .pool-float.go { animation:floatUp 1.05s var(--ease) forwards; }
+  @keyframes floatUp { 0%{opacity:0; transform:translateY(12px) scale(.8);} 20%{opacity:1; transform:translateY(2px) scale(1.08);} 65%{opacity:1; transform:translateY(-16px) scale(1);} 100%{opacity:0; transform:translateY(-38px) scale(1);} }
   .pmonth { font-size:12.5px; font-weight:650; margin-top:3px; }
   .pmonth.pos { color:var(--save); } .pmonth.neg { color:var(--over); } .pmonth.zero { color:var(--muted); }
+  .ptx-list { display:flex; flex-direction:column; gap:4px; margin:8px 0 4px; }
+  .ptx-item { display:flex; align-items:center; gap:8px; font-size:12.5px; }
+  .ptx-item .tx-when { color:var(--muted); flex:1; }
+  .ptx-item input.mini-amt { width:92px; text-align:right; padding:5px 7px; border-radius:8px; border:1px solid var(--border); background:var(--surface); }
 
   /* pool history (Pools tab) */
   .ph-card { border:1px solid var(--border-soft); border-radius:var(--radius); background:var(--surface-2); padding:16px 18px; margin-bottom:14px; }
@@ -394,9 +399,8 @@
   <nav class="tabs" id="tabBar">
     <button class="tab active" data-tab="budget">📋 Budget</button>
     <button class="tab" data-tab="breakdown">📊 Breakdown</button>
-    <button class="tab" data-tab="pools">🐷 Pools</button>
+    <button class="tab" data-tab="pools">🏦 Pools</button>
     <button class="tab" data-tab="invest">📈 Investments</button>
-    <button class="tab" data-tab="overview">🗓 Overview</button>
     <button class="tab" data-tab="plan">🧮 Plan</button>
   </nav>
 
@@ -461,17 +465,12 @@
 
     <div class="section" id="savingsSection">
       <h2><span class="sec-icon" style="background:var(--save-soft);color:var(--save)">★</span>Savings pools</h2>
-      <p class="desc">Create pools like <em>Emergency fund</em> or <em>Long-term savings</em>. Each grows when you finalize a month. Use <strong>Adjust</strong> to set a starting balance. Connect a pool to the <strong>Investments</strong> tab to track its returns.</p>
+      <p class="desc"><strong>Add to</strong> or <strong>withdraw from</strong> each pool for the selected month — every change is logged below and flows into the pool. Create pools, set monthly targets &amp; goals, and see the full history on the <strong>Pools</strong> tab.</p>
       <div class="total-saved" id="totalSavedBox">
         <div><div class="tlabel">Total saved across all pools</div><div class="tval" id="totalSaved">€0</div></div>
         <div class="tbreak" id="savedBreak"></div>
-        <div class="month-float" id="monthFloat"></div>
       </div>
       <div class="pools" id="poolsContainer"></div>
-      <div class="add-cat" style="margin-top:14px">
-        <input class="text" type="text" id="newPool" placeholder="New savings pool (e.g. Emergency fund)…">
-        <button class="btn-add" id="addPoolBtn">+ Add pool</button>
-      </div>
     </div>
 
     <footer>
@@ -501,22 +500,16 @@
     </div>
   </div>
 
-  <!-- ============ OVERVIEW TAB ============ -->
-  <div id="page-overview" class="page">
-    <div class="section">
-      <h2 style="justify-content:space-between"><span style="display:flex;align-items:center;gap:9px"><span class="sec-icon" style="background:var(--save-soft);color:var(--save)">🗓</span>Yearly overview</span>
-        <select id="ovYear" class="text" style="font-size:13px"></select></h2>
-      <p class="desc">Key numbers and trends across the year.</p>
-      <div id="ovContent"></div>
-    </div>
-  </div>
-
   <!-- ============ POOLS TAB ============ -->
   <div id="page-pools" class="page">
     <div class="section">
-      <h2><span class="sec-icon" style="background:var(--save-soft);color:var(--save)">🐷</span>Pools — full history</h2>
-      <p class="desc">Every deposit, withdrawal and monthly contribution across all time, per pool. The home tab only shows the month you're currently editing.</p>
+      <h2><span class="sec-icon" style="background:var(--save-soft);color:var(--save)">🏦</span>Pools — manage &amp; history</h2>
+      <p class="desc">Create pools, set their monthly target and end goal (or leave it indefinite), set a starting balance, and see every transaction across all time. Day-to-day deposits and withdrawals for a month are done on the <strong>Budget</strong> tab.</p>
       <div id="poolsTabContent"></div>
+      <div class="add-cat" style="margin-top:14px">
+        <input class="text" type="text" id="newPool" placeholder="New pool (e.g. Emergency fund)…">
+        <button class="btn-add" id="addPoolBtn">+ Add pool</button>
+      </div>
     </div>
   </div>
 
@@ -734,6 +727,25 @@ function logPoolTx(name, amount, type, note, dateStr) {
 }
 const poolMonthSum = (name, mkey) => poolTxOf(name).reduce((s, x) => s + (String(x.d).startsWith(mkey + "-") ? num(x.a) : 0), 0);
 const monthChangeTotal = mkey => { let s = 0; new Set([...Object.keys(data.poolTx), ...Object.keys(data.savings)]).forEach(n => { s += poolMonthSum(n, mkey); }); return s; };
+const TX_LABEL = { deposit:"Deposit", withdraw:"Withdrawal", contribution:"Monthly contribution", start:"Balance set" };
+function poolList() {
+  const names = [], m = getMonth(current);
+  m.savingsGoals.forEach(g => names.push(g.name));
+  Object.keys(data.savings).forEach(n => { if (!names.includes(n)) names.push(n); });
+  Object.keys(data.poolTx).forEach(n => { if (!names.includes(n)) names.push(n); });
+  return names;
+}
+function renamePool(oldName, newName) {
+  if (!newName || oldName === newName) return;
+  Object.values(data.months).forEach(mm => (mm.savingsGoals||[]).forEach(g => { if (g.name === oldName) g.name = newName; }));
+  if (data.savings[oldName] !== undefined) { data.savings[newName] = num(data.savings[newName]) + num(data.savings[oldName]); delete data.savings[oldName]; }
+  if (data.investments[oldName]) { data.investments[newName] = data.investments[oldName]; delete data.investments[oldName]; }
+  if (data.poolTx[oldName]) { data.poolTx[newName] = data.poolTx[oldName]; delete data.poolTx[oldName]; }
+}
+function deletePool(name) {
+  Object.values(data.months).forEach(mm => { const i = (mm.savingsGoals||[]).findIndex(g => g.name === name); if (i >= 0) mm.savingsGoals.splice(i, 1); });
+  delete data.savings[name]; delete data.investments[name]; delete data.poolTx[name];
+}
 
 /* ===== savings count-up + scroll-triggered animation ===== */
 let savAnimPlayed = false;
@@ -746,15 +758,15 @@ function countUp(el, from, to, ms) {
   })(t0);
 }
 function animateSavings() {
-  const total = totalSaved(), change = monthChangeTotal(current);
-  const tv = $("totalSaved"), fl = $("monthFloat");
-  if (!tv || !fl) return;
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (reduce || !change) { tv.textContent = eur(total); fl.className = "month-float"; return; }
-  fl.textContent = (change > 0 ? "+" : "−") + eur(Math.abs(change));
-  fl.className = "month-float" + (change < 0 ? " neg" : "");
-  void fl.offsetWidth; fl.classList.add("go");
-  countUp(tv, total - change, total, 900);
+  document.querySelectorAll("#poolsContainer .pool[data-pool]").forEach(card => {
+    const name = card.dataset.pool, bal = num(data.savings[name]), change = poolMonthSum(name, current);
+    const balEl = card.querySelector(".pbal"), fl = card.querySelector(".pool-float");
+    if (!balEl) return;
+    if (reduce || !change) { balEl.textContent = eur(bal); if (fl) fl.className = "pool-float"; return; }
+    if (fl) { fl.textContent = (change > 0 ? "+" : "−") + eur(Math.abs(change)); fl.className = "pool-float" + (change < 0 ? " neg" : ""); void fl.offsetWidth; fl.classList.add("go"); }
+    countUp(balEl, bal - change, bal, 850);
+  });
 }
 function playSavingsAnim() { savAnimPlayed = true; animateSavings(); }
 
@@ -777,13 +789,12 @@ function switchTab(name) {
   document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === name));
   document.querySelectorAll(".page").forEach(p => p.classList.toggle("active", p.id === "page-" + name));
   $("monthControls").style.display = (name === "budget" || name === "breakdown") ? "flex" : "none";
-  renderTab(name);
+  if (name === "budget") render(); else renderTab(name);
 }
 function renderTab(name) {
   if (name === "breakdown") renderBreakdown();
   else if (name === "pools") renderPoolsTab();
   else if (name === "invest") renderInvest();
-  else if (name === "overview") renderOverview();
   else if (name === "plan") renderPlan();
 }
 $("tabBar").addEventListener("click", e => { const t = e.target.closest(".tab"); if (t) switchTab(t.dataset.tab); });
@@ -927,38 +938,40 @@ function renderOneOff(m) {
 
 function renderPools(m) {
   const c = $("poolsContainer"); c.innerHTML = "";
-  const names = [...m.savingsGoals.map(g => g.name)];
-  Object.keys(data.savings).forEach(n => { if (!names.includes(n) && num(data.savings[n]) !== 0) names.push(n); });
-  if (!names.length) { c.innerHTML = `<p class="hint">No pools yet — add one below.</p>`; return; }
+  const names = poolList();
+  if (!names.length) { c.innerHTML = `<p class="hint">No pools yet — add one on the <b>Pools</b> tab.</p>`; return; }
+  const monLabel = monthName(current).split(" ")[0];
   names.forEach(name => {
-    const goal = m.savingsGoals.find(g => g.name === name), si = m.savingsGoals.indexOf(goal);
+    const goal = m.savingsGoals.find(g => g.name === name);
     const bal = num(data.savings[name]), target = goal ? num(goal.target) : 0;
     const pc = target > 0 ? Math.min(100, bal/target*100) : 0, reached = target > 0 && bal >= target;
-    const isInv = !!data.investments[name];
-    const mChange = poolMonthSum(name, current), monLabel = monthName(current).split(" ")[0];
+    const isInv = !!data.investments[name], mChange = poolMonthSum(name, current);
+    const monthItems = (data.poolTx[name] || []).map((x, idx) => ({ x, idx })).filter(o => String(o.x.d).startsWith(current + "-"));
+    const itemsHtml = monthItems.length ? monthItems.map(({ x, idx }) => `
+        <div class="ptx-item">
+          <span class="tx-when">${parseDate(x.d).toLocaleDateString(undefined,{day:"numeric",month:"short"})} · ${TX_LABEL[x.t] || x.t}</span>
+          <span class="euro"><input class="mini-amt ptx-in" type="number" step="0.01" value="${num(x.a)}" data-ptx="${idx}" aria-label="Amount"></span>
+          <button class="btn-x" data-ptxdel="${idx}" aria-label="Delete">✕</button>
+        </div>`).join("") : `<div class="hint" style="padding:2px 0">No changes logged for ${monLabel} yet.</div>`;
+    const targetInfo = (goal && num(goal.planned) ? `aims ${eur(goal.planned)}/mo · ` : "") + (target > 0 ? `${Math.round(pc)}% of ${eur(target)} goal` : "indefinite — no end goal");
     const div = document.createElement("div");
     div.className = "pool" + (reached ? " reached" : "");
-    if (goal) div.dataset.si = si;
+    div.dataset.pool = name;
     div.innerHTML = `
+      <div class="pool-float"></div>
       <div class="pool-top">
-        ${goal ? `<input class="pname" type="text" value="${esc(name)}" data-si="${si}" data-f="name" aria-label="Pool name">`
-                : `<span class="pname" style="opacity:.8">${esc(name)} <small class="hint">(inactive)</small></span>`}
+        <span class="pname" style="font-weight:650">${esc(name)}</span>
         ${isInv ? `<span class="inv-tag">📈 invested</span>` : ""}
         ${reached ? `<span class="reached-tag">✓ reached</span>` : ""}
-        <button class="btn-x" data-delpool="${esc(name)}" aria-label="Delete pool">✕</button>
       </div>
       <div class="pbal num">${eur(bal)}</div>
-      <div class="ptarget">${target > 0 ? `${Math.round(pc)}% of ${eur(target)} goal` : "no target set"}</div>
-      <div class="pmonth ${mChange>0?"pos":mChange<0?"neg":"zero"}">${monLabel}: ${mChange===0 ? "no change logged yet" : (mChange>0?"+":"−")+eur(Math.abs(mChange))+" this month"}</div>
-      ${target > 0 ? `<div class="pbar"><div style="width:${pc}%"></div></div>` : `<div style="height:9px"></div>`}
-      <div class="pool-controls">
-        ${goal ? `<span class="mini">target/mo <span class="euro"><input class="mini-amt" type="number" min="0" step="0.01" value="${goal.planned ?? ""}" data-si="${si}" data-f="planned" aria-label="Monthly contribution"></span></span>
-                  <span class="mini">goal <span class="euro"><input class="mini-amt" type="number" min="0" step="0.01" value="${goal.target ?? ""}" data-si="${si}" data-f="target" aria-label="Target"></span></span>` : ""}
-      </div>
-      <div class="inv-actions" style="margin-top:8px">
+      <div class="ptarget">${targetInfo}</div>
+      ${target > 0 ? `<div class="pbar"><div style="width:${pc}%"></div></div>` : `<div style="height:6px"></div>`}
+      <div class="pmonth ${mChange>0?"pos":mChange<0?"neg":"zero"}">${monLabel} total: ${mChange===0 ? "no change yet" : (mChange>0?"+":"−")+eur(Math.abs(mChange))}</div>
+      <div class="ptx-list">${itemsHtml}</div>
+      <div class="inv-actions">
         <button class="btn sm primary" data-pdep="${esc(name)}">＋ Add</button>
         <button class="btn sm" data-pwd="${esc(name)}">− Withdraw</button>
-        <button class="link-btn" data-pset="${esc(name)}">Set balance</button>
       </div>`;
     c.appendChild(div);
   });
@@ -999,35 +1012,29 @@ $("addPoolBtn").addEventListener("click", addPool);
 $("newPool").addEventListener("keydown", e => { if (e.key === "Enter") addPool(); });
 const pools = $("poolsContainer");
 pools.addEventListener("input", e => {
-  const t = e.target, m = getMonth(current); if (t.dataset.si === undefined) return;
-  const g = m.savingsGoals[t.dataset.si], f = t.dataset.f, old = g.name;
-  if (f === "name") {
-    g.name = t.value;
-    if (data.savings[old] !== undefined && old !== t.value) { data.savings[t.value] = data.savings[old]; delete data.savings[old]; }
-    if (data.investments[old] && old !== t.value) { data.investments[t.value] = data.investments[old]; delete data.investments[old]; }
-    save();
-  } else { g[f] = num(t.value); liveRecalc(); }
+  const t = e.target; if (t.dataset.ptx === undefined) return;
+  const card = t.closest("[data-pool]"); if (!card) return;
+  const name = card.dataset.pool, idx = +t.dataset.ptx, tx = data.poolTx[name][idx];
+  if (!tx) return;
+  const old = num(tx.a), nw = num(t.value);
+  tx.a = nw; data.savings[name] = num(data.savings[name]) + (nw - old);
+  const balEl = card.querySelector(".pbal"); if (balEl) balEl.textContent = eur(data.savings[name]);
+  const mc = poolMonthSum(name, current), mEl = card.querySelector(".pmonth");
+  if (mEl) { mEl.textContent = `${monthName(current).split(" ")[0]} total: ${mc===0?"no change yet":(mc>0?"+":"−")+eur(Math.abs(mc))}`; mEl.className = "pmonth " + (mc>0?"pos":mc<0?"neg":"zero"); }
+  updateSummary(getMonth(current)); save();
 });
 pools.addEventListener("click", e => {
-  const m = getMonth(current), t = e.target;
-  if (t.dataset.delpool !== undefined) {
-    const name = t.dataset.delpool, bal = num(data.savings[name]);
-    if (bal !== 0 && !confirm(`"${name}" holds ${eur(bal)}. Delete it and discard that balance?`)) return;
-    if (bal === 0 && !confirm("Remove this pool?")) return;
-    const i = m.savingsGoals.findIndex(g => g.name === name); if (i >= 0) m.savingsGoals.splice(i, 1);
-    delete data.savings[name]; delete data.investments[name]; delete data.poolTx[name];
-    render();
-  } else if (t.dataset.pdep !== undefined) {
-    const name = t.dataset.pdep, v = prompt(`Add money to "${name}" — how much?`, ""); if (v == null || !num(v)) return;
-    logPoolTx(name, Math.abs(num(v)), "deposit", (prompt("Note (optional):", "") || "")); render(); playSavingsAnim();
+  const t = e.target, mn = monthName(current).split(" ")[0];
+  if (t.dataset.pdep !== undefined) {
+    const name = t.dataset.pdep, v = prompt(`Add money to "${name}" (for ${mn}) — how much?`, ""); if (v == null || !num(v)) return;
+    logPoolTx(name, Math.abs(num(v)), "deposit", (prompt("Note (optional):", "") || ""), current + "-15"); render(); playSavingsAnim();
   } else if (t.dataset.pwd !== undefined) {
-    const name = t.dataset.pwd, v = prompt(`Withdraw from "${name}" — how much?`, ""); if (v == null || !num(v)) return;
-    logPoolTx(name, -Math.abs(num(v)), "withdraw", (prompt("Note (optional):", "") || "")); render(); playSavingsAnim();
-  } else if (t.dataset.pset !== undefined) {
-    const name = t.dataset.pset, cur = num(data.savings[name]);
-    const v = prompt(`Set the current balance for "${name}" (now ${eur(cur)}):`, cur.toFixed(2));
-    if (v == null) return; const delta = num(v) - cur;
-    if (delta !== 0) logPoolTx(name, delta, "start", "Balance set");
+    const name = t.dataset.pwd, v = prompt(`Withdraw from "${name}" (for ${mn}) — how much?`, ""); if (v == null || !num(v)) return;
+    logPoolTx(name, -Math.abs(num(v)), "withdraw", (prompt("Note (optional):", "") || ""), current + "-15"); render(); playSavingsAnim();
+  } else if (t.dataset.ptxdel !== undefined) {
+    const card = t.closest("[data-pool]"); if (!card) return;
+    const name = card.dataset.pool, idx = +t.dataset.ptxdel, tx = data.poolTx[name][idx];
+    if (tx) { data.savings[name] = num(data.savings[name]) - num(tx.a); data.poolTx[name].splice(idx, 1); }
     render();
   }
 });
@@ -1103,7 +1110,7 @@ function applyFinalize(m) {
   const net = num(m.income) + num(m.bonus) - exp - num(m.discretionaryActual) - sav;
   const snapshot = { contributions:{}, buffer:net };
   m.savingsGoals.forEach(g => {
-    if (num(g.planned) !== 0) logPoolTx(g.name, num(g.planned), "contribution", "Monthly contribution", current + "-15");
+    if (num(g.planned) !== 0) logPoolTx(g.name, num(g.planned), "contribution", "", current + "-15");
     snapshot.contributions[g.name] = num(g.planned);
   });
   data.buffer = num(data.buffer) + net;
@@ -1128,6 +1135,23 @@ $("clearBtn").addEventListener("click", () => {
 });
 
 /* ===== BREAKDOWN tab ===== */
+let bdFrame = "all";
+function frameKeys(frame) {
+  const all = Object.keys(data.months), now = new Date();
+  if (frame === "all") return all;
+  if (frame === "ytd") return all.filter(k => k.startsWith(now.getFullYear() + "-") && k <= monthKey(now));
+  const n = { m1:1, m3:3, m6:6, y1:12 }[frame] || 1;
+  const start = monthKey(new Date(now.getFullYear(), now.getMonth() - n, 1));
+  const end = monthKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+  return all.filter(k => k >= start && k <= end);
+}
+function savingsStats(frame) {
+  const keys = frameKeys(frame).filter(k => data.months[k] && data.months[k].finalized);
+  let total = 0, spend = 0;
+  keys.forEach(k => { const m = data.months[k]; total += monthSaved(m); spend += expensesEff(m); });
+  const count = keys.length;
+  return { avg: count ? total/count : 0, total, avgSpend: count ? spend/count : 0, count };
+}
 function renderBreakdown() {
   const m = getMonth(current); $("bdMonth").textContent = monthName(current);
   const total = expensesEff(m);
@@ -1139,13 +1163,23 @@ function renderBreakdown() {
   items.sort((a,b) => b.val - a.val);
   const inc = num(m.income) + num(m.bonus);
   const colors = ["var(--spend)","var(--save)","var(--primary)","var(--warn)","var(--over)","var(--expense)"];
+  const st = savingsStats(bdFrame);
+  const frames = [["Last month","m1"],["3 months","m3"],["6 months","m6"],["Rolling year","y1"],["YTD","ytd"],["All","all"]];
+  const savHtml = `<div class="set-label">Savings · finalized months</div>
+    <div class="win-chips" id="bdFrames">${frames.map(([l,f]) => `<button data-bf="${f}" class="${bdFrame===f?"on":""}">${l}</button>`).join("")}</div>
+    <div class="kpis" style="margin-top:12px">
+      <div class="kpi"><div class="kl">Avg saved / month</div><div class="kv pos">${st.count?eur0(st.avg):"—"}</div></div>
+      <div class="kpi"><div class="kl">Total saved (period)</div><div class="kv">${st.count?eur0(st.total):"—"}</div></div>
+      <div class="kpi"><div class="kl">Avg spent / month</div><div class="kv">${st.count?eur0(st.avgSpend):"—"}</div></div>
+      <div class="kpi"><div class="kl">Finalized months</div><div class="kv">${st.count}</div></div>
+    </div>`;
   let html = `<div class="kpis">
       <div class="kpi"><div class="kl">Total expenses</div><div class="kv">${eur(total)}</div></div>
       <div class="kpi"><div class="kl">% of income</div><div class="kv">${inc ? pct(total/inc*100) : "—"}</div></div>
       <div class="kpi"><div class="kl">Biggest category</div><div class="kv" style="font-size:18px">${cats[0] ? esc(cats[0].name) : "—"}</div></div>
       <div class="kpi"><div class="kl">Categories</div><div class="kv">${cats.length}</div></div>
     </div>`;
-  if (!cats.length) { $("bdContent").innerHTML = html + `<p class="hint">No expenses recorded for this month yet.</p>`; return; }
+  if (!cats.length) { $("bdContent").innerHTML = html + `<p class="hint">No expenses recorded for this month yet.</p>` + savHtml; return; }
   html += `<div class="set-label" style="margin-top:4px">By category</div><div class="rank">`;
   cats.forEach((c, i) => {
     const sharePct = total ? c.val/total*100 : 0;
@@ -1159,9 +1193,10 @@ function renderBreakdown() {
     html += `<div class="rank-row"><div class="rank-top"><span class="rl">${esc(it.name)} <span class="hint">· ${esc(it.cat)}</span></span><span class="rv">${eur(it.val)}</span></div>
       <div class="rbar"><div style="width:${sharePct}%;background:var(--expense)"></div></div></div>`;
   });
-  html += `</div>`;
+  html += `</div>` + savHtml;
   $("bdContent").innerHTML = html;
 }
+$("bdContent").addEventListener("click", e => { const b = e.target.closest("[data-bf]"); if (b) { bdFrame = b.dataset.bf; renderBreakdown(); } });
 
 /* ===== INVESTMENTS tab ===== */
 function allPoolNames() {
@@ -1381,7 +1416,7 @@ function renderOverview() {
   }
   $("ovContent").innerHTML = html;
 }
-$("ovYear").addEventListener("change", renderOverview);
+/* Overview tab removed — its renderer is unused. */
 function chartIncomeExpense(keys) {
   const W = 660, H = 230, pad = 28, n = keys.length;
   const rows = keys.map(k => { const m = data.months[k]; return { k, inc: num(m.income)+num(m.bonus), exp: expensesEff(m) }; });
@@ -1411,25 +1446,68 @@ function chartCumSaved(keys) {
 
 /* ===== POOLS tab (full history) ===== */
 function renderPoolsTab() {
-  const c = $("poolsTabContent");
-  const names = allPoolNames();
-  Object.keys(data.poolTx).forEach(n => { if (!names.includes(n)) names.push(n); });
-  if (!names.length) { c.innerHTML = `<p class="hint">No pools yet. Add one on the Budget tab.</p>`; return; }
-  const labelOf = { deposit:"Deposit", withdraw:"Withdrawal", contribution:"Monthly contribution", start:"Balance set" };
+  const c = $("poolsTabContent"), m = getMonth(current);
+  const names = poolList();
+  if (!names.length) { c.innerHTML = `<p class="hint">No pools yet — add one below.</p>`; return; }
   c.innerHTML = names.map(name => {
-    const bal = num(data.savings[name]), isInv = !!data.investments[name];
+    const goal = m.savingsGoals.find(g => g.name === name), si = m.savingsGoals.indexOf(goal);
+    const bal = num(data.savings[name]), target = goal ? num(goal.target) : 0, isInv = !!data.investments[name], indef = !(target > 0);
     const txs = poolTxOf(name).slice().sort((a,b) => String(b.d).localeCompare(String(a.d)));
     const rows = txs.length ? txs.map(x => `<tr>
         <td class="tx-when">${parseDate(x.d).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"})}</td>
-        <td>${labelOf[x.t] || x.t}${x.n ? ` <span class="hint">· ${esc(x.n)}</span>` : ""}</td>
+        <td>${TX_LABEL[x.t] || x.t}${x.n ? ` <span class="hint">· ${esc(x.n)}</span>` : ""}</td>
         <td class="r tx-amt ${num(x.a)>=0?"pos":"neg"}">${num(x.a)>=0?"+":"−"}${eur(Math.abs(num(x.a)))}</td></tr>`).join("")
-      : `<tr><td colspan="3" class="hint">No logged activity yet — deposits, withdrawals and monthly contributions appear here.</td></tr>`;
-    return `<div class="ph-card">
-      <div class="ph-head"><div><div class="ph-name">${isInv?"📈 ":"🐷 "}${esc(name)}</div><div class="hint">${txs.length} entr${txs.length===1?"y":"ies"}</div></div>
+      : `<tr><td colspan="3" class="hint">No logged activity yet.</td></tr>`;
+    return `<div class="ph-card" data-pt="${esc(name)}">
+      <div class="ph-head">
+        <div style="flex:1">${goal
+            ? `<input class="pname" type="text" value="${esc(name)}" data-pt-name="${si}" style="font-weight:700;font-size:15px;min-width:140px">`
+            : `<span class="ph-name">${isInv?"📈 ":"🏦 "}${esc(name)} <small class="hint">(inactive — not in this month)</small></span>`}
+          <div class="hint" style="margin-top:3px">${txs.length} entr${txs.length===1?"y":"ies"}${isInv?" · 📈 investment":""}</div></div>
         <div class="ph-bal">${eur(bal)}</div></div>
+      ${goal ? `<div class="pool-controls" style="margin:12px 0 8px">
+          <span class="mini">target/mo <span class="euro"><input class="mini-amt" type="number" min="0" step="0.01" value="${goal.planned ?? ""}" data-pt-mo="${si}"></span></span>
+          <span class="mini">end goal <span class="euro"><input class="mini-amt" type="number" min="0" step="0.01" value="${target || ""}" data-pt-goal="${si}" ${indef?"disabled":""}></span></span>
+          <label class="mini" style="cursor:pointer;gap:5px"><input type="checkbox" data-pt-indef="${si}" ${indef?"checked":""}> indefinite (no goal)</label>
+        </div>` : ""}
+      <div class="inv-actions" style="margin-bottom:8px">
+        <button class="btn sm" data-pt-setbal="${esc(name)}">Set balance</button>
+        <button class="btn sm danger" data-pt-del="${esc(name)}">Delete pool</button>
+      </div>
       <table class="ph-tx"><tbody>${rows}</tbody></table></div>`;
   }).join("");
 }
+const poolsTabC = $("poolsTabContent");
+poolsTabC.addEventListener("input", e => {
+  const t = e.target, m = getMonth(current);
+  if (t.dataset.ptMo !== undefined) { m.savingsGoals[t.dataset.ptMo].planned = num(t.value); save(); }
+  else if (t.dataset.ptGoal !== undefined) { m.savingsGoals[t.dataset.ptGoal].target = num(t.value); save(); }
+});
+poolsTabC.addEventListener("change", e => {
+  const t = e.target, m = getMonth(current);
+  if (t.dataset.ptName !== undefined) {
+    const g = m.savingsGoals[t.dataset.ptName], nn = t.value.trim();
+    if (nn && nn !== g.name) renamePool(g.name, nn);
+    render(); renderPoolsTab();
+  } else if (t.dataset.ptIndef !== undefined) {
+    const g = m.savingsGoals[t.dataset.ptIndef];
+    if (t.checked) g.target = 0;
+    save(); render(); renderPoolsTab();
+  }
+});
+poolsTabC.addEventListener("click", e => {
+  const t = e.target;
+  if (t.dataset.ptSetbal !== undefined) {
+    const name = t.dataset.ptSetbal, cur = num(data.savings[name]);
+    const v = prompt(`Set the current balance for "${name}" (now ${eur(cur)}):`, cur.toFixed(2));
+    if (v == null) return; const delta = num(v) - cur; if (delta !== 0) logPoolTx(name, delta, "start", "Balance set");
+    render(); renderPoolsTab();
+  } else if (t.dataset.ptDel !== undefined) {
+    const name = t.dataset.ptDel, bal = num(data.savings[name]);
+    if (!confirm(`Delete "${name}"${bal?` and discard its ${eur(bal)} balance`:""}? This removes it everywhere.`)) return;
+    deletePool(name); render(); renderPoolsTab();
+  }
+});
 
 /* ===== PLAN tab (calculators — not linked to real data) ===== */
 let ptMode = "pct";
