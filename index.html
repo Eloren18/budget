@@ -5,8 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232563eb'/%3E%3Cpath d='M5 8.5A2 2 0 0 1 7 6.5h9a2 2 0 0 1 2 2V9h.5a1 1 0 0 1 1 1v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8.5Z' fill='none' stroke='white' stroke-width='1.5'/%3E%3Ccircle cx='16' cy='13' r='1.3' fill='white'/%3E%3C/svg%3E">
 <title>Budget</title>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Quicksand:wght@500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --radius: 16px; --radius-sm: 10px;
@@ -33,46 +34,72 @@
     --save:#059669; --save-soft:rgba(5,150,105,.12); --spend:#0284c7; --spend-soft:rgba(2,132,199,.12);
     --expense:#64748b; --expense-soft:rgba(100,116,139,.14); --over:#e11d48; --warn:#d97706;
   }
-  html[data-theme="ocean"] {
-    --bg:#04141a;
-    --bg-grad: radial-gradient(1200px 600px at 80% -10%, rgba(45,212,191,.14), transparent 60%), radial-gradient(900px 500px at -10% 10%, rgba(34,211,238,.12), transparent 55%);
-    --surface:#0a2128; --surface-2:#0e2c35; --elevated:#11343f; --text:#e3f6f8; --muted:#88b6bd; --faint:#4d747b;
-    --border:#163a44; --border-soft:#102e36; --primary:#2dd4bf; --primary-ink:#012e2a;
-    --save:#34d399; --save-soft:rgba(52,211,153,.16); --spend:#22d3ee; --spend-soft:rgba(34,211,238,.16);
-    --expense:#7a9aa0; --expense-soft:rgba(122,154,160,.18); --over:#fb7185; --warn:#fbbf24;
-    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 32px rgba(0,0,0,.4);
+  html[data-theme="synthwave"] {
+    --bg:#140720;
+    --bg-grad: radial-gradient(1200px 600px at 80% -10%, rgba(255,95,208,.18), transparent 60%), radial-gradient(900px 520px at -10% 110%, rgba(34,211,238,.16), transparent 55%);
+    --surface:#1f0d31; --surface-2:#2a123f; --elevated:#34194c; --text:#fbe9ff; --muted:#c89ad8; --faint:#7e5b94;
+    --border:#3d2257; --border-soft:#2e1846; --primary:#ff5fd0; --primary-ink:#1a0014;
+    --save:#5ce1b9; --save-soft:rgba(92,225,185,.16); --spend:#22d3ee; --spend-soft:rgba(34,211,238,.16);
+    --expense:#b48fd0; --expense-soft:rgba(180,143,208,.2); --over:#ff5a7a; --warn:#ffd166;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 40px rgba(255,95,208,.12);
   }
-  html[data-theme="forest"] {
-    --bg:#0a1410;
-    --bg-grad: radial-gradient(1200px 600px at 80% -10%, rgba(74,222,128,.13), transparent 60%), radial-gradient(900px 500px at -10% 10%, rgba(163,230,53,.10), transparent 55%);
-    --surface:#10231a; --surface-2:#152d22; --elevated:#19352a; --text:#e7f5ec; --muted:#8fb59f; --faint:#547561;
-    --border:#1d3b2c; --border-soft:#162f23; --primary:#4ade80; --primary-ink:#04230f;
-    --save:#34d399; --save-soft:rgba(52,211,153,.16); --spend:#a3e635; --spend-soft:rgba(163,230,53,.16);
-    --expense:#85a392; --expense-soft:rgba(133,163,146,.18); --over:#fb7185; --warn:#fbbf24;
-    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 32px rgba(0,0,0,.4);
+  html[data-theme="brutalist"] {
+    --font:"Space Mono", ui-monospace, monospace;
+    --bg:#f3efe2; --bg-grad:none;
+    --surface:#ffffff; --surface-2:#f3efe2; --elevated:#ffffff; --text:#111111; --muted:#444444; --faint:#777777;
+    --border:#111111; --border-soft:#111111; --primary:#2b41ff; --primary-ink:#ffffff;
+    --save:#0a8a3a; --save-soft:rgba(10,138,58,.14); --spend:#2b41ff; --spend-soft:rgba(43,65,255,.12);
+    --expense:#555555; --expense-soft:rgba(85,85,85,.15); --over:#e0245e; --warn:#c77800;
+    --radius:0px; --radius-sm:0px; --shadow:4px 4px 0 #111111;
   }
-  html[data-theme="sunset"] {
-    --bg:#1a0f12;
-    --bg-grad: radial-gradient(1200px 600px at 80% -10%, rgba(245,158,11,.15), transparent 60%), radial-gradient(900px 500px at -10% 10%, rgba(251,113,133,.12), transparent 55%);
-    --surface:#2a1820; --surface-2:#34202a; --elevated:#3c2632; --text:#fbeae2; --muted:#c79b93; --faint:#8a5f5a;
-    --border:#43262f; --border-soft:#371f27; --primary:#f59e0b; --primary-ink:#241200;
-    --save:#34d399; --save-soft:rgba(52,211,153,.16); --spend:#fb923c; --spend-soft:rgba(251,146,60,.16);
-    --expense:#b58a82; --expense-soft:rgba(181,138,130,.2); --over:#f43f5e; --warn:#facc15;
-    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 32px rgba(0,0,0,.4);
+  html[data-theme="pastel"] {
+    --font:"Quicksand","Inter",system-ui,sans-serif;
+    --bg:#fbf2fb;
+    --bg-grad: radial-gradient(1100px 560px at 85% -12%, rgba(196,163,240,.28), transparent 60%), radial-gradient(900px 500px at -8% 8%, rgba(134,227,206,.24), transparent 55%);
+    --surface:#ffffff; --surface-2:#f7f0fb; --elevated:#ffffff; --text:#5b5170; --muted:#9a8fb0; --faint:#bcb2cc;
+    --border:#ece2f5; --border-soft:#f2ecf8; --primary:#b387ec; --primary-ink:#ffffff;
+    --save:#5ec9aa; --save-soft:rgba(134,227,206,.3); --spend:#7cc4ec; --spend-soft:rgba(124,196,236,.28);
+    --expense:#b3a7c8; --expense-soft:rgba(179,167,200,.25); --over:#f08aa6; --warn:#f3b765;
+    --radius:22px; --radius-sm:16px; --shadow:0 6px 22px rgba(150,120,200,.14);
   }
-  html[data-theme="grape"] {
-    --bg:#120c1f;
-    --bg-grad: radial-gradient(1200px 600px at 80% -10%, rgba(167,139,250,.15), transparent 60%), radial-gradient(900px 500px at -10% 10%, rgba(192,132,252,.12), transparent 55%);
-    --surface:#1d142e; --surface-2:#251a3a; --elevated:#2c2044; --text:#efe9fb; --muted:#a99ec7; --faint:#6c5f8c;
-    --border:#332447; --border-soft:#271b39; --primary:#a78bfa; --primary-ink:#1a0e33;
-    --save:#34d399; --save-soft:rgba(52,211,153,.16); --spend:#c084fc; --spend-soft:rgba(192,132,252,.16);
-    --expense:#9b8fb8; --expense-soft:rgba(155,143,184,.2); --over:#fb7185; --warn:#fbbf24;
-    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 32px rgba(0,0,0,.4);
+  html[data-theme="mono"] {
+    --bg:#fafafa; --bg-grad:none;
+    --surface:#ffffff; --surface-2:#f4f4f5; --elevated:#ffffff; --text:#18181b; --muted:#71717a; --faint:#a1a1aa;
+    --border:#e4e4e7; --border-soft:#efeff1; --primary:#18181b; --primary-ink:#ffffff;
+    --save:#3f6b54; --save-soft:rgba(63,107,84,.12); --spend:#52525b; --spend-soft:rgba(82,82,91,.1);
+    --expense:#a1a1aa; --expense-soft:rgba(161,161,170,.16); --over:#9b4a4a; --warn:#8a6d3b;
+    --radius:7px; --radius-sm:6px; --shadow:0 1px 2px rgba(0,0,0,.04), 0 6px 18px rgba(0,0,0,.05);
   }
+  html[data-theme="glass"] {
+    --bg:#2a1a52;
+    --bg-grad: linear-gradient(135deg, #3b1d6e 0%, #1f4ed8 55%, #0e9488 100%);
+    --surface:rgba(255,255,255,.09); --surface-2:rgba(255,255,255,.06); --elevated:rgba(255,255,255,.12);
+    --text:#f4f6ff; --muted:#c7cdf0; --faint:#9298c6;
+    --border:rgba(255,255,255,.2); --border-soft:rgba(255,255,255,.12); --primary:#8ab4ff; --primary-ink:#08123a;
+    --save:#67e8c9; --save-soft:rgba(103,232,201,.18); --spend:#7dd3fc; --spend-soft:rgba(125,211,252,.18);
+    --expense:#b9c0e8; --expense-soft:rgba(185,192,232,.16); --over:#fda4c0; --warn:#fcd34d;
+    --shadow: 0 8px 32px rgba(0,0,0,.25);
+  }
+
+  /* theme-specific styling beyond colors */
+  [data-theme="synthwave"] h1, [data-theme="synthwave"] .section > h2 { font-family:"Orbitron","Inter",sans-serif; text-transform:uppercase; letter-spacing:.05em; }
+  [data-theme="synthwave"] .btn.primary, [data-theme="synthwave"] .tab.active { box-shadow:0 0 14px color-mix(in srgb,var(--primary) 60%,transparent); }
+  [data-theme="synthwave"] .total-saved .tval, [data-theme="synthwave"] .inv-val { text-shadow:0 0 16px color-mix(in srgb,var(--save) 55%,transparent); }
+  [data-theme="brutalist"] .card, [data-theme="brutalist"] .section, [data-theme="brutalist"] .kpi,
+  [data-theme="brutalist"] .pool, [data-theme="brutalist"] .inv-card, [data-theme="brutalist"] .wbox,
+  [data-theme="brutalist"] .group, [data-theme="brutalist"] .total-saved, [data-theme="brutalist"] .modal { box-shadow:4px 4px 0 var(--text) !important; }
+  [data-theme="brutalist"] .btn, [data-theme="brutalist"] .chip, [data-theme="brutalist"] .tabs, [data-theme="brutalist"] .seg { box-shadow:3px 3px 0 var(--text); }
+  [data-theme="brutalist"] .btn:active, [data-theme="brutalist"] .chip:active { transform:translate(2px,2px); box-shadow:1px 1px 0 var(--text); }
+  [data-theme="brutalist"] h1, [data-theme="brutalist"] .section > h2 { text-transform:uppercase; }
+  [data-theme="glass"] .card, [data-theme="glass"] .section, [data-theme="glass"] .modal, [data-theme="glass"] .tabs,
+  [data-theme="glass"] .seg, [data-theme="glass"] .chip, [data-theme="glass"] .badge, [data-theme="glass"] .kpi,
+  [data-theme="glass"] .pool, [data-theme="glass"] .inv-card, [data-theme="glass"] .wbox, [data-theme="glass"] .group,
+  [data-theme="glass"] .total-saved, [data-theme="glass"] .btn, [data-theme="glass"] input.text, [data-theme="glass"] input.money,
+  [data-theme="glass"] select.text { backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); }
 
   * { box-sizing: border-box; }
   html, body { height: 100%; }
-  body { margin:0; font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg);
+  body { margin:0; font-family:var(--font,"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif); background:var(--bg);
     background-image:var(--bg-grad); background-attachment:fixed; color:var(--text); line-height:1.5;
     font-variant-numeric:tabular-nums; -webkit-font-smoothing:antialiased; padding:28px 20px 60px;
     transition:background-color .4s var(--ease), color .3s var(--ease); }
@@ -85,6 +112,8 @@
     background:linear-gradient(135deg,var(--primary),var(--spend)); color:#fff; box-shadow:var(--shadow); }
   .brand h1 { font-size:19px; margin:0; letter-spacing:-.02em; font-weight:700; }
   .brand p { margin:0; font-size:12.5px; color:var(--muted); }
+  #brandHome { cursor:pointer; border-radius:12px; transition:transform .1s; }
+  #brandHome:hover { opacity:.85; } #brandHome:active { transform:scale(.97); }
   .toolbar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
   #monthControls { display:flex; align-items:center; gap:8px; }
   .seg { display:flex; align-items:center; gap:2px; background:var(--surface); border:1px solid var(--border);
@@ -303,10 +332,27 @@
   .theme-swatch span { flex:1; }
   .theme-opt .tn { font-size:12.5px; font-weight:600; text-align:center; }
 
-  .auth-or { display:flex; align-items:center; gap:10px; color:var(--faint); font-size:12px; margin:14px 0; }
-  .auth-or::before, .auth-or::after { content:""; height:1px; background:var(--border); flex:1; }
   .btn:disabled { opacity:.5; cursor:not-allowed; }
   .btn:disabled:hover { background:var(--surface); filter:none; }
+
+  /* month-change float + count-up */
+  .month-float { position:absolute; right:20px; top:44%; font-weight:800; font-size:19px; color:var(--save); opacity:0; pointer-events:none; }
+  .month-float.neg { color:var(--over); }
+  .month-float.go { animation:floatUp 1.15s var(--ease) forwards; }
+  @keyframes floatUp { 0%{opacity:0; transform:translateY(10px) scale(.85);} 18%{opacity:1; transform:translateY(2px) scale(1.05);} 65%{opacity:1; transform:translateY(-20px) scale(1);} 100%{opacity:0; transform:translateY(-44px) scale(1);} }
+  .pmonth { font-size:12.5px; font-weight:650; margin-top:3px; }
+  .pmonth.pos { color:var(--save); } .pmonth.neg { color:var(--over); } .pmonth.zero { color:var(--muted); }
+
+  /* pool history (Pools tab) */
+  .ph-card { border:1px solid var(--border-soft); border-radius:var(--radius); background:var(--surface-2); padding:16px 18px; margin-bottom:14px; }
+  .ph-head { display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; }
+  .ph-name { font-weight:700; font-size:15px; }
+  .ph-bal { font-size:22px; font-weight:800; letter-spacing:-.02em; }
+  .ph-tx td { padding:7px 6px; font-size:13.5px; border-top:1px solid var(--border-soft); }
+  .tx-amt.pos { color:var(--save); font-weight:700; } .tx-amt.neg { color:var(--over); font-weight:700; }
+  .tx-when { color:var(--muted); font-size:12px; }
+  #ptMode button, #lsUnit { padding:6px 12px; }
+
   @keyframes rise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
   @keyframes fade { from { opacity:0; } to { opacity:1; } }
   @keyframes pop { 0%{transform:scale(1);} 40%{transform:scale(1.18);} 100%{transform:scale(1);} }
@@ -324,7 +370,7 @@
 <div class="wrap">
 
   <header>
-    <div class="brand">
+    <div class="brand" id="brandHome" role="button" tabindex="0" title="Back to home">
       <div class="logo" aria-hidden="true">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1h1a1 1 0 0 1 1 1v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" stroke="currentColor" stroke-width="1.8"/><circle cx="16.5" cy="13" r="1.4" fill="currentColor"/></svg>
       </div>
@@ -348,8 +394,10 @@
   <nav class="tabs" id="tabBar">
     <button class="tab active" data-tab="budget">📋 Budget</button>
     <button class="tab" data-tab="breakdown">📊 Breakdown</button>
+    <button class="tab" data-tab="pools">🐷 Pools</button>
     <button class="tab" data-tab="invest">📈 Investments</button>
     <button class="tab" data-tab="overview">🗓 Overview</button>
+    <button class="tab" data-tab="plan">🧮 Plan</button>
   </nav>
 
   <div id="setupBanner" role="note"></div>
@@ -388,6 +436,17 @@
       </div>
     </div>
 
+    <div class="section" id="oneOffSection">
+      <h2><span class="sec-icon" style="background:color-mix(in srgb,var(--over) 16%,transparent);color:var(--over)">⚡</span>One-off expenses <span class="hint" style="font-weight:500;font-size:12px">· this month only</span></h2>
+      <p class="desc">Spontaneous, single expenses that should <strong>not</strong> carry to next month (a gift, a repair, concert tickets…). Quick to jot down — they still count toward this month's spending and the breakdown.</p>
+      <div id="oneOffContainer"></div>
+      <div class="add-cat" style="margin-top:10px">
+        <input class="text" type="text" id="newOneOffName" placeholder="What was it?" style="flex:2">
+        <span class="euro"><input class="money" type="number" id="newOneOffAmt" min="0" step="0.01" placeholder="0.00"></span>
+        <button class="btn-add" id="addOneOffBtn">+ Add</button>
+      </div>
+    </div>
+
     <div class="section">
       <h2><span class="sec-icon" style="background:var(--spend-soft);color:var(--spend)">◷</span>Weekly spending money</h2>
       <p class="desc">What's left after expenses and savings, split across 4 weeks.</p>
@@ -403,9 +462,10 @@
     <div class="section" id="savingsSection">
       <h2><span class="sec-icon" style="background:var(--save-soft);color:var(--save)">★</span>Savings pools</h2>
       <p class="desc">Create pools like <em>Emergency fund</em> or <em>Long-term savings</em>. Each grows when you finalize a month. Use <strong>Adjust</strong> to set a starting balance. Connect a pool to the <strong>Investments</strong> tab to track its returns.</p>
-      <div class="total-saved">
+      <div class="total-saved" id="totalSavedBox">
         <div><div class="tlabel">Total saved across all pools</div><div class="tval" id="totalSaved">€0</div></div>
         <div class="tbreak" id="savedBreak"></div>
+        <div class="month-float" id="monthFloat"></div>
       </div>
       <div class="pools" id="poolsContainer"></div>
       <div class="add-cat" style="margin-top:14px">
@@ -450,6 +510,50 @@
       <div id="ovContent"></div>
     </div>
   </div>
+
+  <!-- ============ POOLS TAB ============ -->
+  <div id="page-pools" class="page">
+    <div class="section">
+      <h2><span class="sec-icon" style="background:var(--save-soft);color:var(--save)">🐷</span>Pools — full history</h2>
+      <p class="desc">Every deposit, withdrawal and monthly contribution across all time, per pool. The home tab only shows the month you're currently editing.</p>
+      <div id="poolsTabContent"></div>
+    </div>
+  </div>
+
+  <!-- ============ PLAN TAB ============ -->
+  <div id="page-plan" class="page">
+    <div class="section">
+      <h2><span class="sec-icon" style="background:color-mix(in srgb,var(--primary) 18%,transparent);color:var(--primary)">🎯</span>Savings target</h2>
+      <p class="desc">A quick calculator — <strong>not linked to your real budget</strong>. Try an income and a savings rate to see the target. (Your real per-pool targets stay on the Budget tab.)</p>
+      <div class="field"><label for="ptIncome">Monthly income</label><span class="euro"><input class="money" type="number" id="ptIncome" min="0" step="0.01" placeholder="2600"></span></div>
+      <div class="field"><label>Save as</label><div class="win-chips" id="ptMode"><button class="on" data-pm="pct">% of income</button><button data-pm="amt">fixed amount</button></div></div>
+      <div class="field" id="ptPctRow"><label for="ptPct">Save this % of income</label><input class="text" type="number" id="ptPct" min="0" max="100" step="1" value="20" style="width:110px;text-align:right">&nbsp;%</div>
+      <div class="field" id="ptAmtRow" style="display:none"><label for="ptAmt">Save this much / month</label><span class="euro"><input class="money" type="number" id="ptAmt" min="0" step="0.01" placeholder="500"></span></div>
+      <div class="kpis" id="ptResult" style="margin-top:10px"></div>
+    </div>
+
+    <div class="section">
+      <h2><span class="sec-icon" style="background:var(--spend-soft);color:var(--spend)">💰</span>Projection · lump sum</h2>
+      <p class="desc">Invest one amount and let it grow at a yearly return.</p>
+      <div class="field"><label for="lsAmt">Lump sum invested</label><span class="euro"><input class="money" type="number" id="lsAmt" min="0" step="0.01" placeholder="10000"></span></div>
+      <div class="field"><label for="lsRate">Yearly return</label><input class="text" type="number" id="lsRate" step="0.1" value="7" style="width:110px;text-align:right">&nbsp;%</div>
+      <div class="field"><label for="lsDur">Time</label><input class="text" type="number" id="lsDur" min="0" step="1" value="10" style="width:110px;text-align:right">
+        <select class="text" id="lsUnit"><option value="years">years</option><option value="months">months</option></select></div>
+      <div class="kpis" id="lsResult"></div>
+      <div class="chartwrap" id="lsChart"></div>
+    </div>
+
+    <div class="section">
+      <h2><span class="sec-icon" style="background:var(--save-soft);color:var(--save)">📅</span>Projection · invest every month</h2>
+      <p class="desc">Add a fixed amount each month (optionally starting from a lump sum) and watch it compound.</p>
+      <div class="field"><label for="rcMonthly">Invested each month</label><span class="euro"><input class="money" type="number" id="rcMonthly" min="0" step="0.01" placeholder="300"></span></div>
+      <div class="field"><label for="rcStart">Starting lump (optional)</label><span class="euro"><input class="money" type="number" id="rcStart" min="0" step="0.01" placeholder="0"></span></div>
+      <div class="field"><label for="rcRate">Yearly return</label><input class="text" type="number" id="rcRate" step="0.1" value="7" style="width:110px;text-align:right">&nbsp;%</div>
+      <div class="field"><label for="rcMonths">For how many months</label><input class="text" type="number" id="rcMonths" min="1" step="1" value="15" style="width:110px;text-align:right"></div>
+      <div class="kpis" id="rcResult"></div>
+      <div class="chartwrap" id="rcChart"></div>
+    </div>
+  </div>
 </div>
 
 <!-- FINALIZE MODAL -->
@@ -489,15 +593,9 @@
       </div>
       <div><h3 style="margin:0">Sign in to your Budget</h3></div>
     </div>
-    <p class="note" id="authIntro">No passwords here. Sign in with your Google account — one tap, or a one-time code sent to your email. Your data syncs across devices.</p>
-    <div id="googleWrap" style="margin-bottom:6px">
-      <div id="googleBtn" style="display:flex;justify-content:center;min-height:42px"></div>
-      <p class="note" id="googleHint" style="display:none">Google sign-in isn't set up yet (see <b>SETUP-InstantDB.txt</b>, Part 3). You can still use an email code below.</p>
-    </div>
-    <div class="auth-or"><span>or use an email code</span></div>
+    <p class="note" id="authIntro">Enter your email and we'll send a 6-digit code — no password. <b>New here?</b> It creates your account. <b>Coming back?</b> It signs you into your existing one. Your data syncs across devices.</p>
     <div id="authStep1">
-      <div class="field"><label for="authEmail">Email</label><input class="text" type="email" id="authEmail" placeholder="you@gmail.com" autocomplete="email" style="flex:1;min-width:200px"></div>
-      <div id="captcha" style="margin:4px 0 12px"></div>
+      <div class="field"><label for="authEmail">Email</label><input class="text" type="email" id="authEmail" placeholder="you@example.com" autocomplete="email" style="flex:1;min-width:200px"></div>
       <div class="actions"><button class="btn primary" id="authSend">Send code →</button></div>
     </div>
     <div id="authStep2" style="display:none">
@@ -524,10 +622,6 @@ import { init, i, id } from "https://esm.sh/@instantdb/core";
 
 /* ===== InstantDB (auth + cloud db) — see SETUP-InstantDB.txt ===== */
 const INSTANT_APP_ID = "c8b1ae69-e6ba-4fe2-ba9e-25f751658170";
-// Optional extra sign-in methods — fill in after setup (see SETUP-InstantDB.txt, Part 3):
-const GOOGLE_CLIENT_ID = "";            // Google Cloud "Web" OAuth client ID (…apps.googleusercontent.com)
-const INSTANT_GOOGLE_CLIENT_NAME = "";  // the client name you register in the InstantDB dashboard → Auth tab
-const TURNSTILE_SITE_KEY = "";          // Cloudflare Turnstile site key (the captcha on the email-code form)
 const schema = i.schema({
   entities: {
     $users: i.entity({ email: i.string().unique().indexed() }),
@@ -549,10 +643,11 @@ const CURRENCIES = {
 const THEMES = [
   {id:"dark",name:"Original",sw:["#5b9dff","#121a2b","#34d399"]},
   {id:"light",name:"Daylight",sw:["#2563eb","#ffffff","#059669"]},
-  {id:"ocean",name:"Ocean",sw:["#2dd4bf","#0a2128","#22d3ee"]},
-  {id:"forest",name:"Forest",sw:["#4ade80","#10231a","#a3e635"]},
-  {id:"sunset",name:"Sunset",sw:["#f59e0b","#2a1820","#fb923c"]},
-  {id:"grape",name:"Grape",sw:["#a78bfa","#1d142e","#c084fc"]},
+  {id:"synthwave",name:"Synthwave",sw:["#ff5fd0","#1f0d31","#22d3ee"]},
+  {id:"brutalist",name:"Brutalist",sw:["#2b41ff","#f3efe2","#111111"]},
+  {id:"pastel",name:"Pastel",sw:["#b387ec","#fbf2fb","#5ec9aa"]},
+  {id:"mono",name:"Mono",sw:["#18181b","#fafafa","#3f6b54"]},
+  {id:"glass",name:"Glass",sw:["#8ab4ff","#3b1d6e","#67e8c9"]},
 ];
 const curCfg = () => CURRENCIES[(data.settings && data.settings.currency)] || CURRENCIES.EUR;
 const eur = n => new Intl.NumberFormat(curCfg().locale, { style:"currency", currency:(data.settings&&data.settings.currency)||"EUR", maximumFractionDigits:2 }).format(Number(n)||0);
@@ -574,9 +669,9 @@ const invWindow = {}; // per-pool selected return window (months|null)
 
 /* ===== storage / migration / seed ===== */
 function blankMonth() {
-  return { income:0, bonus:0, groups:[], savingsGoals:[], weeklyGroceries:0, discretionaryActual:null, finalized:false, applied:null };
+  return { income:0, bonus:0, groups:[], oneOff:[], savingsGoals:[], weeklyGroceries:0, discretionaryActual:null, finalized:false, applied:null };
 }
-function normalize(d) { d.settings ??= {}; d.savings ??= {}; d.buffer ??= 0; d.investments ??= {}; d.months ??= {}; return d; }
+function normalize(d) { d.settings ??= {}; d.savings ??= {}; d.buffer ??= 0; d.investments ??= {}; d.poolTx ??= {}; d.months ??= {}; Object.values(d.months).forEach(m => { m.oneOff ??= []; }); return d; }
 function load() {
   let raw; try { raw = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch {}
   if (raw && raw.months) return normalize(raw);
@@ -608,7 +703,7 @@ function seedExample() {
   return { months:{ [key]:m }, savings:{}, buffer:0, investments:{}, settings:{ seeded:true, currency:"EUR" }, updatedAt:0 };
 }
 function getMonth(key) {
-  if (data.months[key]) return data.months[key];
+  if (data.months[key]) { data.months[key].oneOff ??= []; return data.months[key]; }
   const earlier = Object.keys(data.months).filter(k => k < key).sort();
   const src = earlier.length ? data.months[earlier[earlier.length-1]] : null;
   const m = blankMonth();
@@ -623,11 +718,45 @@ function getMonth(key) {
 
 /* ===== calculations ===== */
 const groupTotal = (g, useActual) => g.items.reduce((s, it) => s + (useActual ? (it.actual ?? it.planned) : it.planned), 0);
-const expensesEff = m => m.groups.reduce((s, g) => s + groupTotal(g, true), 0);
+const oneOffTotal = m => (m.oneOff || []).reduce((s, o) => s + num(o.amount), 0);
+const expensesEff = m => m.groups.reduce((s, g) => s + groupTotal(g, true), 0) + oneOffTotal(m);
 const savingsPlanned = m => m.savingsGoals.reduce((s, g) => s + num(g.planned), 0);
 const discretionary = m => num(m.income) + num(m.bonus) - expensesEff(m) - savingsPlanned(m);
 const totalSaved = () => num(data.buffer) + Object.values(data.savings).reduce((s, v) => s + num(v), 0);
 const monthSaved = m => (m.finalized && m.applied) ? Object.values(m.applied.contributions).reduce((s,v)=>s+v,0) + num(m.applied.buffer) : savingsPlanned(m);
+
+/* ===== pool transactions ===== */
+const poolTxOf = name => (data.poolTx[name] || []);
+function logPoolTx(name, amount, type, note, dateStr) {
+  data.poolTx[name] = data.poolTx[name] || [];
+  data.poolTx[name].push({ d: dateStr || todayStr(), a: amount, t: type, n: note || "" });
+  data.savings[name] = num(data.savings[name]) + amount;
+}
+const poolMonthSum = (name, mkey) => poolTxOf(name).reduce((s, x) => s + (String(x.d).startsWith(mkey + "-") ? num(x.a) : 0), 0);
+const monthChangeTotal = mkey => { let s = 0; new Set([...Object.keys(data.poolTx), ...Object.keys(data.savings)]).forEach(n => { s += poolMonthSum(n, mkey); }); return s; };
+
+/* ===== savings count-up + scroll-triggered animation ===== */
+let savAnimPlayed = false;
+function countUp(el, from, to, ms) {
+  const t0 = performance.now();
+  (function step(t) {
+    const k = Math.min(1, (t - t0) / ms), e = 1 - Math.pow(1 - k, 3);
+    el.textContent = eur(from + (to - from) * e);
+    if (k < 1) requestAnimationFrame(step); else el.textContent = eur(to);
+  })(t0);
+}
+function animateSavings() {
+  const total = totalSaved(), change = monthChangeTotal(current);
+  const tv = $("totalSaved"), fl = $("monthFloat");
+  if (!tv || !fl) return;
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduce || !change) { tv.textContent = eur(total); fl.className = "month-float"; return; }
+  fl.textContent = (change > 0 ? "+" : "−") + eur(Math.abs(change));
+  fl.className = "month-float" + (change < 0 ? " neg" : "");
+  void fl.offsetWidth; fl.classList.add("go");
+  countUp(tv, total - change, total, 900);
+}
+function playSavingsAnim() { savAnimPlayed = true; animateSavings(); }
 
 /* ===== theme + currency ===== */
 function applyTheme() {
@@ -652,10 +781,14 @@ function switchTab(name) {
 }
 function renderTab(name) {
   if (name === "breakdown") renderBreakdown();
+  else if (name === "pools") renderPoolsTab();
   else if (name === "invest") renderInvest();
   else if (name === "overview") renderOverview();
+  else if (name === "plan") renderPlan();
 }
 $("tabBar").addEventListener("click", e => { const t = e.target.closest(".tab"); if (t) switchTab(t.dataset.tab); });
+$("brandHome").addEventListener("click", () => switchTab("budget"));
+$("brandHome").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); switchTab("budget"); } });
 
 /* ===== month nav ===== */
 function shiftMonth(d) { const [y,mo]=current.split("-").map(Number); current = monthKey(new Date(y,mo-1+d,1)); render(); }
@@ -672,13 +805,13 @@ function render() {
   badge.textContent = locked ? "Finalized ✓" : "Planning";
   badge.className = "badge" + (locked ? " done" : "");
   $("finalizeBtn").textContent = locked ? "↩ Re-open month" : "✓ Finalize month";
-  ["incomeSection","expenseSection","savingsSection"].forEach(id => $(id).classList.toggle("locked", locked));
+  ["incomeSection","expenseSection","oneOffSection","savingsSection"].forEach(id => $(id).classList.toggle("locked", locked));
 
   $("incomeInput").value = m.income || "";
   $("bonusInput").value = m.bonus || "";
   $("grocInput").value = m.weeklyGroceries || "";
 
-  renderGroups(m); renderPools(m); renderRecap(m); updateSummary(m);
+  renderGroups(m); renderOneOff(m); renderPools(m); renderRecap(m); updateSummary(m);
   if (activeTab !== "budget") renderTab(activeTab);
   save();
 }
@@ -780,6 +913,18 @@ function renderGroups(m) {
     c.appendChild(div);
   });
 }
+function renderOneOff(m) {
+  const c = $("oneOffContainer"), list = m.oneOff || [];
+  if (!list.length) { c.innerHTML = `<p class="hint">No one-off expenses this month.</p>`; return; }
+  const total = list.reduce((s, o) => s + num(o.amount), 0);
+  c.innerHTML = `<table><thead><tr><th>Expense</th><th class="r">Amount</th><th></th></tr></thead><tbody>` +
+    list.map((o, i) => `<tr>
+      <td><input class="cell name" type="text" value="${esc(o.name)}" data-oo="${i}" data-f="name" aria-label="One-off name"></td>
+      <td class="r"><input class="cell r amt" type="number" inputmode="decimal" min="0" step="0.01" value="${o.amount ?? ""}" data-oo="${i}" data-f="amount" aria-label="Amount"></td>
+      <td class="r"><button class="btn-x" data-deloo="${i}" aria-label="Delete">✕</button></td></tr>`).join("") +
+    `<tr><td><b>Total</b></td><td class="r"><b class="oo-total">${eur(total)}</b></td><td></td></tr></tbody></table>`;
+}
+
 function renderPools(m) {
   const c = $("poolsContainer"); c.innerHTML = "";
   const names = [...m.savingsGoals.map(g => g.name)];
@@ -790,6 +935,7 @@ function renderPools(m) {
     const bal = num(data.savings[name]), target = goal ? num(goal.target) : 0;
     const pc = target > 0 ? Math.min(100, bal/target*100) : 0, reached = target > 0 && bal >= target;
     const isInv = !!data.investments[name];
+    const mChange = poolMonthSum(name, current), monLabel = monthName(current).split(" ")[0];
     const div = document.createElement("div");
     div.className = "pool" + (reached ? " reached" : "");
     if (goal) div.dataset.si = si;
@@ -803,11 +949,16 @@ function renderPools(m) {
       </div>
       <div class="pbal num">${eur(bal)}</div>
       <div class="ptarget">${target > 0 ? `${Math.round(pc)}% of ${eur(target)} goal` : "no target set"}</div>
+      <div class="pmonth ${mChange>0?"pos":mChange<0?"neg":"zero"}">${monLabel}: ${mChange===0 ? "no change logged yet" : (mChange>0?"+":"−")+eur(Math.abs(mChange))+" this month"}</div>
       ${target > 0 ? `<div class="pbar"><div style="width:${pc}%"></div></div>` : `<div style="height:9px"></div>`}
       <div class="pool-controls">
-        ${goal ? `<span class="mini">+ <span class="euro"><input class="mini-amt" type="number" min="0" step="0.01" value="${goal.planned ?? ""}" data-si="${si}" data-f="planned" aria-label="Monthly contribution"></span>/mo</span>
-                  <span class="mini">target <span class="euro"><input class="mini-amt" type="number" min="0" step="0.01" value="${goal.target ?? ""}" data-si="${si}" data-f="target" aria-label="Target"></span></span>` : ""}
-        <button class="link-btn" data-adjust="${esc(name)}">Adjust balance</button>
+        ${goal ? `<span class="mini">target/mo <span class="euro"><input class="mini-amt" type="number" min="0" step="0.01" value="${goal.planned ?? ""}" data-si="${si}" data-f="planned" aria-label="Monthly contribution"></span></span>
+                  <span class="mini">goal <span class="euro"><input class="mini-amt" type="number" min="0" step="0.01" value="${goal.target ?? ""}" data-si="${si}" data-f="target" aria-label="Target"></span></span>` : ""}
+      </div>
+      <div class="inv-actions" style="margin-top:8px">
+        <button class="btn sm primary" data-pdep="${esc(name)}">＋ Add</button>
+        <button class="btn sm" data-pwd="${esc(name)}">− Withdraw</button>
+        <button class="link-btn" data-pset="${esc(name)}">Set balance</button>
       </div>`;
     c.appendChild(div);
   });
@@ -858,22 +1009,54 @@ pools.addEventListener("input", e => {
   } else { g[f] = num(t.value); liveRecalc(); }
 });
 pools.addEventListener("click", e => {
-  const m = getMonth(current);
-  if (e.target.dataset.delpool !== undefined) {
-    const name = e.target.dataset.delpool, bal = num(data.savings[name]);
+  const m = getMonth(current), t = e.target;
+  if (t.dataset.delpool !== undefined) {
+    const name = t.dataset.delpool, bal = num(data.savings[name]);
     if (bal !== 0 && !confirm(`"${name}" holds ${eur(bal)}. Delete it and discard that balance?`)) return;
     if (bal === 0 && !confirm("Remove this pool?")) return;
     const i = m.savingsGoals.findIndex(g => g.name === name); if (i >= 0) m.savingsGoals.splice(i, 1);
-    delete data.savings[name]; delete data.investments[name];
+    delete data.savings[name]; delete data.investments[name]; delete data.poolTx[name];
     render();
-  } else if (e.target.dataset.adjust !== undefined) {
-    const name = e.target.dataset.adjust, cur = num(data.savings[name]);
-    const v = prompt(`Set the balance for "${name}" (currently ${eur(cur)}).\nEnter the new total, or a +/- amount to add or withdraw:`, cur.toFixed(2));
-    if (v == null) return; const s = v.trim();
-    data.savings[name] = /^[+-]/.test(s) ? cur + num(s) : num(s);
+  } else if (t.dataset.pdep !== undefined) {
+    const name = t.dataset.pdep, v = prompt(`Add money to "${name}" — how much?`, ""); if (v == null || !num(v)) return;
+    logPoolTx(name, Math.abs(num(v)), "deposit", (prompt("Note (optional):", "") || "")); render(); playSavingsAnim();
+  } else if (t.dataset.pwd !== undefined) {
+    const name = t.dataset.pwd, v = prompt(`Withdraw from "${name}" — how much?`, ""); if (v == null || !num(v)) return;
+    logPoolTx(name, -Math.abs(num(v)), "withdraw", (prompt("Note (optional):", "") || "")); render(); playSavingsAnim();
+  } else if (t.dataset.pset !== undefined) {
+    const name = t.dataset.pset, cur = num(data.savings[name]);
+    const v = prompt(`Set the current balance for "${name}" (now ${eur(cur)}):`, cur.toFixed(2));
+    if (v == null) return; const delta = num(v) - cur;
+    if (delta !== 0) logPoolTx(name, delta, "start", "Balance set");
     render();
   }
 });
+
+/* one-off expenses editing */
+const oneOffC = $("oneOffContainer");
+oneOffC.addEventListener("input", e => {
+  const t = e.target, m = getMonth(current); if (t.dataset.oo === undefined) return;
+  const o = m.oneOff[t.dataset.oo], f = t.dataset.f;
+  if (f === "name") { o.name = t.value; save(); }
+  else {
+    o.amount = num(t.value);
+    const totEl = oneOffC.querySelector(".oo-total"); if (totEl) totEl.textContent = eur(m.oneOff.reduce((s, x) => s + num(x.amount), 0));
+    updateSummary(m); save();
+  }
+});
+oneOffC.addEventListener("click", e => {
+  if (e.target.dataset.deloo === undefined) return;
+  getMonth(current).oneOff.splice(e.target.dataset.deloo, 1); render();
+});
+function addOneOff() {
+  const nm = $("newOneOffName"), am = $("newOneOffAmt"), name = nm.value.trim();
+  if (!name && !num(am.value)) return;
+  getMonth(current).oneOff.push({ name: name || "One-off", amount: num(am.value) });
+  nm.value = ""; am.value = ""; render(); nm.focus();
+}
+$("addOneOffBtn").addEventListener("click", addOneOff);
+$("newOneOffName").addEventListener("keydown", e => { if (e.key === "Enter") addOneOff(); });
+$("newOneOffAmt").addEventListener("keydown", e => { if (e.key === "Enter") addOneOff(); });
 
 /* ===== finalize (weekly = per-week × 4) ===== */
 const overlay = $("overlay");
@@ -919,13 +1102,21 @@ function applyFinalize(m) {
   const exp = expensesEff(m), sav = savingsPlanned(m);
   const net = num(m.income) + num(m.bonus) - exp - num(m.discretionaryActual) - sav;
   const snapshot = { contributions:{}, buffer:net };
-  m.savingsGoals.forEach(g => { data.savings[g.name] = num(data.savings[g.name]) + num(g.planned); snapshot.contributions[g.name] = num(g.planned); });
+  m.savingsGoals.forEach(g => {
+    if (num(g.planned) !== 0) logPoolTx(g.name, num(g.planned), "contribution", "Monthly contribution", current + "-15");
+    snapshot.contributions[g.name] = num(g.planned);
+  });
   data.buffer = num(data.buffer) + net;
   m.finalized = true; m.applied = snapshot;
 }
 function reverseFinalize(m) {
   if (m.applied) {
-    for (const n in m.applied.contributions) data.savings[n] = num(data.savings[n]) - m.applied.contributions[n];
+    const mk = current + "-";
+    for (const n in m.applied.contributions) {
+      const amt = num(m.applied.contributions[n]);
+      data.savings[n] = num(data.savings[n]) - amt;
+      if (data.poolTx[n]) data.poolTx[n] = data.poolTx[n].filter(x => !(x.t === "contribution" && String(x.d).startsWith(mk) && num(x.a) === amt));
+    }
     data.buffer = num(data.buffer) - m.applied.buffer;
   }
   m.finalized = false; m.applied = null;
@@ -940,9 +1131,11 @@ $("clearBtn").addEventListener("click", () => {
 function renderBreakdown() {
   const m = getMonth(current); $("bdMonth").textContent = monthName(current);
   const total = expensesEff(m);
-  const cats = m.groups.map(g => ({ name:g.name, val:groupTotal(g, true) })).filter(c => c.val > 0).sort((a,b) => b.val - a.val);
+  const ooTot = oneOffTotal(m);
+  const cats = [...m.groups.map(g => ({ name:g.name, val:groupTotal(g, true) })), ...(ooTot > 0 ? [{ name:"One-off ⚡", val:ooTot }] : [])].filter(c => c.val > 0).sort((a,b) => b.val - a.val);
   const items = [];
   m.groups.forEach(g => g.items.forEach(it => { const v = num(it.actual ?? it.planned); if (v > 0) items.push({ name:it.name, cat:g.name, val:v }); }));
+  (m.oneOff || []).forEach(o => { const v = num(o.amount); if (v > 0) items.push({ name:o.name || "One-off", cat:"One-off ⚡", val:v }); });
   items.sort((a,b) => b.val - a.val);
   const inc = num(m.income) + num(m.bonus);
   const colors = ["var(--spend)","var(--save)","var(--primary)","var(--warn)","var(--over)","var(--expense)"];
@@ -986,6 +1179,7 @@ function investCashflows(name) {
     if (m.finalized && m.applied && m.applied.contributions && num(m.applied.contributions[name]))
       flows.push({ date: parseDate(k + "-15"), amount: num(m.applied.contributions[name]) });
   });
+  poolTxOf(name).forEach(x => { if (x.t !== "contribution" && num(x.a)) flows.push({ date: parseDate(x.d), amount: num(x.a) }); });
   return flows.sort((a,b) => a.date - b.date);
 }
 function snapshotsOf(name) { return ((data.investments[name] || {}).snapshots || []).map(s => ({ date: parseDate(s.date), value: num(s.value) })).sort((a,b) => a.date - b.date); }
@@ -1143,15 +1337,32 @@ function renderOverview() {
   withData.forEach(k => { const m = data.months[k]; totInc += num(m.income)+num(m.bonus); totExp += expensesEff(m); totSav += monthSaved(m); });
   const months = withData.length;
   const catTotals = {};
-  withData.forEach(k => data.months[k].groups.forEach(g => { catTotals[g.name] = (catTotals[g.name]||0) + groupTotal(g, true); }));
+  withData.forEach(k => { const m = data.months[k]; m.groups.forEach(g => { catTotals[g.name] = (catTotals[g.name]||0) + groupTotal(g, true); }); const oo = oneOffTotal(m); if (oo > 0) catTotals["One-off ⚡"] = (catTotals["One-off ⚡"]||0) + oo; });
   const cats = Object.entries(catTotals).map(([name,val]) => ({ name, val })).filter(c => c.val > 0).sort((a,b) => b.val - a.val);
   const maxCat = cats.length ? cats[0].val : 1;
 
-  let html = `<div class="kpis">
-      <div class="kpi"><div class="kl">Total income</div><div class="kv">${eur0(totInc)}</div></div>
-      <div class="kpi"><div class="kl">Total spent</div><div class="kv">${eur0(totExp)}</div></div>
-      <div class="kpi"><div class="kl">Total saved</div><div class="kv pos">${eur0(totSav)}</div></div>
+  const savingsRate = totInc > 0 ? totSav/totInc*100 : 0;
+  const priciest = withData.map(k => ({ k, v: expensesEff(data.months[k]) })).sort((a,b)=>b.v-a.v)[0];
+  let overMonths = 0, overImpact = 0;
+  withData.forEach(k => { const mm = data.months[k]; if (mm.finalized && mm.applied && num(mm.applied.buffer) < 0) { overMonths++; overImpact += -num(mm.applied.buffer); } });
+  let goalsAchieved = 0, goalsTotal = 0; const seenG = new Set();
+  Object.values(data.months).forEach(mm => (mm.savingsGoals||[]).forEach(g => { if (num(g.target) > 0 && !seenG.has(g.name)) { seenG.add(g.name); goalsTotal++; if (num(data.savings[g.name]) >= num(g.target)) goalsAchieved++; } }));
+  let invGains = 0, anyInv = false;
+  Object.keys(data.investments).forEach(n => { const cv = currentValue(n); if (cv != null) { anyInv = true; invGains += cv - investCashflows(n).reduce((s,f)=>s+f.amount,0); } });
+
+  let html = `<div class="set-label" style="margin-top:0">🎉 ${yr==="all"?"All-time":yr} in review</div>
+    <div class="kpis">
+      <div class="kpi"><div class="kl">Earned</div><div class="kv">${eur0(totInc)}</div></div>
+      <div class="kpi"><div class="kl">Spent</div><div class="kv">${eur0(totExp)}</div></div>
+      <div class="kpi"><div class="kl">Saved</div><div class="kv pos">${eur0(totSav)}</div></div>
+      <div class="kpi"><div class="kl">Savings rate</div><div class="kv ${savingsRate>=0?"pos":"neg"}">${pct(savingsRate)}</div></div>
+      <div class="kpi"><div class="kl">Biggest category</div><div class="kv" style="font-size:16px">${cats[0]?esc(cats[0].name):"—"}</div></div>
+      <div class="kpi"><div class="kl">Priciest month</div><div class="kv" style="font-size:16px">${priciest?monthName(priciest.k).split(" ")[0]:"—"}</div></div>
+      <div class="kpi"><div class="kl">Goals achieved</div><div class="kv">${goalsAchieved}/${goalsTotal}</div></div>
+      <div class="kpi"><div class="kl">Months overspent</div><div class="kv ${overMonths?"neg":""}">${overMonths}</div></div>
       <div class="kpi"><div class="kl">Avg spend / mo</div><div class="kv">${eur0(totExp/months)}</div></div>
+      ${overImpact>0?`<div class="kpi"><div class="kl">Drawn from buffer</div><div class="kv neg">−${eur0(overImpact)}</div></div>`:""}
+      ${anyInv?`<div class="kpi"><div class="kl">Investment gains</div><div class="kv ${invGains>=0?"pos":"neg"}">${invGains>=0?"+":""}${eur0(invGains)}</div></div>`:""}
     </div>`;
 
   html += `<div class="set-label">Income vs spending by month</div><div class="chartwrap">${chartIncomeExpense(withData)}</div>
@@ -1196,6 +1407,91 @@ function chartCumSaved(keys) {
   const Y = v => H-pad - ((v-min)/((max-min)||1))*(H-2*pad);
   const poly = pts.map(p => `${X(p.i).toFixed(1)},${Y(p.cum).toFixed(1)}`).join(" ");
   return `<svg viewBox="0 0 ${W} ${H}" width="100%"><polyline points="${pad},${(H-pad).toFixed(1)} ${poly} ${(W-pad).toFixed(1)},${(H-pad).toFixed(1)}" fill="color-mix(in srgb,var(--save) 16%,transparent)" stroke="none"/><polyline points="${poly}" fill="none" stroke="var(--save)" stroke-width="2.5"/></svg>`;
+}
+
+/* ===== POOLS tab (full history) ===== */
+function renderPoolsTab() {
+  const c = $("poolsTabContent");
+  const names = allPoolNames();
+  Object.keys(data.poolTx).forEach(n => { if (!names.includes(n)) names.push(n); });
+  if (!names.length) { c.innerHTML = `<p class="hint">No pools yet. Add one on the Budget tab.</p>`; return; }
+  const labelOf = { deposit:"Deposit", withdraw:"Withdrawal", contribution:"Monthly contribution", start:"Balance set" };
+  c.innerHTML = names.map(name => {
+    const bal = num(data.savings[name]), isInv = !!data.investments[name];
+    const txs = poolTxOf(name).slice().sort((a,b) => String(b.d).localeCompare(String(a.d)));
+    const rows = txs.length ? txs.map(x => `<tr>
+        <td class="tx-when">${parseDate(x.d).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"})}</td>
+        <td>${labelOf[x.t] || x.t}${x.n ? ` <span class="hint">· ${esc(x.n)}</span>` : ""}</td>
+        <td class="r tx-amt ${num(x.a)>=0?"pos":"neg"}">${num(x.a)>=0?"+":"−"}${eur(Math.abs(num(x.a)))}</td></tr>`).join("")
+      : `<tr><td colspan="3" class="hint">No logged activity yet — deposits, withdrawals and monthly contributions appear here.</td></tr>`;
+    return `<div class="ph-card">
+      <div class="ph-head"><div><div class="ph-name">${isInv?"📈 ":"🐷 "}${esc(name)}</div><div class="hint">${txs.length} entr${txs.length===1?"y":"ies"}</div></div>
+        <div class="ph-bal">${eur(bal)}</div></div>
+      <table class="ph-tx"><tbody>${rows}</tbody></table></div>`;
+  }).join("");
+}
+
+/* ===== PLAN tab (calculators — not linked to real data) ===== */
+let ptMode = "pct";
+function planChart(values, invested) {
+  const n = values.length; if (n < 2) return "";
+  const W = 660, H = 180, pad = 26, max = Math.max(1, ...values), min = 0;
+  const X = i => pad + (i/(n-1))*(W-2*pad), Y = v => H-pad - ((v-min)/((max-min)||1))*(H-2*pad);
+  const line = arr => arr.map((v,i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(" ");
+  const vpoly = line(values);
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%">
+    <polyline points="${pad},${(H-pad).toFixed(1)} ${vpoly} ${(W-pad).toFixed(1)},${(H-pad).toFixed(1)}" fill="color-mix(in srgb,var(--save) 14%,transparent)" stroke="none"/>
+    ${invested ? `<polyline points="${line(invested)}" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 4"/>` : ""}
+    <polyline points="${vpoly}" fill="none" stroke="var(--save)" stroke-width="2.5"/></svg>`;
+}
+function recalcTarget() {
+  const inc = num($("ptIncome").value);
+  const monthly = ptMode === "pct" ? inc * num($("ptPct").value)/100 : num($("ptAmt").value);
+  $("ptResult").innerHTML = `
+    <div class="kpi"><div class="kl">Save / month</div><div class="kv pos">${eur(monthly)}</div></div>
+    <div class="kpi"><div class="kl">Save / year</div><div class="kv">${eur(monthly*12)}</div></div>
+    <div class="kpi"><div class="kl">% of income</div><div class="kv">${inc>0?pct(monthly/inc*100):"—"}</div></div>
+    <div class="kpi"><div class="kl">Left to spend / mo</div><div class="kv">${eur(Math.max(inc-monthly,0))}</div></div>`;
+}
+function recalcLump() {
+  const P = num($("lsAmt").value), rate = num($("lsRate").value)/100, dur = num($("lsDur").value);
+  const years = $("lsUnit").value === "months" ? dur/12 : dur;
+  const fv = P * Math.pow(1+rate, years), profit = fv - P;
+  $("lsResult").innerHTML = `
+    <div class="kpi"><div class="kl">Final value</div><div class="kv pos">${eur(fv)}</div></div>
+    <div class="kpi"><div class="kl">You put in</div><div class="kv">${eur(P)}</div></div>
+    <div class="kpi"><div class="kl">Profit</div><div class="kv ${profit>=0?"pos":"neg"}">${profit>=0?"+":""}${eur(profit)}</div></div>
+    <div class="kpi"><div class="kl">Total growth</div><div class="kv">${P>0?pct(profit/P*100):"—"}</div></div>`;
+  if (years > 0 && P > 0) { const steps=40, vals=[]; for (let i=0;i<=steps;i++) vals.push(P*Math.pow(1+rate, years*i/steps)); $("lsChart").innerHTML = planChart(vals); }
+  else $("lsChart").innerHTML = "";
+}
+function recalcRecurring() {
+  const C = num($("rcMonthly").value), P = num($("rcStart").value), rate = num($("rcRate").value)/100, n = Math.max(0, Math.round(num($("rcMonths").value)));
+  const im = Math.pow(1+rate, 1/12) - 1;
+  const fvAt = k => P*Math.pow(1+im,k) + (im===0 ? C*k : C*((Math.pow(1+im,k)-1)/im));
+  const fv = fvAt(n), invested = P + C*n, profit = fv - invested;
+  $("rcResult").innerHTML = `
+    <div class="kpi"><div class="kl">Final value</div><div class="kv pos">${eur(fv)}</div></div>
+    <div class="kpi"><div class="kl">Total invested</div><div class="kv">${eur(invested)}</div></div>
+    <div class="kpi"><div class="kl">Profit</div><div class="kv ${profit>=0?"pos":"neg"}">${profit>=0?"+":""}${eur(profit)}</div></div>
+    <div class="kpi"><div class="kl">Total growth</div><div class="kv">${invested>0?pct(profit/invested*100):"—"}</div></div>`;
+  if (n > 0 && (C > 0 || P > 0)) { const steps=Math.min(n,60)||1, vals=[], inv=[]; for (let i=0;i<=steps;i++){ const k=Math.round(n*i/steps); vals.push(fvAt(k)); inv.push(P+C*k); } $("rcChart").innerHTML = planChart(vals, inv); }
+  else $("rcChart").innerHTML = "";
+}
+function renderPlan() { recalcTarget(); recalcLump(); recalcRecurring(); }
+function bindPlan() {
+  ["ptIncome","ptPct","ptAmt"].forEach(idd => $(idd).addEventListener("input", recalcTarget));
+  ["lsAmt","lsRate","lsDur"].forEach(idd => $(idd).addEventListener("input", recalcLump));
+  $("lsUnit").addEventListener("change", recalcLump);
+  ["rcMonthly","rcStart","rcRate","rcMonths"].forEach(idd => $(idd).addEventListener("input", recalcRecurring));
+  $("ptMode").addEventListener("click", e => {
+    const b = e.target.closest("[data-pm]"); if (!b) return;
+    ptMode = b.dataset.pm;
+    $("ptMode").querySelectorAll("button").forEach(x => x.classList.toggle("on", x.dataset.pm === ptMode));
+    $("ptPctRow").style.display = ptMode === "pct" ? "" : "none";
+    $("ptAmtRow").style.display = ptMode === "amt" ? "" : "none";
+    recalcTarget();
+  });
 }
 
 /* ===== settings (gear) ===== */
@@ -1266,50 +1562,13 @@ function startSync() {
 }
 const authGate = $("authGate");
 let pendingEmail = "";
-function openAuthGate() { authGate.classList.add("show"); showAuthStep(1); setupGoogle(); setupCaptcha(); }
+function openAuthGate() { authGate.classList.add("show"); showAuthStep(1); }
 function closeAuthGate() { authGate.classList.remove("show"); }
 function showAuthStep(n) { $("authStep1").style.display = n === 1 ? "" : "none"; $("authStep2").style.display = n === 2 ? "" : "none"; $("authError").style.display = "none"; }
 function authErr(msg) { const e = $("authError"); e.textContent = msg; e.style.display = ""; }
 function authMsg(e, fallback) { return (e && e.body && e.body.message) || (e && e.message) || fallback; }
-
-function waitFor(cond, ms = 8000) { return new Promise((res, rej) => { const t0 = Date.now(); (function c() { try { if (cond()) return res(); } catch {} if (Date.now()-t0 > ms) return rej(new Error("timeout")); setTimeout(c, 120); })(); }); }
-
-/* ---- Google sign-in (InstantDB ID-token flow) ---- */
-let gsiReady = false;
-async function setupGoogle() {
-  const wrap = $("googleBtn"), hint = $("googleHint");
-  if (!GOOGLE_CLIENT_ID || !INSTANT_GOOGLE_CLIENT_NAME) { hint.style.display = ""; wrap.style.display = "none"; return; }
-  hint.style.display = "none"; wrap.style.display = "flex";
-  try { await waitFor(() => window.google && google.accounts && google.accounts.id); }
-  catch { hint.textContent = "Google's library didn't load — check your connection."; hint.style.display = ""; return; }
-  if (gsiReady) return; gsiReady = true;
-  const nonce = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Math.random()).slice(2);
-  google.accounts.id.initialize({
-    client_id: GOOGLE_CLIENT_ID, ux_mode: "popup", nonce,
-    callback: async (resp) => {
-      try { await db.auth.signInWithIdToken({ clientName: INSTANT_GOOGLE_CLIENT_NAME, idToken: resp.credential, nonce }); }
-      catch (e) { authErr(authMsg(e, "Google sign-in failed — check the setup in SETUP-InstantDB.txt.")); }
-    },
-  });
-  google.accounts.id.renderButton(wrap, { theme: "filled_blue", size: "large", text: "continue_with", shape: "pill", width: 300 });
-}
-
-/* ---- Captcha (Cloudflare Turnstile) gating the email-code form ---- */
-let captchaOk = false, turnstileWidget = null;
-function updateSendState() { const b = $("authSend"); if (b) b.disabled = !!TURNSTILE_SITE_KEY && !captchaOk; }
-async function setupCaptcha() {
-  if (!TURNSTILE_SITE_KEY) { captchaOk = true; updateSendState(); return; }
-  captchaOk = false; updateSendState();
-  try { await waitFor(() => window.turnstile); } catch { return; }
-  if (turnstileWidget != null) { try { turnstile.reset(turnstileWidget); } catch {} return; }
-  turnstileWidget = turnstile.render("#captcha", { sitekey: TURNSTILE_SITE_KEY,
-    callback: () => { captchaOk = true; updateSendState(); },
-    "expired-callback": () => { captchaOk = false; updateSendState(); },
-    "error-callback": () => { captchaOk = false; updateSendState(); } });
-}
 $("authSend").addEventListener("click", async () => {
   if (!db) return; const email = $("authEmail").value.trim(); if (!email) return authErr("Enter your email.");
-  if (TURNSTILE_SITE_KEY && !captchaOk) return authErr("Please complete the captcha first.");
   try { await db.auth.sendMagicCode({ email }); pendingEmail = email; showAuthStep(2); $("authCode").focus(); }
   catch (e) { authErr(authMsg(e, "Couldn't send the code — check the email and try again.")); }
 });
@@ -1329,6 +1588,14 @@ $("accountBtn").addEventListener("click", () => {
 
 /* ===== init ===== */
 applyTheme(); applyCurrency(); render();
+bindPlan();
+const savObserver = new IntersectionObserver(entries => {
+  entries.forEach(en => {
+    if (en.isIntersecting) { if (!savAnimPlayed) { savAnimPlayed = true; animateSavings(); } }
+    else savAnimPlayed = false;
+  });
+}, { threshold: 0.3 });
+savObserver.observe($("savingsSection"));
 booting = false;
 if (!INSTANT_APP_ID) { showSetupBanner(); setSync("", "Set up sync"); }
 else {
