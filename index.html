@@ -241,6 +241,25 @@
   .wbox .wv { font-size:23px; font-weight:750; margin-top:3px; letter-spacing:-.02em; }
   .wbox.hero { background:var(--spend-soft); border-color:transparent; }
   .wbox.hero .wv { color:var(--spend); }
+  .split-field { display:flex; flex-direction:column; gap:8px; }
+  .split-inputs { display:flex; gap:10px; flex-wrap:wrap; }
+  .split-tag { display:inline-flex; align-items:center; gap:6px; background:var(--surface-2); border:1px solid var(--border-soft); border-radius:var(--radius-sm); padding:7px 11px; font-size:13.5px; font-weight:600; }
+  .split-tag.groc { color:var(--save); } .split-tag.oop { color:var(--spend); }
+  .pctin { width:48px; border:none; border-bottom:1.5px solid currentColor; background:transparent; font:inherit; font-weight:750; text-align:right; color:inherit; outline:none; -moz-appearance:textfield; }
+  .pctin::-webkit-outer-spin-button, .pctin::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+  .sched { display:flex; flex-direction:column; gap:7px; margin-top:14px; }
+  .sched-row { display:grid; grid-template-columns:1fr auto; gap:3px 12px; align-items:center; background:var(--surface-2); border:1px solid var(--border-soft); border-left:3px solid var(--border-soft); border-radius:var(--radius-sm); padding:10px 13px; transition:opacity .2s; }
+  .sched-row .sched-date { font-weight:600; font-size:14px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .sched-row .sched-days { color:var(--muted); font-weight:500; font-size:12px; }
+  .sched-row .sched-amt { font-weight:750; font-size:17px; letter-spacing:-.02em; }
+  .sched-row .sched-split { grid-column:1 / -1; display:flex; gap:7px 16px; flex-wrap:wrap; margin-top:3px; }
+  .sched-row .split-amt { font-size:13.5px; font-weight:700; display:inline-flex; align-items:baseline; gap:5px; }
+  .sched-row .split-amt small { font-weight:500; font-size:11.5px; color:var(--muted); }
+  .sched-row .split-amt.groc { color:var(--save); }
+  .sched-row .split-amt.oop { color:var(--spend); }
+  .sched-row.past { opacity:.45; }
+  .sched-row.upcoming { border-left-color:var(--spend); background:var(--spend-soft); }
+  .now-tag { background:var(--spend); color:#fff; font-size:10.5px; font-weight:700; padding:1px 7px; border-radius:999px; letter-spacing:.02em; }
 
   .total-saved { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:8px;
     padding:16px 18px; border-radius:var(--radius-sm); margin-bottom:16px;
@@ -347,6 +366,9 @@
   .ptx-item { display:flex; align-items:center; gap:8px; font-size:12.5px; }
   .ptx-item .tx-when { color:var(--muted); flex:1; }
   .ptx-item input.mini-amt { width:92px; text-align:right; padding:5px 7px; border-radius:8px; border:1px solid var(--border); background:var(--surface); }
+  .ptx-item input.mini-amt.locked { border-style:dashed; color:var(--save); -webkit-text-fill-color:var(--save); font-weight:650; background:color-mix(in srgb,var(--save) 8%,transparent); cursor:default; }
+  .btn-x.lock { cursor:default; color:var(--faint); font-size:13px; }
+  .btn-x.lock:hover { background:transparent; color:var(--faint); }
 
   /* pool history (Pools tab) */
   .ph-card { border:1px solid var(--border-soft); border-radius:var(--radius); background:var(--surface-2); padding:16px 18px; margin-bottom:14px; }
@@ -413,7 +435,7 @@
     <div class="cards">
       <div class="card"><div class="klabel"><span class="kdot" style="background:var(--primary)"></span>Income + bonus</div><div class="kvalue" id="cIncome">€0</div><div class="ksub" id="cIncomeSub"></div></div>
       <div class="card"><div class="klabel"><span class="kdot" style="background:var(--expense)"></span>Planned expenses</div><div class="kvalue" id="cExp">€0</div><div class="ksub" id="cExpSub"></div></div>
-      <div class="card"><div class="klabel"><span class="kdot" style="background:var(--spend)"></span>Weekly allowance</div><div class="kvalue" id="cWeek">€0</div><div class="ksub" id="cWeekSub"></div></div>
+      <div class="card"><div class="klabel"><span class="kdot" style="background:var(--spend)"></span>Spending / week</div><div class="kvalue" id="cWeek">€0</div><div class="ksub" id="cWeekSub"></div></div>
       <div class="card"><div class="klabel"><span class="kdot" style="background:var(--save)"></span>Total saved</div><div class="kvalue pos" id="cSaved">€0</div><div class="ksub" id="cSavedSub"></div></div>
     </div>
 
@@ -453,14 +475,21 @@
 
     <div class="section">
       <h2><span class="sec-icon" style="background:var(--spend-soft);color:var(--spend)">◷</span>Weekly spending money</h2>
-      <p class="desc">What's left after expenses and savings, split across 4 weeks.</p>
-      <div class="field"><label for="grocInput">Weekly groceries target</label><span class="euro"><input class="money" type="number" id="grocInput" min="0" step="0.01" placeholder="0.00"></span></div>
-      <div class="weekly-grid">
-        <div class="wbox hero"><div class="wl">Total per week</div><div class="wv" id="wTotal">€0</div></div>
-        <div class="wbox"><div class="wl">→ Groceries / week</div><div class="wv" id="wGroc">€0</div></div>
-        <div class="wbox" id="wOopBox"><div class="wl">→ Free spending / week</div><div class="wv" id="wOop">€0</div></div>
+      <p class="desc">What's left after expenses &amp; savings, transferred to yourself on the <strong>1st</strong> and every <strong>Sunday</strong> — each transfer is sized by the real days it covers. Assumed fully spent.</p>
+      <div class="field split-field">
+        <label for="grocPctInput">Split each transfer — groceries vs. out-of-pocket</label>
+        <div class="split-inputs">
+          <span class="split-tag groc">🛒 Groceries <input class="pctin" type="number" id="grocPctInput" min="0" max="100" step="5">%</span>
+          <span class="split-tag oop">💸 Out-of-pocket <b id="oopPct">—</b>%</span>
+        </div>
       </div>
-      <p class="hint" id="weeksHint" style="margin-top:12px"></p>
+      <div class="weekly-grid">
+        <div class="wbox hero"><div class="wl">To spend this month</div><div class="wv" id="spendTotal">€0</div></div>
+        <div class="wbox"><div class="wl">Per day</div><div class="wv" id="spendDaily">€0</div></div>
+        <div class="wbox"><div class="wl">Per full week</div><div class="wv" id="spendWeek">€0</div></div>
+      </div>
+      <div class="sched" id="spendSchedule"></div>
+      <p class="hint" id="spendHint" style="margin-top:12px"></p>
     </div>
 
     <div class="section" id="savingsSection">
@@ -554,8 +583,7 @@
   <div class="modal">
     <h3>Finalize <span id="modalMonth"></span></h3>
     <div class="field"><label for="mBonus">Bonus / gifts received</label><span class="euro"><input class="money" type="number" id="mBonus" min="0" step="0.01"></span></div>
-    <div class="field"><label for="mDisc">Actually spent <strong>per week</strong></label><span class="euro"><input class="money" type="number" id="mDisc" min="0" step="0.01"></span></div>
-    <p class="note">This is a <strong>per-week</strong> figure — it's multiplied by 4 for the month. Defaults to your weekly allowance (spent exactly to plan). Lower it if you spent less per week (more goes to your buffer); raise it if you overspent.</p>
+    <p class="note">Your spending money for the month is assumed fully spent. Finalizing locks the month and keeps this month's pool contributions.</p>
     <div id="modalSummary"></div>
     <div class="actions">
       <button class="btn" id="modalCancel">Cancel</button>
@@ -644,7 +672,6 @@ const db = INSTANT_APP_ID ? init({ appId: INSTANT_APP_ID, schema }) : null;
 
 /* ===== constants / helpers ===== */
 const STORAGE_KEY = "myBudgetData_v3";
-const WEEKS = 4; // a month is treated as 4 spending-weeks
 const CURRENCIES = {
   EUR:{sym:"€",locale:"en-IE"}, USD:{sym:"$",locale:"en-US"}, GBP:{sym:"£",locale:"en-GB"},
   JPY:{sym:"¥",locale:"ja-JP"}, CHF:{sym:"Fr",locale:"de-CH"}, CAD:{sym:"$",locale:"en-CA"},
@@ -671,6 +698,25 @@ const $ = id => document.getElementById(id);
 const monthName = key => { const [y,mo]=key.split("-"); return new Date(y,mo-1,1).toLocaleString(undefined,{month:"long",year:"numeric"}); };
 const parseDate = s => { const p=String(s).split("-").map(Number); return new Date(p[0],(p[1]||1)-1,p[2]||15); };
 const todayStr = () => { const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); };
+const grocPct = () => { const v = (data.settings && data.settings.grocPct); const n = Number(v); return (v===undefined||v===null||isNaN(n)) ? 70 : Math.min(100, Math.max(0, n)); };
+const monthDayCount = key => { const [y,mo]=key.split("-").map(Number); return new Date(y, mo, 0).getDate(); };
+/* Spending transfer schedule: pay yourself on the 1st and every Sunday; each segment spans the days until the next transfer (so it sums to the month). */
+function spendSegments(key) {
+  const [y,mo]=key.split("-").map(Number), dim = new Date(y, mo, 0).getDate(), starts = [];
+  for (let d=1; d<=dim; d++) { const dow = new Date(y, mo-1, d).getDay(); if (d===1 || dow===0) starts.push(d); }
+  return starts.map((s,i) => { const end = (i+1<starts.length ? starts[i+1]-1 : dim); return { start:s, end, days:end-s+1, date:new Date(y, mo-1, s) }; });
+}
+/* One-time migration: the retired rainy-day buffer becomes a normal pool so no money is lost. */
+function migrateBuffer(d) {
+  const b = num(d.buffer);
+  if (b > 0) {
+    const name = "Rainy-day buffer";
+    d.savings = d.savings || {}; d.poolTx = d.poolTx || {};
+    d.savings[name] = num(d.savings[name]) + b;
+    (d.poolTx[name] = d.poolTx[name] || []).push({ d: todayStr(), a: b, t:"deposit", n:"Moved from old buffer" });
+  }
+  d.buffer = 0;
+}
 
 let data = load();
 let current = monthKey(new Date());
@@ -680,9 +726,9 @@ const invWindow = {}; // per-pool selected return window (months|null)
 
 /* ===== storage / migration / seed ===== */
 function blankMonth() {
-  return { income:0, bonus:0, groups:[], oneOff:[], savingsGoals:[], weeklyGroceries:0, discretionaryActual:null, finalized:false, applied:null };
+  return { income:0, bonus:0, groups:[], oneOff:[], savingsGoals:[], finalized:false, applied:null };
 }
-function normalize(d) { d.settings ??= {}; d.savings ??= {}; d.buffer ??= 0; d.investments ??= {}; d.poolTx ??= {}; d.months ??= {}; Object.values(d.months).forEach(m => { m.oneOff ??= []; }); return d; }
+function normalize(d) { d.settings ??= {}; d.savings ??= {}; d.investments ??= {}; d.poolTx ??= {}; d.months ??= {}; d.settings.grocPct ??= 70; Object.values(d.months).forEach(m => { m.oneOff ??= []; }); migrateBuffer(d); return d; }
 function load() {
   let raw; try { raw = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch {}
   if (raw && raw.months) return normalize(raw);
@@ -698,7 +744,7 @@ function save() {
 function seedExample() {
   const key = monthKey(new Date());
   const m = blankMonth();
-  m.income = 2600; m.weeklyGroceries = 80;
+  m.income = 2600;
   m.groups = [
     { name:"Housing", collapsed:false, items:[ {name:"Rent",planned:1000,actual:null},{name:"Electricity & gas",planned:120,actual:null},{name:"Water",planned:30,actual:null},{name:"Internet",planned:40,actual:null} ] },
     { name:"Subscriptions", collapsed:false, items:[ {name:"Netflix",planned:13,actual:null},{name:"Spotify",planned:11,actual:null},{name:"Cloud storage",planned:3,actual:null} ] },
@@ -719,9 +765,9 @@ function getMonth(key) {
   const src = earlier.length ? data.months[earlier[earlier.length-1]] : null;
   const m = blankMonth();
   if (src) {
-    m.income = src.income; m.weeklyGroceries = src.weeklyGroceries;
+    m.income = src.income;
     m.groups = src.groups.map(g => ({ name:g.name, collapsed:g.collapsed||false, items:g.items.map(it => ({ name:it.name, planned:it.planned, actual:null })) }));
-    m.savingsGoals = src.savingsGoals.map(s => ({ name:s.name, planned:s.planned, target:s.target||0 }));
+    m.savingsGoals = src.savingsGoals.map(s => ({ name:s.name, planned:s.planned, target:s.target||0, indefinite:s.indefinite }));
   }
   data.months[key] = m; save();
   return m;
@@ -733,25 +779,47 @@ const oneOffTotal = m => (m.oneOff || []).reduce((s, o) => s + num(o.amount), 0)
 const expensesEff = m => m.groups.reduce((s, g) => s + groupTotal(g, true), 0) + oneOffTotal(m);
 const savingsPlanned = m => m.savingsGoals.reduce((s, g) => s + num(g.planned), 0);
 const discretionary = m => num(m.income) + num(m.bonus) - expensesEff(m) - savingsPlanned(m);
-const totalSaved = () => num(data.buffer) + Object.values(data.savings).reduce((s, v) => s + num(v), 0);
-const monthSaved = m => (m.finalized && m.applied) ? Object.values(m.applied.contributions).reduce((s,v)=>s+v,0) + num(m.applied.buffer) : savingsPlanned(m);
+const totalSaved = () => Object.values(data.savings).reduce((s, v) => s + num(v), 0);
+const monthSaved = m => (m.finalized && m.applied) ? Object.values(m.applied.contributions).reduce((s,v)=>s+v,0) : savingsPlanned(m);
 
 /* ===== pool transactions ===== */
-const poolTxOf = name => (data.poolTx[name] || []);
+const poolTxOf = name => ((data.poolTx || {})[name] || []);
 function logPoolTx(name, amount, type, note, dateStr) {
+  data.poolTx = data.poolTx || {};
   data.poolTx[name] = data.poolTx[name] || [];
   data.poolTx[name].push({ d: dateStr || todayStr(), a: amount, t: type, n: note || "" });
   data.savings[name] = num(data.savings[name]) + amount;
 }
 const poolMonthSum = (name, mkey) => poolTxOf(name).reduce((s, x) => s + (String(x.d).startsWith(mkey + "-") ? num(x.a) : 0), 0);
-const monthChangeTotal = mkey => { let s = 0; new Set([...Object.keys(data.poolTx), ...Object.keys(data.savings)]).forEach(n => { s += poolMonthSum(n, mkey); }); return s; };
-const TX_LABEL = { deposit:"Deposit", withdraw:"Withdrawal", contribution:"Monthly contribution", start:"Balance set" };
+const monthChangeTotal = mkey => { let s = 0; new Set([...Object.keys(data.poolTx || {}), ...Object.keys(data.savings || {})]).forEach(n => { s += poolMonthSum(n, mkey); }); return s; };
+const TX_LABEL = { deposit:"Deposit", withdraw:"Withdrawal", contribution:"Monthly target", start:"Balance set" };
+const indefiniteGoal = g => g ? (g.indefinite !== undefined ? !!g.indefinite : !(num(g.target) > 0)) : true;
 function poolList() {
   const names = [], m = getMonth(current);
   m.savingsGoals.forEach(g => names.push(g.name));
-  Object.keys(data.savings).forEach(n => { if (!names.includes(n)) names.push(n); });
-  Object.keys(data.poolTx).forEach(n => { if (!names.includes(n)) names.push(n); });
+  Object.keys(data.savings || {}).forEach(n => { if (!names.includes(n)) names.push(n); });
+  Object.keys(data.poolTx || {}).forEach(n => { if (!names.includes(n)) names.push(n); });
   return names;
+}
+/* The monthly target auto-applies as a contribution to the month being edited (idempotent). */
+function ensureContribution(name, mkey, amount) {
+  data.poolTx = data.poolTx || {};
+  const arr = data.poolTx[name] = data.poolTx[name] || [];
+  const idx = arr.findIndex(x => x.t === "contribution" && String(x.d).startsWith(mkey + "-"));
+  amount = num(amount);
+  if (idx >= 0) {
+    const old = num(arr[idx].a);
+    if (amount > 0) { if (old !== amount) { data.savings[name] = num(data.savings[name]) + (amount - old); arr[idx].a = amount; } }
+    else { data.savings[name] = num(data.savings[name]) - old; arr.splice(idx, 1); }
+  } else if (amount > 0) {
+    arr.push({ d: mkey + "-15", a: amount, t: "contribution", n: "" });
+    data.savings[name] = num(data.savings[name]) + amount;
+  }
+}
+function applyMonthContributions(m, mkey) {
+  if (m.finalized) return;
+  if (mkey > monthKey(new Date())) return; // don't pre-fund months that haven't happened yet
+  m.savingsGoals.forEach(g => ensureContribution(g.name, mkey, num(g.planned)));
 }
 function renamePool(oldName, newName) {
   if (!newName || oldName === newName) return;
@@ -838,8 +906,8 @@ function render() {
 
   $("incomeInput").value = m.income || "";
   $("bonusInput").value = m.bonus || "";
-  $("grocInput").value = m.weeklyGroceries || "";
 
+  applyMonthContributions(m, current);
   renderGroups(m); renderOneOff(m); renderPools(m); renderRecap(m); updateSummary(m);
   if (activeTab !== "budget") renderTab(activeTab);
   save();
@@ -851,20 +919,39 @@ function updateSummary(m) {
   $("cIncomeSub").textContent = m.bonus ? "incl. " + eur(m.bonus) + " bonus" : "monthly income";
   $("cExp").textContent = eur(expEff);
   $("cExpSub").textContent = m.groups.length + " categor" + (m.groups.length === 1 ? "y" : "ies");
-  const disc = discretionary(m), perWeek = disc / WEEKS, grocWk = num(m.weeklyGroceries), oop = perWeek - grocWk;
-  const cw = $("cWeek"); cw.textContent = eur(perWeek); cw.className = "kvalue" + (perWeek < 0 ? " neg" : "");
-  $("cWeekSub").textContent = eur(sav) + " to savings / mo";
-  $("wTotal").textContent = eur(perWeek);
-  $("wGroc").textContent = eur(grocWk);
-  $("wOop").textContent = eur(oop);
-  $("wOopBox").style.opacity = oop < 0 ? .55 : 1;
-  $("weeksHint").textContent = `${eur(disc)} left after expenses & savings ÷ 4 weeks = ${eur(perWeek)}/week` +
-    (disc < 0 ? " — you're over budget; trim expenses or savings." : grocWk ? "." : ". Set a groceries target to split it out.");
+  const disc = discretionary(m), dim = monthDayCount(current), daily = disc / dim;
+  const cw = $("cWeek"); cw.textContent = eur(daily * 7); cw.className = "kvalue" + (disc < 0 ? " neg" : "");
+  $("cWeekSub").textContent = eur(daily) + " / day";
+  renderSpendSchedule(m, disc, dim, daily);
   const ts = totalSaved();
   $("cSaved").textContent = eur0(ts);
-  $("cSavedSub").textContent = Object.keys(data.savings).length + " pools + buffer";
+  const np = Object.keys(data.savings).length;
+  $("cSavedSub").textContent = np + " pool" + (np === 1 ? "" : "s");
   $("totalSaved").textContent = eur(ts);
-  $("savedBreak").innerHTML = `in pools ${eur(ts - num(data.buffer))} · buffer ${eur(data.buffer)}`;
+  $("savedBreak").innerHTML = `across ${np} pool${np === 1 ? "" : "s"}`;
+}
+function renderSpendSchedule(m, disc, dim, daily) {
+  const gp = grocPct();
+  const gpEl = $("grocPctInput"); if (gpEl && document.activeElement !== gpEl) gpEl.value = gp; // don't clobber while typing
+  $("oopPct").textContent = 100 - gp;
+  $("spendTotal").textContent = eur(disc);
+  $("spendDaily").textContent = eur(daily);
+  $("spendWeek").textContent = eur(daily * 7);
+  const segs = spendSegments(current), now = new Date(), isThisMonth = current === monthKey(now), today = now.getDate();
+  const upcomingStart = isThisMonth ? Math.min(Infinity, ...segs.filter(s => s.end >= today).map(s => s.start)) : -1;
+  $("spendSchedule").innerHTML = segs.map(s => {
+    const amt = daily * s.days, g = amt * gp / 100, o = amt - g;
+    const past = isThisMonth && s.end < today, up = s.start === upcomingStart;
+    const label = s.date.toLocaleDateString(undefined, { weekday:"short", day:"numeric", month:"short" });
+    return `<div class="sched-row${past ? " past" : ""}${up ? " upcoming" : ""}">
+      <div class="sched-date">${label}${up ? ` <span class="now-tag">this week</span>` : ""}<span class="sched-days">${s.days} day${s.days === 1 ? "" : "s"}</span></div>
+      <div class="sched-amt${amt < 0 ? " neg" : ""}">${eur(amt)}</div>
+      <div class="sched-split"><span class="split-amt groc">🛒 ${eur(g)} <small>groceries</small></span><span class="split-amt oop">💸 ${eur(o)} <small>out-of-pocket</small></span></div>
+    </div>`;
+  }).join("");
+  $("spendHint").textContent = disc < 0
+    ? "You're over budget — expenses and savings exceed your income. Trim them to free up spending money."
+    : `${eur(disc)} ÷ ${dim} days = ${eur(daily)}/day. Transfer each amount to yourself on its date; together they cover the whole month.`;
 }
 function liveRecalc() {
   const m = getMonth(current);
@@ -901,11 +988,9 @@ function renderAllocation(m) {
 function renderRecap(m) {
   const r = $("recap");
   if (m.finalized && m.applied) {
-    const toPools = Object.values(m.applied.contributions).reduce((s,v)=>s+v,0), buf = m.applied.buffer;
+    const toPools = Object.values(m.applied.contributions || {}).reduce((s,v)=>s+num(v),0);
     r.className = "recap show";
-    r.innerHTML = `<span class="ic">🎉</span><div>Month finalized — <b>${eur(toPools)}</b> added to savings pools` +
-      (buf >= 0 ? `, <b>${eur(buf)}</b> to your buffer.` : `, <b style="color:var(--over)">${eur(-buf)}</b> drawn from your buffer.`) +
-      ` Total saved is now <b>${eur(totalSaved())}</b>.</div>`;
+    r.innerHTML = `<span class="ic">🎉</span><div>Month finalized — <b>${eur(toPools)}</b> went to your pools this month. Total saved is now <b>${eur(totalSaved())}</b>.</div>`;
   } else r.className = "recap";
 }
 function deltaHtml(it) {
@@ -961,17 +1046,25 @@ function renderPools(m) {
   const monLabel = monthName(current).split(" ")[0];
   names.forEach(name => {
     const goal = m.savingsGoals.find(g => g.name === name);
-    const bal = num(data.savings[name]), target = goal ? num(goal.target) : 0;
+    const indef = indefiniteGoal(goal);
+    const bal = num(data.savings[name]), target = (goal && !indef) ? num(goal.target) : 0;
+    const planned = goal ? num(goal.planned) : 0;
     const pc = target > 0 ? Math.min(100, bal/target*100) : 0, reached = target > 0 && bal >= target;
     const isInv = !!data.investments[name], mChange = poolMonthSum(name, current);
     const monthItems = (data.poolTx[name] || []).map((x, idx) => ({ x, idx })).filter(o => String(o.x.d).startsWith(current + "-"));
-    const itemsHtml = monthItems.length ? monthItems.map(({ x, idx }) => `
-        <div class="ptx-item">
+    const itemsHtml = monthItems.length ? monthItems.map(({ x, idx }) => x.t === "contribution"
+      ? `<div class="ptx-item">
+          <span class="tx-when">${parseDate(x.d).toLocaleDateString(undefined,{day:"numeric",month:"short"})} · Monthly target</span>
+          <span class="euro"><input class="mini-amt locked" type="number" value="${num(x.a)}" readonly tabindex="-1" aria-label="Monthly target — set on the Pools tab"></span>
+          <span class="btn-x lock" title="Added automatically from this pool's monthly target. Change it on the Pools tab.">🔒</span>
+        </div>`
+      : `<div class="ptx-item">
           <span class="tx-when">${parseDate(x.d).toLocaleDateString(undefined,{day:"numeric",month:"short"})} · ${TX_LABEL[x.t] || x.t}</span>
           <span class="euro"><input class="mini-amt ptx-in" type="number" step="0.01" value="${num(x.a)}" data-ptx="${idx}" aria-label="Amount"></span>
           <button class="btn-x" data-ptxdel="${idx}" aria-label="Delete">✕</button>
         </div>`).join("") : `<div class="hint" style="padding:2px 0">No changes logged for ${monLabel} yet.</div>`;
-    const targetInfo = (goal && num(goal.planned) ? `aims ${eur(goal.planned)}/mo · ` : "") + (target > 0 ? `${Math.round(pc)}% of ${eur(target)} goal` : "indefinite — no end goal");
+    const goalTxt = indef ? "indefinite — no end goal" : (target > 0 ? `${Math.round(pc)}% of ${eur(target)} goal` : "no end goal set");
+    const targetInfo = (planned ? `aims ${eur(planned)}/mo · ` : "") + goalTxt;
     const div = document.createElement("div");
     div.className = "pool" + (reached ? " reached" : "");
     div.dataset.pool = name;
@@ -985,7 +1078,7 @@ function renderPools(m) {
       <div class="pbal num">${eur(bal)}</div>
       <div class="ptarget">${targetInfo}</div>
       ${target > 0 ? `<div class="pbar"><div style="width:${pc}%"></div></div>` : `<div style="height:6px"></div>`}
-      <div class="pmonth ${mChange>0?"pos":mChange<0?"neg":"zero"}">${monLabel} total: ${mChange===0 ? "no change yet" : (mChange>0?"+":"−")+eur(Math.abs(mChange))}</div>
+      <div class="pmonth ${planned>0?(mChange>=planned?"pos":"neg"):(mChange>0?"pos":mChange<0?"neg":"zero")}">${monLabel}: ${(mChange>=0?"+":"−")}${eur(Math.abs(mChange))} saved${planned>0?` · target ${eur(planned)} ${mChange>=planned?"✓ met":"— not met"}`:""}</div>
       <div class="ptx-list">${itemsHtml}</div>
       <div class="inv-actions">
         <button class="btn sm primary" data-pdep="${esc(name)}">＋ Add</button>
@@ -998,7 +1091,13 @@ function renderPools(m) {
 /* ===== editing events ===== */
 $("incomeInput").addEventListener("input", e => { getMonth(current).income = num(e.target.value); liveRecalc(); });
 $("bonusInput").addEventListener("input", e => { getMonth(current).bonus = num(e.target.value); liveRecalc(); });
-$("grocInput").addEventListener("input", e => { getMonth(current).weeklyGroceries = num(e.target.value); liveRecalc(); });
+$("grocPctInput").addEventListener("input", e => {
+  data.settings.grocPct = Math.min(100, Math.max(0, Math.round(num(e.target.value))));
+  $("oopPct").textContent = 100 - grocPct();
+  const m = getMonth(current), disc = discretionary(m), dim = monthDayCount(current);
+  renderSpendSchedule(m, disc, dim, disc / dim); // live update without stealing focus
+  save();
+});
 function addGroup() { const inp = $("newGroup"), name = inp.value.trim(); if (!name) return; getMonth(current).groups.push({ name, collapsed:false, items:[] }); inp.value = ""; render(); }
 $("addGroupBtn").addEventListener("click", addGroup);
 $("newGroup").addEventListener("keydown", e => { if (e.key === "Enter") addGroup(); });
@@ -1083,67 +1182,51 @@ $("addOneOffBtn").addEventListener("click", addOneOff);
 $("newOneOffName").addEventListener("keydown", e => { if (e.key === "Enter") addOneOff(); });
 $("newOneOffAmt").addEventListener("keydown", e => { if (e.key === "Enter") addOneOff(); });
 
-/* ===== finalize (weekly = per-week × 4) ===== */
+/* ===== finalize (spending money is assumed fully spent — no actual entry) ===== */
 const overlay = $("overlay");
 $("finalizeBtn").addEventListener("click", () => {
   const m = getMonth(current);
-  if (m.finalized) { if (confirm("Re-open this month? Its savings contributions and buffer change will be undone.")) { reverseFinalize(m); render(); } return; }
+  if (m.finalized) { if (confirm("Re-open this month for editing? Your pool contributions stay as they are.")) { reverseFinalize(m); render(); } return; }
   openFinalize(m);
 });
 function openFinalize(m) {
   $("modalMonth").textContent = monthName(current);
   $("mBonus").value = m.bonus || "";
-  $("mDisc").value = Math.max(discretionary(m)/WEEKS, 0).toFixed(2);
   updateModalSummary();
   overlay.classList.add("show");
 }
 function updateModalSummary() {
   const m = getMonth(current);
-  const bonus = num($("mBonus").value), weekly = num($("mDisc").value), monthlySpent = weekly * WEEKS;
-  const exp = expensesEff(m), sav = savingsPlanned(m);
-  const net = num(m.income) + bonus - exp - monthlySpent - sav;
+  const bonus = num($("mBonus").value), exp = expensesEff(m), sav = savingsPlanned(m);
+  const spend = Math.max(num(m.income) + bonus - exp - sav, 0);
   $("modalSummary").innerHTML = `
     <div class="mrow"><span>Income</span><span class="num">${eur(m.income)}</span></div>
     <div class="mrow"><span>Bonus / gifts</span><span class="num">+ ${eur(bonus)}</span></div>
-    <div class="mrow"><span>Expenses (actual)</span><span class="num">− ${eur(exp)}</span></div>
-    <div class="mrow"><span>Weekly spending (${eur(weekly)} × 4)</span><span class="num">− ${eur(monthlySpent)}</span></div>
-    <div class="mrow"><span>Savings pools funded</span><span class="num">− ${eur(sav)}</span></div>
-    <div class="mrow total"><span>${net < 0 ? "Drawn from buffer" : "Added to buffer"}</span><span class="num" style="color:${net < 0 ? "var(--over)" : "var(--save)"}">${eur(net)}</span></div>`;
+    <div class="mrow"><span>Expenses</span><span class="num">− ${eur(exp)}</span></div>
+    <div class="mrow"><span>Spending money (assumed spent)</span><span class="num">− ${eur(spend)}</span></div>
+    <div class="mrow total"><span>Saved to pools this month</span><span class="num" style="color:var(--save)">${eur(sav)}</span></div>`;
 }
 $("mBonus").addEventListener("input", updateModalSummary);
-$("mDisc").addEventListener("input", updateModalSummary);
 $("modalCancel").addEventListener("click", () => overlay.classList.remove("show"));
 overlay.addEventListener("click", e => { if (e.target === overlay) overlay.classList.remove("show"); });
 $("modalConfirm").addEventListener("click", () => {
   const m = getMonth(current);
   m.bonus = num($("mBonus").value);
-  m.discretionaryActual = num($("mDisc").value) * WEEKS; // store monthly
   applyFinalize(m);
   overlay.classList.remove("show");
   shiftMonth(1);
 });
 function applyFinalize(m) {
   if (m.finalized) return;
-  const exp = expensesEff(m), sav = savingsPlanned(m);
-  const net = num(m.income) + num(m.bonus) - exp - num(m.discretionaryActual) - sav;
-  const snapshot = { contributions:{}, buffer:net };
-  m.savingsGoals.forEach(g => {
-    if (num(g.planned) !== 0) logPoolTx(g.name, num(g.planned), "contribution", "", current + "-15");
-    snapshot.contributions[g.name] = num(g.planned);
-  });
-  data.buffer = num(data.buffer) + net;
+  // The monthly targets were already deposited into the pools during the month
+  // (auto-applied as contributions). Finalizing just locks the month.
+  applyMonthContributions(m, current);
+  const snapshot = { contributions:{} };
+  m.savingsGoals.forEach(g => { snapshot.contributions[g.name] = num(g.planned); });
   m.finalized = true; m.applied = snapshot;
 }
 function reverseFinalize(m) {
-  if (m.applied) {
-    const mk = current + "-";
-    for (const n in m.applied.contributions) {
-      const amt = num(m.applied.contributions[n]);
-      data.savings[n] = num(data.savings[n]) - amt;
-      if (data.poolTx[n]) data.poolTx[n] = data.poolTx[n].filter(x => !(x.t === "contribution" && String(x.d).startsWith(mk) && num(x.a) === amt));
-    }
-    data.buffer = num(data.buffer) - m.applied.buffer;
-  }
+  // Contributions stay in the pools (they belong to the month); just unlock the month.
   m.finalized = false; m.applied = null;
 }
 $("clearBtn").addEventListener("click", () => {
@@ -1220,19 +1303,15 @@ $("bdContent").addEventListener("click", e => { const b = e.target.closest("[dat
 function allPoolNames() {
   const set = new Set();
   Object.values(data.months).forEach(m => (m.savingsGoals||[]).forEach(g => set.add(g.name)));
-  Object.keys(data.savings).forEach(n => set.add(n));
+  Object.keys(data.savings || {}).forEach(n => set.add(n));
   return [...set];
 }
 function investCashflows(name) {
   const inv = data.investments[name] || {}, flows = [];
   if (num(inv.startBasis) > 0 && inv.startDate) flows.push({ date: parseDate(inv.startDate), amount: num(inv.startBasis) });
   (inv.extra || []).forEach(e => { if (num(e.amount)) flows.push({ date: parseDate(e.date), amount: num(e.amount) }); });
-  Object.keys(data.months).sort().forEach(k => {
-    const m = data.months[k];
-    if (m.finalized && m.applied && m.applied.contributions && num(m.applied.contributions[name]))
-      flows.push({ date: parseDate(k + "-15"), amount: num(m.applied.contributions[name]) });
-  });
-  poolTxOf(name).forEach(x => { if (x.t !== "contribution" && num(x.a)) flows.push({ date: parseDate(x.d), amount: num(x.a) }); });
+  // Every pool movement (auto target contributions, manual deposits/withdrawals) is a cashflow.
+  poolTxOf(name).forEach(x => { if (num(x.a)) flows.push({ date: parseDate(x.d), amount: num(x.a) }); });
   return flows.sort((a,b) => a.date - b.date);
 }
 function snapshotsOf(name) { return ((data.investments[name] || {}).snapshots || []).map(s => ({ date: parseDate(s.date), value: num(s.value) })).sort((a,b) => a.date - b.date); }
@@ -1396,8 +1475,6 @@ function renderOverview() {
 
   const savingsRate = totInc > 0 ? totSav/totInc*100 : 0;
   const priciest = withData.map(k => ({ k, v: expensesEff(data.months[k]) })).sort((a,b)=>b.v-a.v)[0];
-  let overMonths = 0, overImpact = 0;
-  withData.forEach(k => { const mm = data.months[k]; if (mm.finalized && mm.applied && num(mm.applied.buffer) < 0) { overMonths++; overImpact += -num(mm.applied.buffer); } });
   let goalsAchieved = 0, goalsTotal = 0; const seenG = new Set();
   Object.values(data.months).forEach(mm => (mm.savingsGoals||[]).forEach(g => { if (num(g.target) > 0 && !seenG.has(g.name)) { seenG.add(g.name); goalsTotal++; if (num(data.savings[g.name]) >= num(g.target)) goalsAchieved++; } }));
   let invGains = 0, anyInv = false;
@@ -1412,9 +1489,7 @@ function renderOverview() {
       <div class="kpi"><div class="kl">Biggest category</div><div class="kv" style="font-size:16px">${cats[0]?esc(cats[0].name):"—"}</div></div>
       <div class="kpi"><div class="kl">Priciest month</div><div class="kv" style="font-size:16px">${priciest?monthName(priciest.k).split(" ")[0]:"—"}</div></div>
       <div class="kpi"><div class="kl">Goals achieved</div><div class="kv">${goalsAchieved}/${goalsTotal}</div></div>
-      <div class="kpi"><div class="kl">Months overspent</div><div class="kv ${overMonths?"neg":""}">${overMonths}</div></div>
       <div class="kpi"><div class="kl">Avg spend / mo</div><div class="kv">${eur0(totExp/months)}</div></div>
-      ${overImpact>0?`<div class="kpi"><div class="kl">Drawn from buffer</div><div class="kv neg">−${eur0(overImpact)}</div></div>`:""}
       ${anyInv?`<div class="kpi"><div class="kl">Investment gains</div><div class="kv ${invGains>=0?"pos":"neg"}">${invGains>=0?"+":""}${eur0(invGains)}</div></div>`:""}
     </div>`;
 
@@ -1469,7 +1544,7 @@ function renderPoolsTab() {
   if (!names.length) { c.innerHTML = `<p class="hint">No pools yet — add one below.</p>`; return; }
   c.innerHTML = names.map(name => {
     const goal = m.savingsGoals.find(g => g.name === name), si = m.savingsGoals.indexOf(goal);
-    const bal = num(data.savings[name]), target = goal ? num(goal.target) : 0, isInv = !!data.investments[name], indef = !(target > 0);
+    const bal = num(data.savings[name]), target = goal ? num(goal.target) : 0, isInv = !!data.investments[name], indef = indefiniteGoal(goal);
     const txs = poolTxOf(name).slice().sort((a,b) => String(b.d).localeCompare(String(a.d)));
     const rows = txs.length ? txs.map(x => `<tr>
         <td class="tx-when">${parseDate(x.d).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"})}</td>
@@ -1498,7 +1573,12 @@ function renderPoolsTab() {
 const poolsTabC = $("poolsTabContent");
 poolsTabC.addEventListener("input", e => {
   const t = e.target, m = getMonth(current);
-  if (t.dataset.ptMo !== undefined) { m.savingsGoals[t.dataset.ptMo].planned = num(t.value); save(); }
+  if (t.dataset.ptMo !== undefined) {
+    const g = m.savingsGoals[t.dataset.ptMo]; g.planned = num(t.value);
+    if (!m.finalized && current <= monthKey(new Date())) ensureContribution(g.name, current, num(g.planned)); // auto-apply target to this month
+    const card = t.closest("[data-pt]"); if (card) { const bEl = card.querySelector(".ph-bal"); if (bEl) bEl.textContent = eur(num(data.savings[g.name])); }
+    save();
+  }
   else if (t.dataset.ptGoal !== undefined) { m.savingsGoals[t.dataset.ptGoal].target = num(t.value); save(); }
 });
 poolsTabC.addEventListener("change", e => {
@@ -1509,7 +1589,7 @@ poolsTabC.addEventListener("change", e => {
     render(); renderPoolsTab();
   } else if (t.dataset.ptIndef !== undefined) {
     const g = m.savingsGoals[t.dataset.ptIndef];
-    if (t.checked) g.target = 0;
+    g.indefinite = t.checked;          // explicit flag — unchecking now lets you type an end goal
     save(); render(); renderPoolsTab();
   }
 });
