@@ -369,6 +369,7 @@
   .ptx-item input.mini-amt.locked { border-style:dashed; color:var(--save); -webkit-text-fill-color:var(--save); font-weight:650; background:color-mix(in srgb,var(--save) 8%,transparent); cursor:default; }
   .btn-x.lock { cursor:default; color:var(--faint); font-size:13px; }
   .btn-x.lock:hover { background:transparent; color:var(--faint); }
+  .pending-tag { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--muted); background:var(--surface-2); border:1px solid var(--border-soft); padding:1px 6px; border-radius:999px; }
 
   /* pool history (Pools tab) */
   .ph-card { border:1px solid var(--border-soft); border-radius:var(--radius); background:var(--surface-2); padding:16px 18px; margin-bottom:14px; }
@@ -717,6 +718,19 @@ function migrateBuffer(d) {
   }
   d.buffer = 0;
 }
+/* One-time migration: ensure every already-finalized month has a contribution entry per its
+   snapshot, so derived balances keep the targets that were locked in before this model change. */
+function migrateContribTx(d) {
+  Object.keys(d.months || {}).forEach(mkey => {
+    const m = d.months[mkey];
+    if (!(m.finalized && m.applied && m.applied.contributions)) return;
+    for (const name in m.applied.contributions) {
+      const amt = num(m.applied.contributions[name]); if (amt <= 0) continue;
+      d.poolTx = d.poolTx || {}; const arr = d.poolTx[name] = d.poolTx[name] || [];
+      if (!arr.some(x => x.t === "contribution" && String(x.d).slice(0,7) === mkey)) arr.push({ d: mkey + "-15", a: amt, t: "contribution", n: "" });
+    }
+  });
+}
 
 let data = load();
 let current = monthKey(new Date());
@@ -728,7 +742,7 @@ const invWindow = {}; // per-pool selected return window (months|null)
 function blankMonth() {
   return { income:0, bonus:0, groups:[], oneOff:[], savingsGoals:[], finalized:false, applied:null };
 }
-function normalize(d) { d.settings ??= {}; d.savings ??= {}; d.investments ??= {}; d.poolTx ??= {}; d.months ??= {}; d.settings.grocPct ??= 70; Object.values(d.months).forEach(m => { m.oneOff ??= []; }); migrateBuffer(d); return d; }
+function normalize(d) { d.settings ??= {}; d.savings ??= {}; d.investments ??= {}; d.poolTx ??= {}; d.months ??= {}; d.settings.grocPct ??= 70; Object.values(d.months).forEach(m => { m.oneOff ??= []; }); migrateBuffer(d); migrateContribTx(d); return d; }
 function load() {
   let raw; try { raw = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch {}
   if (raw && raw.months) return normalize(raw);
@@ -784,16 +798,20 @@ const monthSaved = m => (m.finalized && m.applied) ? Object.values(m.applied.con
 
 /* ===== pool transactions ===== */
 const poolTxOf = name => ((data.poolTx || {})[name] || []);
+const monthOf = dateStr => String(dateStr).slice(0, 7);
+const monthFinalized = mkey => { const mm = data.months[mkey]; return !!(mm && mm.finalized); };
 function logPoolTx(name, amount, type, note, dateStr) {
   data.poolTx = data.poolTx || {};
   data.poolTx[name] = data.poolTx[name] || [];
   data.poolTx[name].push({ d: dateStr || todayStr(), a: amount, t: type, n: note || "" });
-  data.savings[name] = num(data.savings[name]) + amount;
+  recomputeSavings();
 }
 const poolMonthSum = (name, mkey) => poolTxOf(name).reduce((s, x) => s + (String(x.d).startsWith(mkey + "-") ? num(x.a) : 0), 0);
 const monthChangeTotal = mkey => { let s = 0; new Set([...Object.keys(data.poolTx || {}), ...Object.keys(data.savings || {})]).forEach(n => { s += poolMonthSum(n, mkey); }); return s; };
 const TX_LABEL = { deposit:"Deposit", withdraw:"Withdrawal", contribution:"Monthly target", start:"Balance set" };
 const indefiniteGoal = g => g ? (g.indefinite !== undefined ? !!g.indefinite : !(num(g.target) > 0)) : true;
+/* A month's target amount (the contribution entry for that month) — frozen for finalized months, live for unfinalized. */
+const monthTarget = (name, mkey) => { const t = poolTxOf(name).find(x => x.t === "contribution" && monthOf(x.d) === mkey); return t ? num(t.a) : 0; };
 function poolList() {
   const names = [], m = getMonth(current);
   m.savingsGoals.forEach(g => names.push(g.name));
@@ -801,25 +819,38 @@ function poolList() {
   Object.keys(data.poolTx || {}).forEach(n => { if (!names.includes(n)) names.push(n); });
   return names;
 }
-/* The monthly target auto-applies as a contribution to the month being edited (idempotent). */
-function ensureContribution(name, mkey, amount) {
+/* Pool balance is DERIVED: manual deposits/withdrawals/set-balance always count; a month's
+   target counts toward the pool only once that month is FINALIZED (until then it's a pending plan). */
+function recomputeSavings() {
+  const bal = {};
+  for (const name in (data.poolTx || {})) {
+    bal[name] = poolTxOf(name).reduce((s, x) =>
+      s + (x.t === "contribution" ? (monthFinalized(monthOf(x.d)) ? num(x.a) : 0) : num(x.a)), 0);
+  }
+  data.savings = bal;
+}
+/* One contribution entry per goal per month (shown in every month). Tracks the goal's planned
+   amount for UNFINALIZED months only; a finalized month's target is left frozen forever. */
+function setContribution(name, mkey, amount) {
   data.poolTx = data.poolTx || {};
   const arr = data.poolTx[name] = data.poolTx[name] || [];
-  const idx = arr.findIndex(x => x.t === "contribution" && String(x.d).startsWith(mkey + "-"));
+  const idx = arr.findIndex(x => x.t === "contribution" && monthOf(x.d) === mkey);
   amount = num(amount);
-  if (idx >= 0) {
-    const old = num(arr[idx].a);
-    if (amount > 0) { if (old !== amount) { data.savings[name] = num(data.savings[name]) + (amount - old); arr[idx].a = amount; } }
-    else { data.savings[name] = num(data.savings[name]) - old; arr.splice(idx, 1); }
-  } else if (amount > 0) {
-    arr.push({ d: mkey + "-15", a: amount, t: "contribution", n: "" });
-    data.savings[name] = num(data.savings[name]) + amount;
-  }
+  if (idx >= 0) { if (amount > 0) arr[idx].a = amount; else arr.splice(idx, 1); }
+  else if (amount > 0) arr.push({ d: mkey + "-15", a: amount, t: "contribution", n: "" });
 }
-function applyMonthContributions(m, mkey) {
-  if (m.finalized) return;
-  if (mkey > monthKey(new Date())) return; // don't pre-fund months that haven't happened yet
-  m.savingsGoals.forEach(g => ensureContribution(g.name, mkey, num(g.planned)));
+function syncContributions() {
+  Object.keys(data.months).forEach(mkey => {
+    const m = data.months[mkey];
+    if (m.finalized) return; // frozen — never re-touch a finalized month's target
+    (m.savingsGoals || []).forEach(g => setContribution(g.name, mkey, num(g.planned)));
+  });
+}
+function poolMonthLine(name) {
+  const mc = poolMonthSum(name, current), planned = monthTarget(name, current), verb = monthFinalized(current) ? "saved" : "planned";
+  const text = `${monthName(current).split(" ")[0]}: ${(mc>=0?"+":"−")}${eur(Math.abs(mc))} ${verb}${planned>0?` · target ${eur(planned)} ${mc>=planned?"✓ met":"— not met"}`:""}`;
+  const cls = "pmonth " + (planned>0 ? (mc>=planned?"pos":"neg") : (mc>0?"pos":mc<0?"neg":"zero"));
+  return { text, cls };
 }
 function renamePool(oldName, newName) {
   if (!newName || oldName === newName) return;
@@ -842,11 +873,14 @@ function countUp(el, from, to, ms) {
     el.textContent = eur(from + (to - from) * e);
     if (k < 1) requestAnimationFrame(step); else el.textContent = eur(to);
   })(t0);
+  setTimeout(() => { el.textContent = eur(to); }, ms + 80); // guarantee the final balance even if rAF stalls
 }
 function animateSavings() {
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   document.querySelectorAll("#poolsContainer .pool[data-pool]").forEach(card => {
-    const name = card.dataset.pool, bal = num(data.savings[name]), change = poolMonthSum(name, current);
+    const name = card.dataset.pool, bal = num(data.savings[name]);
+    // animate only what actually entered the pool this month (manual moves + finalized targets; pending targets don't count)
+    const change = poolTxOf(name).reduce((s, x) => (String(x.d).startsWith(current + "-") && !(x.t === "contribution" && !monthFinalized(current))) ? s + num(x.a) : s, 0);
     const balEl = card.querySelector(".pbal"), fl = card.querySelector(".pool-float");
     if (!balEl) return;
     if (reduce || !change) { balEl.textContent = eur(bal); if (fl) fl.className = "pool-float"; return; }
@@ -907,7 +941,7 @@ function render() {
   $("incomeInput").value = m.income || "";
   $("bonusInput").value = m.bonus || "";
 
-  applyMonthContributions(m, current);
+  syncContributions(); recomputeSavings();
   renderGroups(m); renderOneOff(m); renderPools(m); renderRecap(m); updateSummary(m);
   if (activeTab !== "budget") renderTab(activeTab);
   save();
@@ -1048,15 +1082,15 @@ function renderPools(m) {
     const goal = m.savingsGoals.find(g => g.name === name);
     const indef = indefiniteGoal(goal);
     const bal = num(data.savings[name]), target = (goal && !indef) ? num(goal.target) : 0;
-    const planned = goal ? num(goal.planned) : 0;
+    const planned = monthTarget(name, current);
     const pc = target > 0 ? Math.min(100, bal/target*100) : 0, reached = target > 0 && bal >= target;
-    const isInv = !!data.investments[name], mChange = poolMonthSum(name, current);
+    const isInv = !!data.investments[name], mChange = poolMonthSum(name, current), mLine = poolMonthLine(name);
     const monthItems = (data.poolTx[name] || []).map((x, idx) => ({ x, idx })).filter(o => String(o.x.d).startsWith(current + "-"));
     const itemsHtml = monthItems.length ? monthItems.map(({ x, idx }) => x.t === "contribution"
       ? `<div class="ptx-item">
-          <span class="tx-when">${parseDate(x.d).toLocaleDateString(undefined,{day:"numeric",month:"short"})} · Monthly target</span>
+          <span class="tx-when">${parseDate(x.d).toLocaleDateString(undefined,{day:"numeric",month:"short"})} · Monthly target${m.finalized ? "" : ` <span class="pending-tag">pending</span>`}</span>
           <span class="euro"><input class="mini-amt locked" type="number" value="${num(x.a)}" readonly tabindex="-1" aria-label="Monthly target — set on the Pools tab"></span>
-          <span class="btn-x lock" title="Added automatically from this pool's monthly target. Change it on the Pools tab.">🔒</span>
+          <span class="btn-x lock" title="${m.finalized ? "Saved — locked in when you finalized this month." : "Planned — it's added to the pool when you finalize this month. Change it on the Pools tab."}">🔒</span>
         </div>`
       : `<div class="ptx-item">
           <span class="tx-when">${parseDate(x.d).toLocaleDateString(undefined,{day:"numeric",month:"short"})} · ${TX_LABEL[x.t] || x.t}</span>
@@ -1078,7 +1112,7 @@ function renderPools(m) {
       <div class="pbal num">${eur(bal)}</div>
       <div class="ptarget">${targetInfo}</div>
       ${target > 0 ? `<div class="pbar"><div style="width:${pc}%"></div></div>` : `<div style="height:6px"></div>`}
-      <div class="pmonth ${planned>0?(mChange>=planned?"pos":"neg"):(mChange>0?"pos":mChange<0?"neg":"zero")}">${monLabel}: ${(mChange>=0?"+":"−")}${eur(Math.abs(mChange))} saved${planned>0?` · target ${eur(planned)} ${mChange>=planned?"✓ met":"— not met"}`:""}</div>
+      <div class="${mLine.cls}">${mLine.text}</div>
       <div class="ptx-list">${itemsHtml}</div>
       <div class="inv-actions">
         <button class="btn sm primary" data-pdep="${esc(name)}">＋ Add</button>
@@ -1133,11 +1167,10 @@ pools.addEventListener("input", e => {
   const card = t.closest("[data-pool]"); if (!card) return;
   const name = card.dataset.pool, idx = +t.dataset.ptx, tx = data.poolTx[name][idx];
   if (!tx) return;
-  const old = num(tx.a), nw = num(t.value);
-  tx.a = nw; data.savings[name] = num(data.savings[name]) + (nw - old);
-  const balEl = card.querySelector(".pbal"); if (balEl) balEl.textContent = eur(data.savings[name]);
-  const mc = poolMonthSum(name, current), mEl = card.querySelector(".pmonth");
-  if (mEl) { mEl.textContent = `${monthName(current).split(" ")[0]} total: ${mc===0?"no change yet":(mc>0?"+":"−")+eur(Math.abs(mc))}`; mEl.className = "pmonth " + (mc>0?"pos":mc<0?"neg":"zero"); }
+  tx.a = num(t.value); recomputeSavings();
+  const balEl = card.querySelector(".pbal"); if (balEl) balEl.textContent = eur(num(data.savings[name]));
+  const mEl = card.querySelector(".pmonth"), mLine = poolMonthLine(name);
+  if (mEl) { mEl.textContent = mLine.text; mEl.className = mLine.cls; }
   updateSummary(getMonth(current)); save();
 });
 pools.addEventListener("click", e => {
@@ -1150,8 +1183,8 @@ pools.addEventListener("click", e => {
     logPoolTx(name, -Math.abs(num(v)), "withdraw", (prompt("Note (optional):", "") || ""), current + "-15"); render(); playSavingsAnim();
   } else if (t.dataset.ptxdel !== undefined) {
     const card = t.closest("[data-pool]"); if (!card) return;
-    const name = card.dataset.pool, idx = +t.dataset.ptxdel, tx = data.poolTx[name][idx];
-    if (tx) { data.savings[name] = num(data.savings[name]) - num(tx.a); data.poolTx[name].splice(idx, 1); }
+    const name = card.dataset.pool, idx = +t.dataset.ptxdel;
+    if (data.poolTx[name] && data.poolTx[name][idx]) data.poolTx[name].splice(idx, 1);
     render();
   }
 });
@@ -1218,16 +1251,17 @@ $("modalConfirm").addEventListener("click", () => {
 });
 function applyFinalize(m) {
   if (m.finalized) return;
-  // The monthly targets were already deposited into the pools during the month
-  // (auto-applied as contributions). Finalizing just locks the month.
-  applyMonthContributions(m, current);
+  // Lock in this month's targets at their current planned amounts, then freeze them.
+  (m.savingsGoals || []).forEach(g => setContribution(g.name, current, num(g.planned)));
   const snapshot = { contributions:{} };
-  m.savingsGoals.forEach(g => { snapshot.contributions[g.name] = num(g.planned); });
+  (m.savingsGoals || []).forEach(g => { snapshot.contributions[g.name] = monthTarget(g.name, current); });
   m.finalized = true; m.applied = snapshot;
+  recomputeSavings(); // this month's targets now count toward the pools
 }
 function reverseFinalize(m) {
-  // Contributions stay in the pools (they belong to the month); just unlock the month.
+  // Targets go back to pending (out of the pool balance) but stay as the month's entries.
   m.finalized = false; m.applied = null;
+  recomputeSavings();
 }
 $("clearBtn").addEventListener("click", () => {
   const m = data.months[current];
@@ -1310,8 +1344,12 @@ function investCashflows(name) {
   const inv = data.investments[name] || {}, flows = [];
   if (num(inv.startBasis) > 0 && inv.startDate) flows.push({ date: parseDate(inv.startDate), amount: num(inv.startBasis) });
   (inv.extra || []).forEach(e => { if (num(e.amount)) flows.push({ date: parseDate(e.date), amount: num(e.amount) }); });
-  // Every pool movement (auto target contributions, manual deposits/withdrawals) is a cashflow.
-  poolTxOf(name).forEach(x => { if (num(x.a)) flows.push({ date: parseDate(x.d), amount: num(x.a) }); });
+  // Real money in/out: manual moves always; a monthly target only once its month is finalized.
+  poolTxOf(name).forEach(x => {
+    if (!num(x.a)) return;
+    if (x.t === "contribution" && !monthFinalized(monthOf(x.d))) return; // pending plan, not real yet
+    flows.push({ date: parseDate(x.d), amount: num(x.a) });
+  });
   return flows.sort((a,b) => a.date - b.date);
 }
 function snapshotsOf(name) { return ((data.investments[name] || {}).snapshots || []).map(s => ({ date: parseDate(s.date), value: num(s.value) })).sort((a,b) => a.date - b.date); }
@@ -1545,7 +1583,7 @@ function renderPoolsTab() {
   c.innerHTML = names.map(name => {
     const goal = m.savingsGoals.find(g => g.name === name), si = m.savingsGoals.indexOf(goal);
     const bal = num(data.savings[name]), target = goal ? num(goal.target) : 0, isInv = !!data.investments[name], indef = indefiniteGoal(goal);
-    const txs = poolTxOf(name).slice().sort((a,b) => String(b.d).localeCompare(String(a.d)));
+    const txs = poolTxOf(name).filter(x => !(x.t === "contribution" && !monthFinalized(monthOf(x.d)))).slice().sort((a,b) => String(b.d).localeCompare(String(a.d)));
     const rows = txs.length ? txs.map(x => `<tr>
         <td class="tx-when">${parseDate(x.d).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"})}</td>
         <td>${TX_LABEL[x.t] || x.t}${x.n ? ` <span class="hint">· ${esc(x.n)}</span>` : ""}</td>
@@ -1575,8 +1613,7 @@ poolsTabC.addEventListener("input", e => {
   const t = e.target, m = getMonth(current);
   if (t.dataset.ptMo !== undefined) {
     const g = m.savingsGoals[t.dataset.ptMo]; g.planned = num(t.value);
-    if (!m.finalized && current <= monthKey(new Date())) ensureContribution(g.name, current, num(g.planned)); // auto-apply target to this month
-    const card = t.closest("[data-pt]"); if (card) { const bEl = card.querySelector(".ph-bal"); if (bEl) bEl.textContent = eur(num(data.savings[g.name])); }
+    if (!m.finalized) setContribution(g.name, current, num(g.planned)); // updates this month's target entry; balance is unaffected until you finalize
     save();
   }
   else if (t.dataset.ptGoal !== undefined) { m.savingsGoals[t.dataset.ptGoal].target = num(t.value); save(); }
