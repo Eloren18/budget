@@ -386,10 +386,46 @@
   @keyframes pop { 0%{transform:scale(1);} 40%{transform:scale(1.18);} 100%{transform:scale(1);} }
 
   @media (max-width:760px) {
-    .cards, .kpis { grid-template-columns:repeat(2,1fr); }
-    .weekly-grid, .pools, .inv-stats { grid-template-columns:1fr; }
+    body { padding:18px 14px 48px; }
+    .cards, .kpis { grid-template-columns:repeat(2,1fr); gap:10px; }
+    .weekly-grid { grid-template-columns:1fr 1fr; }
+    .weekly-grid .hero { grid-column:1 / -1; }
+    .pools, .inv-stats { grid-template-columns:1fr; }
     .field label { min-width:100%; }
     .theme-grid { grid-template-columns:repeat(2,1fr); }
+    .section { padding:16px 15px; }
+    .modal { padding:20px; }
+  }
+  @media (max-width:480px) {
+    body { padding:14px 11px 42px; }
+    .brand h1 { font-size:17px; } .brand p { font-size:11.5px; } .logo { width:34px; height:34px; }
+    /* header: month nav gets its own centered full-width row; account + settings share the next */
+    .toolbar { width:100%; justify-content:space-between; gap:8px; }
+    #monthControls { width:100%; justify-content:center; flex-wrap:wrap; gap:7px; }
+    .seg { flex:0 1 auto; }
+    .month-label { min-width:0; padding:0 2px; font-size:13.5px; }
+    /* tabs scroll cleanly */
+    .tabs { width:100%; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+    .tabs::-webkit-scrollbar { display:none; }
+    .tab { padding:8px 12px; font-size:13px; }
+    /* compact cards */
+    .cards { gap:9px; }
+    .card { padding:13px; } .card .kvalue { font-size:21px; } .card .klabel { font-size:11.5px; }
+    .section { padding:14px 13px; } .section > h2 { font-size:15px; } .section .desc { font-size:12.5px; }
+    .total-saved .tval { font-size:26px; }
+    .wbox { padding:12px; } .wbox .wv { font-size:20px; }
+    /* data-entry tables: shrink amounts, drop the Δ column so item names get real room */
+    th, td { padding:7px 4px; }
+    td .cell { padding:6px 4px; }
+    td input.cell.amt { width:72px; flex:none; }
+    /* let flexible/text inputs shrink instead of forcing horizontal page overflow */
+    td input.cell, .row-add input, .add-cat input, .field input.text { min-width:0; }
+    #groupsContainer table th:nth-child(4), #groupsContainer table td:nth-child(4) { display:none; }
+    .group-head { padding:10px 11px; gap:7px; }
+    .gshare { width:54px; }
+    input.money { width:132px; }
+    .win-chips button { padding:5px 9px; } .inv-val { font-size:24px; }
+    footer .btn { flex:1 1 calc(50% - 5px); }
   }
   @media (prefers-reduced-motion: reduce) { * { animation:none !important; transition:none !important; } }
 </style>
