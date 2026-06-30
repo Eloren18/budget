@@ -16,6 +16,11 @@ const _schema = i.schema({
       data: i.json(),
       updatedAt: i.number().indexed(),
     }),
+    // Invite list: one row per approved email. Only the admin may add/remove.
+    access: i.entity({
+      email: i.string().unique().indexed(),
+      addedAt: i.number().indexed(),
+    }),
   },
   links: {
     budgetOwner: {

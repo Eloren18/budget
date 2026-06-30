@@ -2,6 +2,12 @@
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
+<!-- Content-Security-Policy: only allow code/styles/connections from these exact
+     origins. If a CDN were ever compromised or bad HTML slipped in, this stops it
+     from running. Whitelist = the 4 SDK CDNs + Google Fonts + InstantDB only.
+     NOTE: if you ever add a new external service, add its origin here or it'll be blocked. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://esm.sh https://cdn.jsdelivr.net https://esm.run https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data:; connect-src 'self' https://*.instantdb.com wss://*.instantdb.com https://esm.sh https://cdn.jsdelivr.net https://esm.run https://unpkg.com; base-uri 'self'; object-src 'none'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232563eb'/%3E%3Cpath d='M5 8.5A2 2 0 0 1 7 6.5h9a2 2 0 0 1 2 2V9h.5a1 1 0 0 1 1 1v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8.5Z' fill='none' stroke='white' stroke-width='1.5'/%3E%3Ccircle cx='16' cy='13' r='1.3' fill='white'/%3E%3C/svg%3E">
 <title>Budget</title>
@@ -638,6 +644,13 @@
     <div class="set-label">Currency</div>
     <select id="currencySelect" class="text" style="width:100%"></select>
     <p class="note">Currency changes how amounts are displayed everywhere. It doesn't convert existing numbers — it relabels them.</p>
+    <div id="adminAccessSection" style="display:none;margin-top:18px;border-top:1px solid var(--border);padding-top:14px">
+      <div class="set-label">🔒 Manage access (invite-only)</div>
+      <p class="note">Only people whose email is on this list can use the app. You're always allowed. Changes take effect immediately.</p>
+      <div id="accessList" style="margin:10px 0"></div>
+      <div class="field"><input class="text" type="email" id="accessAddEmail" placeholder="friend@example.com" autocomplete="off" style="flex:1;min-width:160px"><button class="btn primary" id="accessAddBtn">Add</button></div>
+      <p class="note" id="accessMsg" style="display:none"></p>
+    </div>
     <div class="actions"><button class="btn primary" id="settingsClose">Done</button></div>
   </div>
 </div>
@@ -661,6 +674,21 @@
       <div class="actions"><button class="btn" id="authBack">‹ Back</button><button class="btn primary" id="authVerify">Verify &amp; sign in</button></div>
     </div>
     <p class="note" id="authError" style="color:var(--over);display:none"></p>
+  </div>
+</div>
+
+<!-- ACCESS GATE (invite-only) — shown to signed-in users not on the access list -->
+<div class="overlay" id="accessGate">
+  <div class="modal">
+    <div class="brand" style="margin-bottom:14px">
+      <div class="logo" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1h1a1 1 0 0 1 1 1v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" stroke="currentColor" stroke-width="1.8"/><circle cx="16.5" cy="13" r="1.4" fill="currentColor"/></svg>
+      </div>
+      <div><h3 style="margin:0">Invite only</h3></div>
+    </div>
+    <p class="note">This budget app is invite-only. The email <b id="accessEmail"></b> hasn't been approved yet.</p>
+    <p class="note">Ask <b>Kerem</b> to add your email. Once added, you'll be let in automatically — no need to refresh.</p>
+    <div class="actions"><button class="btn" id="accessSignOut">Sign out</button></div>
   </div>
 </div>
 
@@ -698,10 +726,14 @@ const { init, i, id } = _instant;
 
 /* ===== InstantDB (auth + cloud db) — see SETUP-InstantDB.txt ===== */
 const INSTANT_APP_ID = "c8b1ae69-e6ba-4fe2-ba9e-25f751658170";
+// Only this email can manage the invite list — and is always allowed in.
+const ADMIN_EMAIL = "keremladkeholland@gmail.com";
 const schema = i.schema({
   entities: {
     $users: i.entity({ email: i.string().unique().indexed() }),
     budgets: i.entity({ data: i.json(), updatedAt: i.number().indexed() }),
+    // Invite list: one row per approved email. Only the admin can add/remove (enforced by dashboard perms).
+    access: i.entity({ email: i.string().unique().indexed(), addedAt: i.number().indexed() }),
   },
   links: { budgetOwner: { forward: { on: "budgets", has: "one", label: "owner" }, reverse: { on: "$users", has: "one", label: "budget" } } },
 });
@@ -1835,6 +1867,74 @@ $("accountBtn").addEventListener("click", () => {
   else openAuthGate();
 });
 
+/* ===== invite-only access gate + admin list ===== */
+const accessGate = $("accessGate");
+let accessUnsub = null, adminAccessUnsub = null, accessRows = [], accessGranted = false;
+const isAdminEmail = e => (e || "").trim().toLowerCase() === ADMIN_EMAIL;
+function showAccessGate(email) { const e = $("accessEmail"); if (e) e.textContent = email || ""; if (accessGate) accessGate.classList.add("show"); }
+function closeAccessGate() { if (accessGate) accessGate.classList.remove("show"); }
+function clearAccessSub() { if (accessUnsub) { try { accessUnsub(); } catch (e) {} accessUnsub = null; } }
+function grantAccess(user) {
+  accessGranted = true; authedUser = user; budgetId = null;
+  closeAuthGate(); closeAccessGate(); setSync("on", user.email);
+  updateAdminUI(); startSync();
+}
+function denyAccess(user) {
+  accessGranted = false; authedUser = null; budgetId = null;
+  closeAuthGate(); setSync("", "No access"); updateAdminUI(); showAccessGate(user.email);
+}
+function gateAccess(user) {
+  if (isAdminEmail(user.email)) { grantAccess(user); return; }   // admin always allowed
+  const email = (user.email || "").trim().toLowerCase();
+  clearAccessSub();
+  // Reactive: if the admin adds this email while they wait, they're let in automatically.
+  accessUnsub = db.subscribeQuery({ access: { $: { where: { email } } } }, (res) => {
+    if (res.error) { denyAccess(user); return; }
+    const rows = (res.data && res.data.access) || [];
+    if (rows.length) grantAccess(user); else denyAccess(user);
+  });
+}
+/* admin-only list management (lives in the ⚙ Settings modal) */
+function renderAccessList() {
+  const c = $("accessList"); if (!c) return;
+  if (!accessRows.length) { c.innerHTML = `<p class="hint">No one added yet — add an email below. (You're always allowed.)</p>`; return; }
+  const sorted = accessRows.slice().sort((a, b) => (a.email || "").localeCompare(b.email || ""));
+  c.innerHTML = sorted.map(r => `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px">
+      <span style="font-size:14px;word-break:break-all">${esc(r.email)}</span>
+      <button class="btn-x" data-access-del="${esc(r.id)}" aria-label="Remove ${esc(r.email)}">✕</button></div>`).join("");
+}
+function startAdminAccessWatch() {
+  if (adminAccessUnsub) return;
+  adminAccessUnsub = db.subscribeQuery({ access: {} }, (res) => { accessRows = (res.data && res.data.access) || []; renderAccessList(); });
+}
+function stopAdminAccessWatch() { if (adminAccessUnsub) { try { adminAccessUnsub(); } catch (e) {} adminAccessUnsub = null; } accessRows = []; }
+function updateAdminUI() {
+  const admin = authedUser && isAdminEmail(authedUser.email);
+  const sec = $("adminAccessSection"); if (sec) sec.style.display = admin ? "" : "none";
+  if (admin) startAdminAccessWatch(); else stopAdminAccessWatch();
+}
+{
+  const accSignOut = $("accessSignOut"); if (accSignOut) accSignOut.addEventListener("click", () => { if (db) db.auth.signOut(); });
+  const accAddBtn = $("accessAddBtn"), accAddEmail = $("accessAddEmail"), accList = $("accessList");
+  if (accAddBtn) accAddBtn.addEventListener("click", async () => {
+    const msg = $("accessMsg");
+    const email = (accAddEmail.value || "").trim().toLowerCase();
+    const say = (t, col) => { if (msg) { msg.style.display = ""; msg.style.color = col; msg.textContent = t; } };
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return say("Enter a valid email address.", "var(--over)");
+    if (isAdminEmail(email)) { accAddEmail.value = ""; return say("That's you — you're always allowed.", "var(--muted)"); }
+    if (accessRows.some(r => (r.email || "").toLowerCase() === email)) { accAddEmail.value = ""; return say("Already on the list.", "var(--muted)"); }
+    try { await db.transact(db.tx.access[id()].update({ email, addedAt: Date.now() })); accAddEmail.value = ""; say("Added ✓", "var(--save)"); }
+    catch (e) { say("Couldn't add — check you're signed in as the admin and the dashboard permissions are saved.", "var(--over)"); }
+  });
+  if (accAddEmail) accAddEmail.addEventListener("keydown", e => { if (e.key === "Enter") accAddBtn.click(); });
+  if (accList) accList.addEventListener("click", async e => {
+    const b = e.target.closest("[data-access-del]"); if (!b) return;
+    const rid = b.getAttribute("data-access-del"), row = accessRows.find(r => r.id === rid);
+    if (row && !confirm("Remove " + row.email + " from the access list? They'll lose access immediately.")) return;
+    try { await db.transact(db.tx.access[rid].delete()); } catch (e) {}
+  });
+}
+
 /* ===== init ===== */
 applyTheme(); applyCurrency(); render();
 bindPlan();
@@ -1850,9 +1950,9 @@ if (!INSTANT_APP_ID) { showSetupBanner(); setSync("", "Set up sync"); }
 else {
   setSync("", "Sign in");
   db.subscribeAuth((auth) => {
-    if (auth.error) { setSync("err", "Sign in"); authErr(authMsg(auth.error, "Sign-in error.")); openAuthGate(); return; }
-    if (auth.user) { authedUser = auth.user; budgetId = null; closeAuthGate(); setSync("on", auth.user.email); startSync(); }
-    else { authedUser = null; budgetId = null; setSync("", "Sign in"); openAuthGate(); }
+    if (auth.error) { setSync("err", "Sign in"); authErr(authMsg(auth.error, "Sign-in error.")); clearAccessSub(); closeAccessGate(); openAuthGate(); return; }
+    if (auth.user) { gateAccess(auth.user); }
+    else { accessGranted = false; authedUser = null; budgetId = null; clearAccessSub(); closeAccessGate(); updateAdminUI(); setSync("", "Sign in"); openAuthGate(); }
   });
 }
 window.__BUDGET_OK = true;

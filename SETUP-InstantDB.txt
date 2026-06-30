@@ -42,10 +42,21 @@ PART 1 — InstantDB (sign-in + database)
       "update": "auth.id != null && auth.id in data.ref('owner.id')",
       "delete": "auth.id != null && auth.id in data.ref('owner.id')"
     }
+  },
+  "access": {
+    "allow": {
+      "view": "auth.id != null",
+      "create": "'keremladkeholland@gmail.com' in auth.ref('$user.email')",
+      "update": "'keremladkeholland@gmail.com' in auth.ref('$user.email')",
+      "delete": "'keremladkeholland@gmail.com' in auth.ref('$user.email')"
+    }
   }
 }
 
    (That's important — without it, the database is open to everyone.)
+   The "access" block powers the invite-only list: only the admin email can
+   add/remove people. If you ever change the admin email, update it in BOTH
+   this permissions block AND the ADMIN_EMAIL line near the top of index.html.
 
    You don't need to do anything for the schema: the app creates the
    needed fields automatically the first time you save. (Advanced: you can
@@ -94,9 +105,15 @@ USING IT ELSEWHERE / SHARING
 ----------------------------------------------------------
 - Phone or another computer: open the SAME web address, sign in with the
   SAME email. Your budget loads automatically. Most recent edit wins.
-- A friend: send them the web address. They sign in with THEIR email and
-  get their own private budget. (No extra setup — InstantDB has no
-  per-website approval step.)
+- A friend: the app is INVITE-ONLY. First, while signed in as the admin
+  (keremladkeholland@gmail.com), open ⚙ Settings → "Manage access" and add
+  their email. Then send them the web address. They sign in with THAT email
+  and get their own private budget. If they try before you add them, they'll
+  see an "Invite only" screen; the moment you add their email they're let in
+  automatically (no refresh needed). Remove an email there to revoke access.
+  NOTE: this gate is enforced in the browser. It controls who you invite; it
+  does NOT weaken data privacy — the "budgets" permissions already make every
+  person's data unreadable to everyone else, invited or not.
 
 
 ----------------------------------------------------------

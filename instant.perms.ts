@@ -14,6 +14,16 @@ const rules = {
       delete: "auth.id != null && auth.id in data.ref('owner.id')",
     },
   },
+  // Invite list. Any signed-in user may READ it (so the app can check whether
+  // they're approved). Only the admin email may ADD/REMOVE entries.
+  access: {
+    allow: {
+      view: "auth.id != null",
+      create: "'keremladkeholland@gmail.com' in auth.ref('$user.email')",
+      update: "'keremladkeholland@gmail.com' in auth.ref('$user.email')",
+      delete: "'keremladkeholland@gmail.com' in auth.ref('$user.email')",
+    },
+  },
 } satisfies InstantRules;
 
 export default rules;
