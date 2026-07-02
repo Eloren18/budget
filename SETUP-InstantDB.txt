@@ -89,8 +89,11 @@ PART 2 — Host it free on GitHub Pages
 
 4. Turn on Pages:
    - In the repo, go to "Settings" (top menu) → "Pages" (left menu).
-   - Under "Build and deployment" → Source: "Deploy from a branch".
-   - Branch: "main"  and  folder: "/ (root)"  →  Save.
+   - Under "Build and deployment" → Source: "GitHub Actions".
+   - That's it — no branch/folder to pick. A workflow file included with
+     the app (.github/workflows/deploy.yml) does the publishing. Every time
+     you push a change, it runs automatically and updates the live site.
+     You can watch runs in the repo's "Actions" tab.
 
 5. Wait ~1 minute, then refresh the Pages settings page. It will show:
        "Your site is live at  https://YOUR-USERNAME.github.io/budget/"
@@ -119,8 +122,12 @@ USING IT ELSEWHERE / SHARING
 ----------------------------------------------------------
 UPDATING THE APP LATER
 ----------------------------------------------------------
-If you (or Claude) change index.html, upload the new version to the repo
-(Add file → Upload files → commit). GitHub Pages refreshes within a minute.
+If you (or Claude) change index.html, get the new version onto GitHub —
+either run Deploy.bat (commits + pushes for you) or upload it on the repo
+website (Add file → Upload files → commit). Pushing triggers the GitHub
+Action, which republishes the live site within a minute. You can also
+re-run the deploy by hand: repo → "Actions" tab → "Deploy to GitHub
+Pages" → "Run workflow".
 
 
 ----------------------------------------------------------
