@@ -184,6 +184,9 @@
 
   .alloc-bar { height:16px; border-radius:999px; overflow:hidden; display:flex; background:var(--surface-2); border:1px solid var(--border-soft); }
   .alloc-bar > span { display:block; transition:width .55s var(--ease); }
+  .carry-line { margin-top:12px; padding:9px 13px; border-radius:var(--radius-sm); font-size:13.5px; font-weight:650; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  .carry-line.pos { background:var(--save-soft); color:var(--save); }
+  .carry-line.neg { background:color-mix(in srgb,var(--over) 15%,transparent); color:var(--over); }
   .seg-exp { background:var(--expense); } .seg-sav { background:var(--save); } .seg-wk { background:var(--spend); }
   .seg-over { background:repeating-linear-gradient(45deg,var(--over),var(--over) 6px,#00000022 6px,#00000022 12px); }
   .legend { display:flex; flex-wrap:wrap; gap:16px; margin-top:14px; }
@@ -503,6 +506,7 @@
       <h2><span class="sec-icon" style="background:color-mix(in srgb,var(--primary) 18%,transparent);color:var(--primary)">↓</span>Income</h2>
       <div class="field"><label for="incomeInput">Monthly income</label><span class="euro"><input class="money" type="number" id="incomeInput" min="0" step="0.01" placeholder="0.00"></span></div>
       <div class="field"><label for="bonusInput">Bonus / gifts this month</label><span class="euro"><input class="money" type="number" id="bonusInput" min="0" step="0.01" placeholder="0.00"></span></div>
+      <div id="carryLine" class="carry-line" style="display:none"></div>
       <div id="incomeWithdrawals"></div>
     </div>
 
@@ -637,7 +641,7 @@
   <div class="modal">
     <h3>Finalize <span id="modalMonth"></span></h3>
     <div class="field"><label for="mBonus">Bonus / gifts received</label><span class="euro"><input class="money" type="number" id="mBonus" min="0" step="0.01"></span></div>
-    <p class="note">Your spending money for the month is assumed fully spent. Finalizing locks the month and keeps this month's pool contributions.</p>
+    <p class="note">The weeks you ticked as "spent" count as spent; anything left over (or any shortfall from late one-offs) rolls into next month. Finalizing locks the month and keeps this month's pool contributions.</p>
     <div id="modalSummary"></div>
     <div class="actions">
       <button class="btn" id="modalCancel">Cancel</button>
@@ -876,7 +880,16 @@ const savingsPlanned = m => m.savingsGoals.reduce((s, g) => s + num(g.planned), 
 const mkeyOf = m => { for (const k in data.months) if (data.months[k] === m) return k; return current; };
 // Money withdrawn from savings pools this month flows back into spendable cash (and is shown in Income).
 const withdrawnToSpend = mkey => { let s = 0; const px = data.poolTx || {}; for (const n in px) (px[n] || []).forEach(x => { if (x.t === "withdraw" && String(x.d).slice(0, 7) === mkey) s += -num(x.a); }); return s; };
-const discretionary = m => num(m.income) + num(m.bonus) - expensesEff(m) - savingsPlanned(m) + withdrawnToSpend(mkeyOf(m));
+// ----- month-to-month carryover (net surplus/deficit rolled into the next month) -----
+// Key of the previous calendar month, e.g. "2026-08" -> "2026-07".
+const prevKey = k => { const [y,mo] = k.split("-").map(Number); return monthKey(new Date(y, mo-2, 1)); };
+// Money rolled INTO a month = the previous month's net, but only once that month is finalized (+surplus / −deficit).
+const carryIn = k => { const p = data.months[prevKey(k)]; return (p && p.finalized && p.applied) ? num(p.applied.carryover) : 0; };
+// Spending money actually spent = sum of the weeks you ticked as "spent" (ignoring stale locks from other month lengths).
+const spentLocked = (m, k) => { const valid = new Set(spendSegments(k).map(s => k + "-" + String(s.start).padStart(2,"0"))); return Object.entries(m.spendLocks || {}).reduce((s,[key,v]) => valid.has(key) ? s + num(v) : s, 0); };
+const discretionary = m => { const k = mkeyOf(m); return num(m.income) + num(m.bonus) + carryIn(k) - expensesEff(m) - savingsPlanned(m) + withdrawnToSpend(k); };
+// A month's net result = spending money budgeted minus what you actually spent (ticked weeks). +surplus / −deficit; rolls into next month.
+const monthNet = (m, k) => discretionary(m) - spentLocked(m, k);
 const totalSaved = () => Object.values(data.savings).reduce((s, v) => s + num(v), 0);
 const monthSaved = m => (m.finalized && m.applied) ? Object.values(m.applied.contributions).reduce((s,v)=>s+v,0) : savingsPlanned(m);
 
@@ -1035,6 +1048,7 @@ function updateSummary(m) {
   const expEff = expensesEff(m), sav = savingsPlanned(m), base = num(m.income)+num(m.bonus);
   $("cIncome").textContent = eur(base);
   $("cIncomeSub").textContent = m.bonus ? "incl. " + eur(m.bonus) + " bonus" : "monthly income";
+  renderCarryLine(m);
   $("cExp").textContent = eur(expEff);
   $("cExpSub").textContent = m.groups.length + " categor" + (m.groups.length === 1 ? "y" : "ies");
   const disc = discretionary(m), dim = monthDayCount(current), daily = disc / dim;
@@ -1123,21 +1137,34 @@ function liveRecalc() {
   save();
 }
 function renderAllocation(m) {
-  const base = num(m.income)+num(m.bonus)+withdrawnToSpend(mkeyOf(m)), exp = expensesEff(m), sav = savingsPlanned(m), disc = discretionary(m);
+  const ci = carryIn(mkeyOf(m));
+  const base = num(m.income)+num(m.bonus)+withdrawnToSpend(mkeyOf(m))+ci, exp = expensesEff(m), sav = savingsPlanned(m), disc = discretionary(m);
   const den = Math.max(base, exp+sav, 1), pc = v => Math.max(0, v)/den*100;
   $("allocBar").innerHTML =
     `<span class="seg-exp" style="width:${pc(exp)}%"></span><span class="seg-sav" style="width:${pc(sav)}%"></span>` +
     `<span class="seg-wk" style="width:${pc(Math.max(disc,0))}%"></span>` + (disc < 0 ? `<span class="seg-over" style="width:${pc(-disc)}%"></span>` : "");
   const item = (c,l,v) => `<div><span class="sw" style="background:${c}"></span><span class="lv">${eur(v)}</span> <span class="ll">${l}</span></div>`;
-  $("allocLegend").innerHTML = item("var(--expense)","expenses",exp) + item("var(--save)","savings",sav) + item("var(--spend)","to spend",Math.max(disc,0)) +
+  $("allocLegend").innerHTML =
+    (ci !== 0 ? `<div><span class="sw" style="background:${ci>0?"var(--save)":"var(--over)"}"></span><span class="lv" style="color:${ci>0?"var(--save)":"var(--over)"}">${ci>0?"+":"−"}${eur(Math.abs(ci))}</span> <span class="ll">carried over</span></div>` : "") +
+    item("var(--expense)","expenses",exp) + item("var(--save)","savings",sav) + item("var(--spend)","to spend",Math.max(disc,0)) +
     (disc < 0 ? `<div><span class="sw seg-over"></span><span class="lv" style="color:var(--over)">${eur(-disc)}</span> <span class="ll">over budget</span></div>` : "");
+}
+function renderCarryLine(m) {
+  const cl = $("carryLine"); if (!cl) return;
+  const k = mkeyOf(m), ci = carryIn(k);
+  if (!ci) { cl.style.display = "none"; cl.innerHTML = ""; return; }
+  cl.style.display = "flex";
+  cl.className = "carry-line " + (ci > 0 ? "pos" : "neg");
+  cl.innerHTML = `<span>↩ Carried over from ${monthName(prevKey(k)).split(" ")[0]} · ${ci > 0 ? "surplus" : "shortfall"}</span><span>${ci > 0 ? "+ " : "− "}${eur(Math.abs(ci))}</span>`;
 }
 function renderRecap(m) {
   const r = $("recap");
   if (m.finalized && m.applied) {
     const toPools = Object.values(m.applied.contributions || {}).reduce((s,v)=>s+num(v),0);
+    const co = num(m.applied.carryover), [ny,nm] = mkeyOf(m).split("-").map(Number), nextName = monthName(monthKey(new Date(ny, nm, 1))).split(" ")[0];
+    const carryTxt = co > 0 ? ` A surplus of <b>${eur(co)}</b> rolled into ${nextName}.` : co < 0 ? ` A shortfall of <b>${eur(-co)}</b> rolled into ${nextName}.` : "";
     r.className = "recap show";
-    r.innerHTML = `<span class="ic">🎉</span><div>Month finalized — <b>${eur(toPools)}</b> went to your pools this month. Total saved is now <b>${eur(totalSaved())}</b>.</div>`;
+    r.innerHTML = `<span class="ic">🎉</span><div>Month finalized — <b>${eur(toPools)}</b> went to your pools this month. Total saved is now <b>${eur(totalSaved())}</b>.${carryTxt}</div>`;
   } else r.className = "recap";
 }
 function deltaHtml(it) {
@@ -1351,15 +1378,24 @@ function openFinalize(m) {
 }
 function updateModalSummary() {
   const m = getMonth(current);
-  const bonus = num($("mBonus").value), exp = expensesEff(m), sav = savingsPlanned(m), pulled = withdrawnToSpend(mkeyOf(m));
-  const spend = Math.max(num(m.income) + bonus + pulled - exp - sav, 0);
+  const bonus = num($("mBonus").value), exp = expensesEff(m), sav = savingsPlanned(m), pulled = withdrawnToSpend(mkeyOf(m)), ci = carryIn(current);
+  const segs = spendSegments(current), weeks = segs.length, locks = m.spendLocks || {};
+  const ticked = segs.filter(s => (current + "-" + String(s.start).padStart(2,"0")) in locks).length;
+  const spent = spentLocked(m, current);
+  const disc = num(m.income) + bonus + ci + pulled - exp - sav; // spending money available this month
+  const net = disc - spent;                                     // rolls into next month
+  const [ny,nm] = current.split("-").map(Number), nextName = monthName(monthKey(new Date(ny, nm, 1))).split(" ")[0];
+  const prevName = monthName(prevKey(current)).split(" ")[0];
   $("modalSummary").innerHTML = `
     <div class="mrow"><span>Income</span><span class="num">${eur(m.income)}</span></div>
-    <div class="mrow"><span>Bonus / gifts</span><span class="num">+ ${eur(bonus)}</span></div>
+    <div class="mrow"><span>Bonus / found money</span><span class="num">+ ${eur(bonus)}</span></div>
+    ${ci !== 0 ? `<div class="mrow"><span>Carried in from ${prevName}</span><span class="num" style="color:${ci>0?"var(--save)":"var(--over)"}">${ci>0?"+":"−"} ${eur(Math.abs(ci))}</span></div>` : ""}
     ${pulled > 0 ? `<div class="mrow"><span>Pulled from savings</span><span class="num">+ ${eur(pulled)}</span></div>` : ""}
-    <div class="mrow"><span>Expenses</span><span class="num">− ${eur(exp)}</span></div>
-    <div class="mrow"><span>Spending money (assumed spent)</span><span class="num">− ${eur(spend)}</span></div>
-    <div class="mrow total"><span>Saved to pools this month</span><span class="num" style="color:var(--save)">${eur(sav)}</span></div>`;
+    <div class="mrow"><span>Expenses (bills + one-off)</span><span class="num">− ${eur(exp)}</span></div>
+    <div class="mrow"><span>Saved to pools</span><span class="num">− ${eur(sav)}</span></div>
+    <div class="mrow"><span>Spending money spent <span class="hint">(${ticked} of ${weeks} weeks ticked)</span></span><span class="num">− ${eur(spent)}</span></div>
+    <div class="mrow total"><span>${net >= 0 ? "Surplus" : "Shortfall"} → rolls into ${nextName}</span><span class="num" style="color:${net>=0?"var(--save)":"var(--over)"}">${net>=0?"+":"−"} ${eur(Math.abs(net))}</span></div>
+    ${ticked < weeks ? `<p class="hint" style="margin:8px 2px 0">Unticked weeks count as <b>not</b> spent (they add to the surplus). If you did spend them, cancel and tick them on the Budget tab first.</p>` : ""}`;
 }
 $("mBonus").addEventListener("input", updateModalSummary);
 $("modalCancel").addEventListener("click", () => overlay.classList.remove("show"));
@@ -1377,6 +1413,7 @@ function applyFinalize(m) {
   (m.savingsGoals || []).forEach(g => setContribution(g.name, current, num(g.planned)));
   const snapshot = { contributions:{} };
   (m.savingsGoals || []).forEach(g => { snapshot.contributions[g.name] = monthTarget(g.name, current); });
+  snapshot.carryover = monthNet(m, current); // net surplus/deficit that rolls into next month
   m.finalized = true; m.applied = snapshot;
   recomputeSavings(); // this month's targets now count toward the pools
 }
