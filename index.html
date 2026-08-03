@@ -221,6 +221,18 @@
   .gshare > div { height:100%; background:var(--expense); border-radius:999px; transition:width .5s var(--ease); }
   .gbody { transition:max-height .3s var(--ease),opacity .25s; overflow:hidden; }
   .group.collapsed .gbody { max-height:0 !important; opacity:0; }
+  .subgroup { margin:6px 14px; border:1px dashed var(--border); border-radius:var(--radius-sm); background:color-mix(in srgb,var(--surface-2) 55%,transparent); overflow:hidden; }
+  .subgroup-head { display:flex; align-items:center; gap:8px; padding:8px 10px 8px 12px; }
+  .sg-handle { cursor:pointer; color:var(--faint); font-size:11px; display:grid; place-items:center; transition:transform .2s; }
+  .subgroup.collapsed .sg-handle { transform:rotate(-90deg); }
+  .sgname { flex:1; font-weight:600; font-size:13.5px; background:transparent; border:1px solid transparent; border-radius:6px; padding:4px 6px; min-width:60px; }
+  .sgname:hover, .sgname:focus-visible { background:var(--surface); }
+  .sgtotal { font-weight:700; font-size:13.5px; letter-spacing:-.01em; white-space:nowrap; }
+  .sgbody { transition:max-height .3s var(--ease),opacity .25s; overflow:hidden; }
+  .subgroup.collapsed .sgbody { max-height:0 !important; opacity:0; }
+  .subgroup table th { font-size:10px; }
+  .add-sg { display:flex; gap:8px; padding:4px 14px 12px; }
+  .add-sg input { flex:1; }
 
   table { width:100%; border-collapse:collapse; }
   th, td { padding:8px 14px; text-align:left; border-top:1px solid var(--border-soft); }
@@ -827,7 +839,7 @@ const invWindow = {}; // per-pool selected return window (months|null)
 function blankMonth() {
   return { income:0, bonus:0, groups:[], oneOff:[], savingsGoals:[], finalized:false, applied:null };
 }
-function normalize(d) { d.settings ??= {}; d.savings ??= {}; d.investments ??= {}; d.poolTx ??= {}; d.months ??= {}; d.settings.grocPct ??= 70; Object.values(d.months).forEach(m => { m.oneOff ??= []; m.spendLocks ??= {}; }); migrateBuffer(d); migrateContribTx(d); return d; }
+function normalize(d) { d.settings ??= {}; d.savings ??= {}; d.investments ??= {}; d.poolTx ??= {}; d.months ??= {}; d.settings.grocPct ??= 70; Object.values(d.months).forEach(m => { m.oneOff ??= []; m.spendLocks ??= {}; (m.groups || []).forEach(g => { g.subgroups ??= []; g.subgroups.forEach(sg => { sg.items ??= []; }); }); }); migrateBuffer(d); migrateContribTx(d); return d; }
 function load() {
   let raw; try { raw = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch {}
   if (raw && raw.months) return normalize(raw);
@@ -865,7 +877,9 @@ function getMonth(key) {
   const m = blankMonth();
   if (src) {
     m.income = src.income;
-    m.groups = src.groups.map(g => ({ name:g.name, collapsed:g.collapsed||false, items:g.items.map(it => ({ name:it.name, planned:it.planned, actual:null })) }));
+    m.groups = src.groups.map(g => ({ name:g.name, collapsed:g.collapsed||false,
+      items:g.items.map(it => ({ name:it.name, planned:it.planned, actual:null })),
+      subgroups:(g.subgroups||[]).map(sg => ({ name:sg.name, collapsed:sg.collapsed||false, items:sg.items.map(it => ({ name:it.name, planned:it.planned, actual:null })) })) }));
     m.savingsGoals = src.savingsGoals.map(s => ({ name:s.name, planned:s.planned, target:s.target||0, indefinite:s.indefinite }));
   }
   data.months[key] = m; save();
@@ -873,7 +887,9 @@ function getMonth(key) {
 }
 
 /* ===== calculations ===== */
-const groupTotal = (g, useActual) => g.items.reduce((s, it) => s + (useActual ? (it.actual ?? it.planned) : it.planned), 0);
+const itemsTotal = (items, useActual) => (items || []).reduce((s, it) => s + (useActual ? num(it.actual ?? it.planned) : num(it.planned)), 0);
+// A category's total = its own items plus every subcategory's items.
+const groupTotal = (g, useActual) => itemsTotal(g.items, useActual) + (g.subgroups || []).reduce((s, sg) => s + itemsTotal(sg.items, useActual), 0);
 const oneOffTotal = m => (m.oneOff || []).reduce((s, o) => s + num(o.amount), 0);
 const expensesEff = m => m.groups.reduce((s, g) => s + groupTotal(g, true), 0) + oneOffTotal(m);
 const savingsPlanned = m => m.savingsGoals.reduce((s, g) => s + num(g.planned), 0);
@@ -916,13 +932,30 @@ function poolList() {
   Object.keys(data.poolTx || {}).forEach(n => { if (!names.includes(n)) names.push(n); });
   return names;
 }
-/* Pool balance is DERIVED: manual deposits/withdrawals/set-balance always count; a month's
-   target counts toward the pool only once that month is FINALIZED (until then it's a pending plan). */
+/* Pool balance is DERIVED. A month's planned target ("contribution") only lands once that month is
+   FINALIZED. Deposits and manual balance-sets always count. A withdrawal first cancels that month's
+   planned target (so you simply save less that month) and only the EXCESS beyond the plan pulls from
+   the actual saved balance. */
+function poolMonthDelta(list, finalized) {
+  let plan = 0, dep = 0, wd = 0, other = 0;
+  list.forEach(x => {
+    if (x.t === "contribution") plan += num(x.a);
+    else if (x.t === "deposit") dep += num(x.a);
+    else if (x.t === "withdraw") wd += -num(x.a); // stored negative; wd is the positive magnitude
+    else other += num(x.a);                        // "start" balance-set deltas (and anything else)
+  });
+  // Finalized: the plan has landed, so the full withdrawal nets against it (plan + deposits − withdrawals).
+  // Pending: the plan hasn't landed; the withdrawal eats the plan first, only the excess touches the balance.
+  return finalized ? (plan + dep - wd + other) : (dep + other - Math.max(0, wd - plan));
+}
 function recomputeSavings() {
   const bal = {};
   for (const name in (data.poolTx || {})) {
-    bal[name] = poolTxOf(name).reduce((s, x) =>
-      s + (x.t === "contribution" ? (monthFinalized(monthOf(x.d)) ? num(x.a) : 0) : num(x.a)), 0);
+    const byMonth = {};
+    poolTxOf(name).forEach(x => { const mo = monthOf(x.d); (byMonth[mo] = byMonth[mo] || []).push(x); });
+    let total = 0;
+    for (const mo in byMonth) total += poolMonthDelta(byMonth[mo], monthFinalized(mo));
+    bal[name] = total;
   }
   data.savings = bal;
 }
@@ -976,8 +1009,9 @@ function animateSavings() {
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   document.querySelectorAll("#poolsContainer .pool[data-pool]").forEach(card => {
     const name = card.dataset.pool, bal = num(data.savings[name]);
-    // animate only what actually entered the pool this month (manual moves + finalized targets; pending targets don't count)
-    const change = poolTxOf(name).reduce((s, x) => (String(x.d).startsWith(current + "-") && !(x.t === "contribution" && !monthFinalized(current))) ? s + num(x.a) : s, 0);
+    // animate only what actually entered the pool this month (matches the derived balance: pending targets
+    // don't count, and a withdrawal cancels the pending target before touching the saved balance)
+    const change = poolMonthDelta(poolTxOf(name).filter(x => String(x.d).startsWith(current + "-")), monthFinalized(current));
     const balEl = card.querySelector(".pbal"), fl = card.querySelector(".pool-float");
     if (!balEl) return;
     if (reduce || !change) { balEl.textContent = eur(bal); if (fl) fl.className = "pool-float"; return; }
@@ -1124,7 +1158,14 @@ function liveRecalc() {
     const sEl = groups.querySelector(`[data-gshare="${gi}"]`); if (sEl) sEl.style.width = Math.min(100, gt/totalExp*100) + "%";
     g.items.forEach((it, ii) => {
       const dEl = groups.querySelector(`[data-delta="${gi}:${ii}"]`); if (dEl) dEl.innerHTML = deltaHtml(it);
-      const aEl = groups.querySelector(`input[data-gi="${gi}"][data-ii="${ii}"][data-f="actual"]`); if (aEl) aEl.placeholder = num(it.planned).toFixed(2);
+      const aEl = groups.querySelector(`input[data-gi="${gi}"][data-ii="${ii}"][data-f="actual"]:not([data-sgi])`); if (aEl) aEl.placeholder = num(it.planned).toFixed(2);
+    });
+    (g.subgroups || []).forEach((sg, sgi) => {
+      const stEl = groups.querySelector(`[data-sgtotal="${gi}:${sgi}"]`); if (stEl) stEl.textContent = eur(itemsTotal(sg.items, true));
+      sg.items.forEach((it, ii) => {
+        const dEl = groups.querySelector(`[data-delta="${gi}:${sgi}:${ii}"]`); if (dEl) dEl.innerHTML = deltaHtml(it);
+        const aEl = groups.querySelector(`input[data-gi="${gi}"][data-sgi="${sgi}"][data-ii="${ii}"][data-f="actual"]`); if (aEl) aEl.placeholder = num(it.planned).toFixed(2);
+      });
     });
   });
   m.savingsGoals.forEach((g, si) => {
@@ -1137,17 +1178,26 @@ function liveRecalc() {
   save();
 }
 function renderAllocation(m) {
-  const ci = carryIn(mkeyOf(m));
-  const base = num(m.income)+num(m.bonus)+withdrawnToSpend(mkeyOf(m))+ci, exp = expensesEff(m), sav = savingsPlanned(m), disc = discretionary(m);
-  const den = Math.max(base, exp+sav, 1), pc = v => Math.max(0, v)/den*100;
+  const k = mkeyOf(m), ci = carryIn(k);
+  const exp = expensesEff(m), sav = savingsPlanned(m), disc = discretionary(m), spent = spentLocked(m, k);
+  const cashIn = num(m.income) + num(m.bonus) + withdrawnToSpend(k) + Math.max(ci, 0); // real money in (carried surplus adds; carried debt is shown as a red claim, below)
+  const deficitIn = Math.max(0, -ci);            // carried-in debt to repay (red)
+  const planOver = Math.max(0, exp + sav - cashIn); // expenses + savings alone exceed your income (red)
+  const toSpend = Math.max(0, disc);             // what you can actually afford to spend (blue)
+  const over = Math.max(0, spent - toSpend);     // money already spent beyond what you can afford (red overflow)
+  const sum = exp + sav + deficitIn + planOver + toSpend + over;
+  const den = Math.max(cashIn, sum, 1), pc = v => Math.max(0, v) / den * 100;
+  const seg = (cls, v) => v > 0 ? `<span class="${cls}" style="width:${pc(v)}%"></span>` : "";
   $("allocBar").innerHTML =
-    `<span class="seg-exp" style="width:${pc(exp)}%"></span><span class="seg-sav" style="width:${pc(sav)}%"></span>` +
-    `<span class="seg-wk" style="width:${pc(Math.max(disc,0))}%"></span>` + (disc < 0 ? `<span class="seg-over" style="width:${pc(-disc)}%"></span>` : "");
+    seg("seg-exp", exp) + seg("seg-sav", sav) + seg("seg-over", deficitIn) +
+    seg("seg-wk", toSpend) + seg("seg-over", over) + seg("seg-over", planOver);
   const item = (c,l,v) => `<div><span class="sw" style="background:${c}"></span><span class="lv">${eur(v)}</span> <span class="ll">${l}</span></div>`;
+  const redItem = (l,v) => `<div><span class="sw seg-over"></span><span class="lv" style="color:var(--over)">${eur(v)}</span> <span class="ll">${l}</span></div>`;
   $("allocLegend").innerHTML =
     (ci !== 0 ? `<div><span class="sw" style="background:${ci>0?"var(--save)":"var(--over)"}"></span><span class="lv" style="color:${ci>0?"var(--save)":"var(--over)"}">${ci>0?"+":"−"}${eur(Math.abs(ci))}</span> <span class="ll">carried over</span></div>` : "") +
-    item("var(--expense)","expenses",exp) + item("var(--save)","savings",sav) + item("var(--spend)","to spend",Math.max(disc,0)) +
-    (disc < 0 ? `<div><span class="sw seg-over"></span><span class="lv" style="color:var(--over)">${eur(-disc)}</span> <span class="ll">over budget</span></div>` : "");
+    item("var(--expense)","expenses",exp) + item("var(--save)","savings",sav) + item("var(--spend)","to spend",toSpend) +
+    (over > 0 ? redItem("overspent", over) : "") +
+    (planOver > 0 ? redItem("over budget", planOver) : "");
 }
 function renderCarryLine(m) {
   const cl = $("carryLine"); if (!cl) return;
@@ -1172,17 +1222,43 @@ function deltaHtml(it) {
   const diff = num(it.planned) - num(it.actual);
   return `<span class="delta ${diff < 0 ? "over" : "under"}">${diff < 0 ? "▲" : "▼"} ${eur(Math.abs(diff))}</span>`;
 }
+// One expense row. sgi === null for a category's own items; otherwise the item lives in subcategory sgi.
+function itemRowHtml(gi, sgi, ii, it) {
+  const addr = sgi == null ? `data-gi="${gi}" data-ii="${ii}"` : `data-gi="${gi}" data-sgi="${sgi}" data-ii="${ii}"`;
+  const dkey = sgi == null ? `${gi}:${ii}` : `${gi}:${sgi}:${ii}`;
+  const del = sgi == null ? `data-delitem="${gi}:${ii}"` : `data-delsgitem="${gi}:${sgi}:${ii}"`;
+  return `<tr>
+      <td><input class="cell name" type="text" value="${esc(it.name)}" ${addr} data-f="name" aria-label="Item name"></td>
+      <td class="r"><input class="cell r amt" type="number" inputmode="decimal" min="0" step="0.01" value="${it.planned ?? ""}" ${addr} data-f="planned" aria-label="Planned"></td>
+      <td class="r"><input class="cell r amt actual" type="number" inputmode="decimal" min="0" step="0.01" value="${it.actual ?? ""}" placeholder="${num(it.planned).toFixed(2)}" ${addr} data-f="actual" aria-label="Actual"></td>
+      <td class="r" data-delta="${dkey}">${deltaHtml(it)}</td>
+      <td class="r"><button class="btn-x" ${del} aria-label="Delete item">✕</button></td></tr>`;
+}
+function itemsTableHtml(gi, sgi, items, addName) {
+  const rows = items.map((it, ii) => itemRowHtml(gi, sgi, ii, it)).join("");
+  const addAttr = sgi == null ? `data-additem="${gi}"` : `data-addsgitem="${gi}:${sgi}"`;
+  const addBtn = sgi == null ? `data-additembtn="${gi}"` : `data-addsgitembtn="${gi}:${sgi}"`;
+  return `<table><thead><tr><th>Item</th><th class="r">Planned</th><th class="r">Actual</th><th class="r">Δ</th><th></th></tr></thead>
+        <tbody>${rows || `<tr><td colspan="5" class="hint">No items yet.</td></tr>`}</tbody></table>
+      <div class="row-add"><input class="text" type="text" placeholder="Add item to ${esc(addName)}…" ${addAttr}><button class="btn-add" ${addBtn}>+ Item</button></div>`;
+}
 function renderGroups(m) {
   const c = $("groupsContainer"), totalExp = expensesEff(m) || 1; c.innerHTML = "";
   if (!m.groups.length) c.innerHTML = `<p class="hint" style="padding:6px 2px">No categories yet — add one below.</p>`;
   m.groups.forEach((g, gi) => {
     const gt = groupTotal(g, true);
-    const rows = g.items.map((it, ii) => `<tr>
-        <td><input class="cell name" type="text" value="${esc(it.name)}" data-gi="${gi}" data-ii="${ii}" data-f="name" aria-label="Item name"></td>
-        <td class="r"><input class="cell r amt" type="number" inputmode="decimal" min="0" step="0.01" value="${it.planned ?? ""}" data-gi="${gi}" data-ii="${ii}" data-f="planned" aria-label="Planned"></td>
-        <td class="r"><input class="cell r amt actual" type="number" inputmode="decimal" min="0" step="0.01" value="${it.actual ?? ""}" placeholder="${num(it.planned).toFixed(2)}" data-gi="${gi}" data-ii="${ii}" data-f="actual" aria-label="Actual"></td>
-        <td class="r" data-delta="${gi}:${ii}">${deltaHtml(it)}</td>
-        <td class="r"><button class="btn-x" data-delitem="${gi}:${ii}" aria-label="Delete item">✕</button></td></tr>`).join("");
+    const subHtml = (g.subgroups || []).map((sg, sgi) => {
+      const sgt = itemsTotal(sg.items, true);
+      return `<div class="subgroup${sg.collapsed ? " collapsed" : ""}">
+        <div class="subgroup-head">
+          <span class="sg-handle" data-sgtoggle="${gi}:${sgi}" role="button" aria-label="Collapse subcategory" tabindex="0">▾</span>
+          <input class="sgname" type="text" value="${esc(sg.name)}" data-sgname="${gi}:${sgi}" aria-label="Subcategory name">
+          <div class="sgtotal num" data-sgtotal="${gi}:${sgi}">${eur(sgt)}</div>
+          <button class="btn-x" data-delsg="${gi}:${sgi}" aria-label="Delete subcategory">✕</button>
+        </div>
+        <div class="sgbody" style="max-height:${sg.collapsed ? 0 : 2000}px">${itemsTableHtml(gi, sgi, sg.items, sg.name)}</div>
+      </div>`;
+    }).join("");
     const div = document.createElement("div");
     div.className = "group" + (g.collapsed ? " collapsed" : "");
     div.innerHTML = `
@@ -1193,10 +1269,10 @@ function renderGroups(m) {
           <div class="gshare"><div data-gshare="${gi}" style="width:${Math.min(100, gt/totalExp*100)}%"></div></div></div>
         <button class="btn-x" data-delgroup="${gi}" aria-label="Delete category">✕</button>
       </div>
-      <div class="gbody" style="max-height:${g.collapsed ? 0 : 1000}px">
-        <table><thead><tr><th>Item</th><th class="r">Planned</th><th class="r">Actual</th><th class="r">Δ</th><th></th></tr></thead>
-          <tbody>${rows || `<tr><td colspan="5" class="hint">No items yet.</td></tr>`}</tbody></table>
-        <div class="row-add"><input class="text" type="text" placeholder="Add item to ${esc(g.name)}…" data-additem="${gi}"><button class="btn-add" data-additembtn="${gi}">+ Item</button></div>
+      <div class="gbody" style="max-height:${g.collapsed ? 0 : 6000}px">
+        ${itemsTableHtml(gi, null, g.items, g.name)}
+        ${subHtml}
+        <div class="add-sg"><input class="text" type="text" placeholder="New subcategory in ${esc(g.name)}…" data-addsg="${gi}"><button class="btn-add" data-addsgbtn="${gi}">+ Subcategory</button></div>
       </div>`;
     c.appendChild(div);
   });
@@ -1287,25 +1363,38 @@ const groups = $("groupsContainer");
 groups.addEventListener("input", e => {
   const t = e.target, m = getMonth(current);
   if (t.dataset.gname !== undefined) { m.groups[t.dataset.gname].name = t.value; save(); return; }
+  if (t.dataset.sgname !== undefined) { const [gi, sgi] = t.dataset.sgname.split(":"); m.groups[gi].subgroups[sgi].name = t.value; save(); return; }
   if (t.dataset.gi !== undefined) {
-    const it = m.groups[t.dataset.gi].items[t.dataset.ii], f = t.dataset.f;
+    const list = t.dataset.sgi !== undefined ? m.groups[t.dataset.gi].subgroups[t.dataset.sgi].items : m.groups[t.dataset.gi].items;
+    const it = list[t.dataset.ii], f = t.dataset.f;
     if (f === "name") { it.name = t.value; save(); }
     else { it[f] = (f === "actual" && t.value === "") ? null : num(t.value); liveRecalc(); }
   }
 });
 groups.addEventListener("click", e => {
-  const t = e.target.closest("[data-toggle],[data-delgroup],[data-delitem],[data-additembtn]"); if (!t) return;
-  const m = getMonth(current);
-  if (t.dataset.toggle !== undefined) { const g = m.groups[t.dataset.toggle]; g.collapsed = !g.collapsed; render(); }
-  else if (t.dataset.delgroup !== undefined) { if (confirm("Delete this whole category?")) { m.groups.splice(t.dataset.delgroup, 1); render(); } }
-  else if (t.dataset.delitem !== undefined) { const [gi, ii] = t.dataset.delitem.split(":"); m.groups[gi].items.splice(ii, 1); render(); }
-  else if (t.dataset.additembtn !== undefined) addItem(t.dataset.additembtn);
+  const t = e.target.closest("[data-toggle],[data-sgtoggle],[data-delgroup],[data-delsg],[data-delitem],[data-delsgitem],[data-additembtn],[data-addsgitembtn],[data-addsgbtn]"); if (!t) return;
+  const m = getMonth(current), d = t.dataset;
+  if (d.toggle !== undefined) { const g = m.groups[d.toggle]; g.collapsed = !g.collapsed; render(); }
+  else if (d.sgtoggle !== undefined) { const [gi, sgi] = d.sgtoggle.split(":"); const sg = m.groups[gi].subgroups[sgi]; sg.collapsed = !sg.collapsed; render(); }
+  else if (d.delgroup !== undefined) { if (confirm("Delete this whole category?")) { m.groups.splice(d.delgroup, 1); render(); } }
+  else if (d.delsg !== undefined) { const [gi, sgi] = d.delsg.split(":"); if (confirm("Delete this subcategory and its items?")) { m.groups[gi].subgroups.splice(sgi, 1); render(); } }
+  else if (d.delitem !== undefined) { const [gi, ii] = d.delitem.split(":"); m.groups[gi].items.splice(ii, 1); render(); }
+  else if (d.delsgitem !== undefined) { const [gi, sgi, ii] = d.delsgitem.split(":"); m.groups[gi].subgroups[sgi].items.splice(ii, 1); render(); }
+  else if (d.additembtn !== undefined) addItem(d.additembtn);
+  else if (d.addsgitembtn !== undefined) addSubItem(d.addsgitembtn);
+  else if (d.addsgbtn !== undefined) addSubgroup(d.addsgbtn);
 });
 groups.addEventListener("keydown", e => {
-  if (e.key === "Enter" && e.target.dataset.additem !== undefined) addItem(e.target.dataset.additem);
-  if (e.key === "Enter" && e.target.dataset.toggle !== undefined) e.target.click();
+  if (e.key !== "Enter") return;
+  const d = e.target.dataset;
+  if (d.additem !== undefined) addItem(d.additem);
+  else if (d.addsgitem !== undefined) addSubItem(d.addsgitem);
+  else if (d.addsg !== undefined) addSubgroup(d.addsg);
+  else if (d.toggle !== undefined || d.sgtoggle !== undefined) e.target.click();
 });
 function addItem(gi) { const inp = groups.querySelector(`[data-additem="${gi}"]`), name = inp.value.trim(); if (!name) return; getMonth(current).groups[gi].items.push({ name, planned:0, actual:null }); render(); }
+function addSubItem(key) { const [gi, sgi] = key.split(":"), inp = groups.querySelector(`[data-addsgitem="${key}"]`), name = inp.value.trim(); if (!name) return; getMonth(current).groups[gi].subgroups[sgi].items.push({ name, planned:0, actual:null }); render(); }
+function addSubgroup(gi) { const inp = groups.querySelector(`[data-addsg="${gi}"]`), name = inp.value.trim(); if (!name) return; const g = getMonth(current).groups[gi]; g.subgroups = g.subgroups || []; g.subgroups.push({ name, collapsed:false, items:[] }); render(); }
 function addPool() { const inp = $("newPool"), name = inp.value.trim(); if (!name) return; getMonth(current).savingsGoals.push({ name, planned:0, target:0 }); inp.value = ""; render(); }
 $("addPoolBtn").addEventListener("click", addPool);
 $("newPool").addEventListener("keydown", e => { if (e.key === "Enter") addPool(); });
@@ -1452,7 +1541,10 @@ function renderBreakdown() {
   const ooTot = oneOffTotal(m);
   const cats = [...m.groups.map(g => ({ name:g.name, val:groupTotal(g, true) })), ...(ooTot > 0 ? [{ name:"One-off ⚡", val:ooTot }] : [])].filter(c => c.val > 0).sort((a,b) => b.val - a.val);
   const items = [];
-  m.groups.forEach(g => g.items.forEach(it => { const v = num(it.actual ?? it.planned); if (v > 0) items.push({ name:it.name, cat:g.name, val:v }); }));
+  m.groups.forEach(g => {
+    g.items.forEach(it => { const v = num(it.actual ?? it.planned); if (v > 0) items.push({ name:it.name, cat:g.name, val:v }); });
+    (g.subgroups || []).forEach(sg => sg.items.forEach(it => { const v = num(it.actual ?? it.planned); if (v > 0) items.push({ name:it.name, cat:`${g.name} › ${sg.name}`, val:v }); }));
+  });
   (m.oneOff || []).forEach(o => { const v = num(o.amount); if (v > 0) items.push({ name:o.name || "One-off", cat:"One-off ⚡", val:v }); });
   items.sort((a,b) => b.val - a.val);
   const inc = num(m.income) + num(m.bonus);
