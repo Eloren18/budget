@@ -233,6 +233,19 @@
   .subgroup table th { font-size:10px; }
   .add-sg { display:flex; gap:8px; padding:4px 14px 12px; }
   .add-sg input { flex:1; }
+  /* drag-to-move expense items */
+  .name-wrap { display:flex; align-items:center; gap:5px; }
+  .name-wrap .cell { flex:1; }
+  .drag-handle { cursor:grab; color:var(--faint); font-size:13px; line-height:1; padding:2px 1px; user-select:none; -webkit-user-select:none; touch-action:none; flex:0 0 auto; }
+  .drag-handle:hover { color:var(--primary); }
+  .drag-handle:active { cursor:grabbing; }
+  tr.dragging { opacity:.4; }
+  .items-drop.drop-zone-active { outline:2px dashed var(--primary); outline-offset:-3px; border-radius:var(--radius-sm); background:color-mix(in srgb,var(--primary) 6%,transparent); }
+  tr.drop-before td { box-shadow:inset 0 2px 0 var(--primary); }
+  tr.drop-after td { box-shadow:inset 0 -2px 0 var(--primary); }
+  .drag-ghost { position:fixed; left:0; top:0; z-index:9999; pointer-events:none; background:var(--elevated); color:var(--text);
+    border:1px solid var(--primary); border-radius:8px; padding:6px 12px; font-size:13px; font-weight:600; box-shadow:var(--shadow-lg);
+    max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; opacity:.96; }
 
   table { width:100%; border-collapse:collapse; }
   th, td { padding:8px 14px; text-align:left; border-top:1px solid var(--border-soft); }
@@ -352,6 +365,9 @@
   .inv-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
   .inv-name { font-size:16px; font-weight:700; }
   .inv-val { font-size:28px; font-weight:800; letter-spacing:-.025em; }
+  .inv-val-euro { margin-top:4px; }
+  .inv-val-input { font-size:24px; font-weight:800; letter-spacing:-.02em; width:170px; max-width:100%; }
+  .inv-val-euro::before { font-size:16px; }
   .inv-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:14px 0; }
   .inv-stat { background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius-sm); padding:11px 13px; }
   .inv-stat .sl { color:var(--muted); font-size:11.5px; font-weight:600; }
@@ -1227,19 +1243,20 @@ function itemRowHtml(gi, sgi, ii, it) {
   const addr = sgi == null ? `data-gi="${gi}" data-ii="${ii}"` : `data-gi="${gi}" data-sgi="${sgi}" data-ii="${ii}"`;
   const dkey = sgi == null ? `${gi}:${ii}` : `${gi}:${sgi}:${ii}`;
   const del = sgi == null ? `data-delitem="${gi}:${ii}"` : `data-delsgitem="${gi}:${sgi}:${ii}"`;
-  return `<tr>
-      <td><input class="cell name" type="text" value="${esc(it.name)}" ${addr} data-f="name" aria-label="Item name"></td>
+  return `<tr data-rowidx="${ii}">
+      <td><div class="name-wrap"><span class="drag-handle" data-drag="${dkey}" title="Drag to move to another category" aria-label="Drag to move">⠿</span><input class="cell name" type="text" value="${esc(it.name)}" ${addr} data-f="name" aria-label="Item name"></div></td>
       <td class="r"><input class="cell r amt" type="number" inputmode="decimal" min="0" step="0.01" value="${it.planned ?? ""}" ${addr} data-f="planned" aria-label="Planned"></td>
       <td class="r"><input class="cell r amt actual" type="number" inputmode="decimal" min="0" step="0.01" value="${it.actual ?? ""}" placeholder="${num(it.planned).toFixed(2)}" ${addr} data-f="actual" aria-label="Actual"></td>
       <td class="r" data-delta="${dkey}">${deltaHtml(it)}</td>
       <td class="r"><button class="btn-x" ${del} aria-label="Delete item">✕</button></td></tr>`;
 }
 function itemsTableHtml(gi, sgi, items, addName) {
+  const dropKey = sgi == null ? `${gi}` : `${gi}:${sgi}`;
   const rows = items.map((it, ii) => itemRowHtml(gi, sgi, ii, it)).join("");
   const addAttr = sgi == null ? `data-additem="${gi}"` : `data-addsgitem="${gi}:${sgi}"`;
   const addBtn = sgi == null ? `data-additembtn="${gi}"` : `data-addsgitembtn="${gi}:${sgi}"`;
-  return `<table><thead><tr><th>Item</th><th class="r">Planned</th><th class="r">Actual</th><th class="r">Δ</th><th></th></tr></thead>
-        <tbody>${rows || `<tr><td colspan="5" class="hint">No items yet.</td></tr>`}</tbody></table>
+  return `<div class="items-drop" data-drop="${dropKey}"><table><thead><tr><th>Item</th><th class="r">Planned</th><th class="r">Actual</th><th class="r">Δ</th><th></th></tr></thead>
+        <tbody>${rows || `<tr class="empty-row"><td colspan="5" class="hint">No items yet — drag one here or add below.</td></tr>`}</tbody></table></div>
       <div class="row-add"><input class="text" type="text" placeholder="Add item to ${esc(addName)}…" ${addAttr}><button class="btn-add" ${addBtn}>+ Item</button></div>`;
 }
 function renderGroups(m) {
@@ -1395,6 +1412,79 @@ groups.addEventListener("keydown", e => {
 function addItem(gi) { const inp = groups.querySelector(`[data-additem="${gi}"]`), name = inp.value.trim(); if (!name) return; getMonth(current).groups[gi].items.push({ name, planned:0, actual:null }); render(); }
 function addSubItem(key) { const [gi, sgi] = key.split(":"), inp = groups.querySelector(`[data-addsgitem="${key}"]`), name = inp.value.trim(); if (!name) return; getMonth(current).groups[gi].subgroups[sgi].items.push({ name, planned:0, actual:null }); render(); }
 function addSubgroup(gi) { const inp = groups.querySelector(`[data-addsg="${gi}"]`), name = inp.value.trim(); if (!name) return; const g = getMonth(current).groups[gi]; g.subgroups = g.subgroups || []; g.subgroups.push({ name, collapsed:false, items:[] }); render(); }
+
+/* ===== drag an expense item into another category / subcategory (mouse + touch) ===== */
+const listAt = (m, gi, sgi) => sgi == null ? m.groups[gi].items : m.groups[gi].subgroups[sgi].items;
+function clearDropMarks() {
+  groups.querySelectorAll(".drop-zone-active").forEach(el => el.classList.remove("drop-zone-active"));
+  groups.querySelectorAll(".drop-before,.drop-after").forEach(el => el.classList.remove("drop-before", "drop-after"));
+}
+function dropIndex(zone, y) {
+  const rows = [...zone.querySelectorAll("tbody tr[data-rowidx]")];
+  for (let i = 0; i < rows.length; i++) { const r = rows[i].getBoundingClientRect(); if (y < r.top + r.height / 2) return i; }
+  return rows.length;
+}
+let drag = null, autoRAF = null, autoDy = 0;
+function autoScroll(y) { // keep scrolling the page while the pointer hovers near an edge (helps on phones / long lists)
+  const margin = 64, speed = 14;
+  autoDy = y < margin ? -speed : y > innerHeight - margin ? speed : 0;
+  if (autoDy && !autoRAF) { const step = () => { if (!autoDy) { autoRAF = null; return; } scrollBy(0, autoDy); autoRAF = requestAnimationFrame(step); }; autoRAF = requestAnimationFrame(step); }
+}
+function endDrag() {
+  if (drag && drag.ghost) drag.ghost.remove();
+  if (drag && drag.row) drag.row.classList.remove("dragging");
+  clearDropMarks(); autoDy = 0; if (autoRAF) { cancelAnimationFrame(autoRAF); autoRAF = null; }
+  drag = null;
+}
+function commitDrag(dkey, zone, y) {
+  const m = getMonth(current);
+  const s = dkey.split(":").map(Number), srcGi = s[0], srcSgi = s.length === 3 ? s[1] : null, srcIi = s[s.length - 1];
+  const t = zone.dataset.drop.split(":").map(Number), tgtGi = t[0], tgtSgi = t.length === 2 ? t[1] : null;
+  const srcList = listAt(m, srcGi, srcSgi), tgtList = listAt(m, tgtGi, tgtSgi);
+  if (!srcList || !tgtList) return;
+  let idx = dropIndex(zone, y);
+  const [item] = srcList.splice(srcIi, 1);
+  if (srcList === tgtList && srcIi < idx) idx--;
+  tgtList.splice(Math.max(0, Math.min(idx, tgtList.length)), 0, item);
+  render();
+}
+groups.addEventListener("pointerdown", e => {
+  const h = e.target.closest(".drag-handle"); if (!h) return;
+  if (e.pointerType === "mouse" && e.button !== 0) return;
+  const row = h.closest("tr"); if (!row) return;
+  e.preventDefault();
+  drag = { dkey: h.dataset.drag, row, x0: e.clientX, y0: e.clientY, active: false, ghost: null, zone: null,
+           name: (row.querySelector('input[data-f="name"]') || {}).value || "item" };
+  try { h.setPointerCapture(e.pointerId); } catch {}
+});
+groups.addEventListener("pointermove", e => {
+  if (!drag) return;
+  if (!drag.active) { // only start once the pointer has actually moved (so a tap doesn't move anything)
+    if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 6) return;
+    drag.active = true; drag.row.classList.add("dragging");
+    const g = document.createElement("div"); g.className = "drag-ghost"; g.textContent = drag.name;
+    document.body.appendChild(g); drag.ghost = g;
+  }
+  e.preventDefault();
+  drag.ghost.style.left = (e.clientX + 14) + "px";
+  drag.ghost.style.top = (e.clientY + 8) + "px";
+  const el = document.elementFromPoint(e.clientX, e.clientY); // ghost is pointer-events:none, so this sees through it
+  const zone = el && el.closest ? el.closest(".items-drop") : null;
+  clearDropMarks(); drag.zone = zone;
+  if (zone) {
+    zone.classList.add("drop-zone-active");
+    const rows = [...zone.querySelectorAll("tbody tr[data-rowidx]")], idx = dropIndex(zone, e.clientY);
+    if (rows.length) { if (idx < rows.length) rows[idx].classList.add("drop-before"); else rows[rows.length - 1].classList.add("drop-after"); }
+  }
+  autoScroll(e.clientY);
+});
+groups.addEventListener("pointerup", e => {
+  if (!drag) return;
+  const active = drag.active, zone = drag.zone, dkey = drag.dkey, y = e.clientY;
+  endDrag();
+  if (active && zone) commitDrag(dkey, zone, y);
+});
+groups.addEventListener("pointercancel", endDrag);
 function addPool() { const inp = $("newPool"), name = inp.value.trim(); if (!name) return; getMonth(current).savingsGoals.push({ name, planned:0, target:0 }); inp.value = ""; render(); }
 $("addPoolBtn").addEventListener("click", addPool);
 $("newPool").addEventListener("keydown", e => { if (e.key === "Enter") addPool(); });
@@ -1672,8 +1762,8 @@ function renderInvest() {
     div.innerHTML = `
       <div class="inv-head">
         <div><div class="inv-name">📈 ${esc(name)}</div>
-          <div class="hint" style="margin-top:2px">${cur!=null ? "current value" : "no value yet — add one to see returns"}</div>
-          <div class="inv-val">${cur!=null ? eur(cur) : "—"}</div></div>
+          <div class="hint" style="margin-top:2px">${cur!=null ? "current value · tap to edit" : "no value yet — tap the box to set it"}</div>
+          <span class="euro inv-val-euro"><input class="money inv-val-input" type="number" inputmode="decimal" min="0" step="0.01" value="${cur!=null ? cur : ""}" placeholder="0.00" data-invval="${esc(name)}" aria-label="Current value of ${esc(name)} — tap to edit"></span></div>
         <div class="win-chips">
           ${[["1M",1],["3M",3],["6M",6],["YTD","ytd"],["1Y",12],["All",null]].map(([l,mo]) => `<button data-win="${esc(name)}|${mo}" class="${(win??null)===mo?"on":""}">${l}</button>`).join("")}
         </div>
@@ -1686,7 +1776,6 @@ function renderInvest() {
       <div class="hint">${win ? `Change over ${({1:"the last month",3:"the last 3 months",6:"the last 6 months",12:"the last year",ytd:"the year so far"})[win]}: ${winGainTxt}` : `Money-weighted annual return since your first investment (${wr&&wr.from?wr.from.toLocaleDateString(undefined,{month:"short",year:"numeric"}):"—"}).`}</div>
       ${sparkline(name)}
       <div class="inv-actions">
-        <button class="btn sm primary" data-invupdate="${esc(name)}">Update current value</button>
         <button class="btn sm" data-invlog="${esc(name)}">Log an extra investment</button>
         <button class="btn sm danger" data-invremove="${esc(name)}">Disconnect</button>
       </div>`;
@@ -1701,6 +1790,16 @@ function renderInvest() {
         <button class="btn sm primary" id="invConnectBtn">Track as investment</button></div>`
     : `<p class="hint">All your pools are connected. Add a new savings pool on the Budget tab to track another investment.</p>`;
 }
+// Edit an investment's current value inline (records/updates today's value snapshot).
+$("invList").addEventListener("change", e => {
+  const t = e.target; if (t.dataset.invval === undefined) return;
+  const name = t.dataset.invval, inv = data.investments[name]; if (!inv) return;
+  if (t.value.trim() === "") { renderInvest(); return; } // nothing entered — restore the shown value
+  inv.snapshots = inv.snapshots || [];
+  const today = todayStr(), val = num(t.value), existing = inv.snapshots.find(s => s.date === today);
+  if (existing) existing.value = val; else inv.snapshots.push({ date: today, value: val });
+  save(); renderInvest();
+});
 $("invList").addEventListener("click", e => {
   const t = e.target;
   if (t.dataset.win !== undefined) { const [name, mo] = t.dataset.win.split("|"); invWindow[name] = mo === "null" ? null : (mo === "ytd" ? "ytd" : Number(mo)); renderInvest(); return; }
