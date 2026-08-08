@@ -1494,7 +1494,6 @@ function renderPools(m) {
   const names = poolList();
   if (!names.length) { c.innerHTML = `<p class="hint">No pools yet — add one on the <b>Pools</b> tab.</p>`; return; }
   const monLabel = monthName(current).split(" ")[0];
-  const nets = accountNet(m), anyDeficit = Object.values(nets).some(v => v < -0.005); // any account owing money this month?
   names.forEach(name => {
     const goal = m.savingsGoals.find(g => g.name === name);
     const indef = indefiniteGoal(goal);
@@ -1536,7 +1535,7 @@ function renderPools(m) {
       <div class="inv-actions">
         <button class="btn sm primary" data-pdep="${esc(name)}">＋ Add</button>
         <button class="btn sm" data-pwd="${esc(name)}">− Withdraw</button>
-        ${anyDeficit ? `<button class="btn sm" data-covdef="${esc(name)}">Cover deficit</button>` : ""}
+        <button class="btn sm" data-covdef="${esc(name)}">Cover deficit</button>
       </div>`;
     c.appendChild(div);
   });
