@@ -1030,6 +1030,23 @@ function accountNet(m) {
 }
 // Balances carried INTO a month from the previous finalized month (+surplus / −deficit), keyed by account id ("" = unassigned).
 const acctCarryIn = k => { const p = data.months[prevKey(k)]; return (p && p.finalized && p.applied && p.applied.acctCarry) ? p.applied.acctCarry : {}; };
+// How much each account is still SHORT this month = this-month deficit + carried-in debt, minus covers already applied. { acctId(or ""): amount owed > 0 }.
+function accountOwed(m) {
+  const k = mkeyOf(m), pos = {}, add = (id, v) => { const kk = id || ""; pos[kk] = (pos[kk] || 0) + v; };
+  m.groups.forEach(g => {
+    g.items.forEach(it => add(resolveAcct(it.account, g.account), num(it.planned) - num(it.actual ?? it.planned)));
+    (g.subgroups || []).forEach(sg => sg.items.forEach(it => add(resolveAcct(it.account, sg.account, g.account), num(it.planned) - num(it.actual ?? it.planned))));
+  });
+  (m.oneOff || []).forEach(o => add(resolveAcct(data.settings.oneOffAccount), -num(o.amount)));
+  ensureSpend(m);
+  const spent = spentLocked(m, k), grocSpent = spentLockedGroc(m, k, grocPct());
+  add(resolveAcct(data.settings.grocAccount), num(m.grocAmt) - grocSpent);
+  add(resolveAcct(data.settings.oopAccount), num(m.oopAmt) - (spent - grocSpent));
+  const carry = acctCarryIn(k); for (const id in carry) add(id, num(carry[id])); // carried-in debt (−) adds to the shortfall
+  for (const n in (data.poolTx || {})) (data.poolTx[n] || []).forEach(x => { if (x.t === "withdraw" && monthOf(x.d) === k && "cover" in x) add((x.cover && acctById(x.cover)) ? x.cover : "", -num(x.a)); }); // covers already made
+  const owed = {}; for (const id in pos) { const o = -pos[id]; if (o > 0.005) owed[id] = o; }
+  return owed;
+}
 // How much to set aside in each account this month = everything drawn from it, minus cash pulled into it from savings.
 function accountSetAside(m) {
   const totals = {}, add = (id, amt) => { const kk = id || ""; totals[kk] = (totals[kk] || 0) + amt; };
@@ -1730,10 +1747,10 @@ pools.addEventListener("click", e => {
     if (data.poolTx[name] && data.poolTx[name][idx]) data.poolTx[name].splice(idx, 1);
     render();
   } else if (t.dataset.covdef !== undefined) {
-    const name = t.dataset.covdef, m = getMonth(current), nets = accountNet(m);
+    const name = t.dataset.covdef, m = getMonth(current), owed = accountOwed(m);
     const defs = [...(data.accounts || []).map(a => ({ id: a.id, name: a.name })), { id: "", name: "Unassigned" }]
-      .map(a => ({ ...a, def: -Math.min(0, num(nets[a.id])) })).filter(a => a.def > 0.005).sort((a, b) => b.def - a.def);
-    if (!defs.length) { alert("No account is in deficit this month — nothing to cover."); return; }
+      .map(a => ({ ...a, def: num(owed[a.id]) })).filter(a => a.def > 0.005).sort((a, b) => b.def - a.def);
+    if (!defs.length) { alert("No account is over budget this month — nothing to cover."); return; }
     const v = prompt(`Withdraw from "${name}" to cover a deficit. It comes from this month's planned saving first, then your saved balance, and is NOT added to your spendable money. How much?`, "");
     if (v == null || !num(v)) return;
     const amt = Math.abs(num(v)); if (!amt) return;
