@@ -1363,7 +1363,7 @@ function renderAllocation(m) {
   const leftover = Math.max(0, affordable - budget);   // money not yet given a job
   // break expenses down by category (+ one-offs), each its own colour
   const cats = m.groups.map(g => ({ name:g.name, val:groupTotal(g, true) })).filter(c => c.val > 0);
-  const ooTot = oneOffTotal(m); if (ooTot > 0) cats.push({ name:"One-off ⚡", val:ooTot });
+  const ooTot = oneOffTotal(m); if (ooTot > 0) cats.push({ name:"One-off", val:ooTot });
   cats.forEach((c, i) => c.color = CAT_COLORS[i % CAT_COLORS.length]);
   const sum = exp + sav + grocSeg + oopSeg + budgetOver + planOver;
   const den = Math.max(cashIn, sum, 1), pc = v => Math.max(0, v) / den * 100;
@@ -1373,14 +1373,15 @@ function renderAllocation(m) {
     seg("seg-sav", sav) + seg("seg-groc", grocSeg) + seg("seg-oop", oopSeg) + seg("seg-over", budgetOver) + seg("seg-over", planOver);
   // legend: one box per item — colour, then name, then amount
   const box = (color, name, v, over) => `<div class="leg-box"><span class="sw${over ? " seg-over" : ""}"${over ? "" : ` style="background:${color}"`}></span><span class="leg-name">${name}</span><span class="leg-amt"${over ? ' style="color:var(--over)"' : ""}>${eur(v)}</span></div>`;
+  const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
   $("allocLegend").innerHTML =
-    cats.map(c => box(c.color, esc(c.name), c.val)).join("") +
-    box("var(--save)", "💰 savings", sav) +
-    box("var(--warn)", "🛒 groceries", gA) +
-    box("var(--spend)", "💸 out-of-pocket", oA) +
-    (budgetOver > 0 ? box(null, "over budget", budgetOver, true) : "") +
-    (planOver > 0 ? box(null, "over income", planOver, true) : "") +
-    (leftover > 0 ? box("var(--faint)", "unallocated", leftover) : "");
+    cats.map(c => box(c.color, esc(cap(c.name)), c.val)).join("") +
+    box("var(--save)", "Savings", sav) +
+    box("var(--warn)", "Groceries", gA) +
+    box("var(--spend)", "Out-of-pocket", oA) +
+    (budgetOver > 0 ? box(null, "Over budget", budgetOver, true) : "") +
+    (planOver > 0 ? box(null, "Over income", planOver, true) : "") +
+    (leftover > 0 ? box("var(--faint)", "Unallocated", leftover) : "");
 }
 function renderRecap(m) {
   const r = $("recap");
