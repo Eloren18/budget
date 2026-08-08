@@ -301,6 +301,7 @@
   .acct-sum-row:last-of-type { border-bottom:none; }
   .acct-sum-row .num { font-weight:750; letter-spacing:-.01em; }
   .acct-sum-row.unassigned { color:var(--muted); }
+  .acct-sum-row.foot { border-top:1px dashed var(--border); font-size:13px; }
   .acct-sum-row .num.pos { color:var(--save); }
   .acct-sum-row .acct-carry { display:block; font-size:11.5px; font-weight:500; margin-top:2px; }
   .acct-carry.owed { color:var(--over); }
@@ -695,12 +696,21 @@
   <div class="modal">
     <h3>Finalize <span id="modalMonth"></span></h3>
     <div class="field"><label for="mBonus">Bonus / gifts received</label><span class="euro"><input class="money" type="number" id="mBonus" min="0" step="0.01"></span></div>
-    <p class="note">Each account's over/under for the month (bills vs plan, one-offs, groceries/out-of-pocket vs what you ticked as spent) rolls into next month. You can cover a shortfall from savings below instead. Finalizing locks the month.</p>
+    <p class="note">Your month's surplus or shortfall (income vs expenses, savings &amp; spending) rolls into next month. Cover a shortfall from a savings pool below instead. Then make the savings transfers shown. Finalizing locks the month.</p>
     <div id="modalSummary"></div>
     <div class="actions">
       <button class="btn" id="modalCancel">Cancel</button>
       <button class="btn primary" id="modalConfirm">Finalize &amp; start next month</button>
     </div>
+  </div>
+</div>
+
+<!-- COVER DEFICIT MODAL -->
+<div class="overlay" id="coverModal">
+  <div class="modal">
+    <h3>Cover deficit</h3>
+    <div id="coverBody"></div>
+    <div class="actions" id="coverActions"></div>
   </div>
 </div>
 
@@ -965,7 +975,11 @@ const lockGroc = (v, gp) => (v && typeof v === "object") ? num(v.g) : lockTotal(
 const spentLocked = (m, k) => { const valid = new Set(spendSegments(k).map(s => k + "-" + String(s.start).padStart(2,"0"))); return Object.entries(m.spendLocks || {}).reduce((s,[key,v]) => valid.has(key) ? s + lockTotal(v) : s, 0); };
 // Of that spent money, how much was groceries (frozen per-week at tick time).
 const spentLockedGroc = (m, k, gp) => { const valid = new Set(spendSegments(k).map(s => k + "-" + String(s.start).padStart(2,"0"))); return Object.entries(m.spendLocks || {}).reduce((s,[key,v]) => valid.has(key) ? s + lockGroc(v, gp) : s, 0); };
-const discretionary = m => { const k = mkeyOf(m); return num(m.income) + num(m.bonus) - expensesEff(m) - savingsPlanned(m) + withdrawnToSpend(k); };
+// Money pulled from pools via "cover deficit" this month — it funds the over-budget but never becomes spendable cash.
+const coversTotal = mkey => { let s = 0; const px = data.poolTx || {}; for (const n in px) (px[n] || []).forEach(x => { if (x.t === "withdraw" && ("cover" in x) && String(x.d).slice(0, 7) === mkey) s += -num(x.a); }); return s; };
+// One month-to-month carryover: the previous finalized month's net (+surplus / −deficit).
+const carryIn = k => { const p = data.months[prevKey(k)]; return (p && p.finalized && p.applied) ? num(p.applied.carryover) : 0; };
+const discretionary = m => { const k = mkeyOf(m); return num(m.income) + num(m.bonus) + carryIn(k) - expensesEff(m) - savingsPlanned(m) + withdrawnToSpend(k) + coversTotal(k); };
 // Spending money is now the SUM of a fixed groceries amount + a fixed out-of-pocket amount (both set by hand).
 const spendBudget = m => num(m.grocAmt) + num(m.oopAmt);
 // First time a month is shown, seed groceries/OOP from whatever's left after expenses & savings, using the saved % split.
@@ -977,6 +991,10 @@ function ensureSpend(m) {
     m.oopAmt = Math.round((avail - m.grocAmt) * 100) / 100;
   }
 }
+// A month's single net = what's left after expenses & savings, minus what you actually spent (ticked weeks). +surplus/−deficit; rolls into next month.
+const monthNet = (m, k) => discretionary(m) - spentLocked(m, k);
+// How far over budget you are this month = spending budget beyond what's available (income − expenses − savings + carryover + covers). Includes any carried-in debt.
+const totalDeficit = m => { ensureSpend(m); return Math.max(0, spendBudget(m) - discretionary(m)); };
 
 /* ===== accounts: which bank account each expense / pool draws from ===== */
 const uid = () => "a" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -1005,49 +1023,7 @@ function paintAcctPickers() {
   if (ow) ow.innerHTML = has ? acctSelectHtml(s.oopAccount, 'data-oopacct', dflt) : "";
   if (oo) { oo.style.display = has ? "flex" : "none"; oo.innerHTML = has ? `<span class="acct-line-label">Draw all one-offs from:</span> ${acctSelectHtml(s.oneOffAccount, 'data-ooacct', dflt)}` : ""; }
 }
-// Per-account net at month end = what you funded (planned) minus what actually drew from it.
-// One-offs are pure deficits (unplanned); groceries/OOP compare the budget to what you actually spent (ticked weeks).
-// +surplus (spare) / −deficit (owed). Returns { acctId(or "" for unassigned): net }.
-function accountNet(m) {
-  const k = mkeyOf(m), base = {}, cred = {};
-  const addB = (id, v) => { const kk = id || ""; base[kk] = (base[kk] || 0) + v; };
-  const addC = (id, v) => { const kk = id || ""; cred[kk] = (cred[kk] || 0) + v; };
-  m.groups.forEach(g => {
-    g.items.forEach(it => addB(resolveAcct(it.account, g.account), num(it.planned) - num(it.actual ?? it.planned)));
-    (g.subgroups || []).forEach(sg => sg.items.forEach(it => addB(resolveAcct(it.account, sg.account, g.account), num(it.planned) - num(it.actual ?? it.planned))));
-  });
-  (m.oneOff || []).forEach(o => addB(resolveAcct(data.settings.oneOffAccount), -num(o.amount)));
-  ensureSpend(m);
-  const spent = spentLocked(m, k), grocSpent = spentLockedGroc(m, k, grocPct()); // use each ticked week's frozen split
-  addB(resolveAcct(data.settings.grocAccount), num(m.grocAmt) - grocSpent);
-  addB(resolveAcct(data.settings.oopAccount), num(m.oopAmt) - (spent - grocSpent));
-  // "cover deficit" money pulled from a pool credits the account it covers (x.a is negative, so −x.a is the amount)
-  for (const n in (data.poolTx || {})) (data.poolTx[n] || []).forEach(x => { if (x.t === "withdraw" && monthOf(x.d) === k && "cover" in x) addC((x.cover && acctById(x.cover)) ? x.cover : "", -num(x.a)); });
-  // a credit only shrinks a deficit toward 0 — it never inflates a surplus that would carry forward
-  const nets = {}, ids = new Set([...Object.keys(base), ...Object.keys(cred)]);
-  ids.forEach(id => { const b = base[id] || 0, net = b < 0 ? Math.min(0, b + (cred[id] || 0)) : b; if (Math.abs(net) > 0.005) nets[id] = net; });
-  return nets;
-}
-// Balances carried INTO a month from the previous finalized month (+surplus / −deficit), keyed by account id ("" = unassigned).
-const acctCarryIn = k => { const p = data.months[prevKey(k)]; return (p && p.finalized && p.applied && p.applied.acctCarry) ? p.applied.acctCarry : {}; };
-// How much each account is still SHORT this month = this-month deficit + carried-in debt, minus covers already applied. { acctId(or ""): amount owed > 0 }.
-function accountOwed(m) {
-  const k = mkeyOf(m), pos = {}, add = (id, v) => { const kk = id || ""; pos[kk] = (pos[kk] || 0) + v; };
-  m.groups.forEach(g => {
-    g.items.forEach(it => add(resolveAcct(it.account, g.account), num(it.planned) - num(it.actual ?? it.planned)));
-    (g.subgroups || []).forEach(sg => sg.items.forEach(it => add(resolveAcct(it.account, sg.account, g.account), num(it.planned) - num(it.actual ?? it.planned))));
-  });
-  (m.oneOff || []).forEach(o => add(resolveAcct(data.settings.oneOffAccount), -num(o.amount)));
-  ensureSpend(m);
-  const spent = spentLocked(m, k), grocSpent = spentLockedGroc(m, k, grocPct());
-  add(resolveAcct(data.settings.grocAccount), num(m.grocAmt) - grocSpent);
-  add(resolveAcct(data.settings.oopAccount), num(m.oopAmt) - (spent - grocSpent));
-  const carry = acctCarryIn(k); for (const id in carry) add(id, num(carry[id])); // carried-in debt (−) adds to the shortfall
-  for (const n in (data.poolTx || {})) (data.poolTx[n] || []).forEach(x => { if (x.t === "withdraw" && monthOf(x.d) === k && "cover" in x) add((x.cover && acctById(x.cover)) ? x.cover : "", -num(x.a)); }); // covers already made
-  const owed = {}; for (const id in pos) { const o = -pos[id]; if (o > 0.005) owed[id] = o; }
-  return owed;
-}
-// How much to set aside in each account this month = everything drawn from it, minus cash pulled into it from savings.
+// How much to set aside in each account this month = everything drawn from it, minus cash a normal withdrawal landed in it.
 function accountSetAside(m) {
   const totals = {}, add = (id, amt) => { const kk = id || ""; totals[kk] = (totals[kk] || 0) + amt; };
   const k = mkeyOf(m);
@@ -1060,33 +1036,27 @@ function accountSetAside(m) {
   if (num(m.grocAmt)) add(resolveAcct(data.settings.grocAccount), num(m.grocAmt));
   if (num(m.oopAmt)) add(resolveAcct(data.settings.oopAccount), num(m.oopAmt));
   m.savingsGoals.forEach(gl => { const t = num(gl.planned); if (t) add(resolveAcct((data.poolAccounts || {})[gl.name]), t); });
-  // a withdrawal reduces what you need to add to an account: a "cover" withdrawal credits the deficit it covers; a normal one lands its cash in its destination account (x.a is negative)
-  for (const n in (data.poolTx || {})) (data.poolTx[n] || []).forEach(x => {
-    if (x.t !== "withdraw" || monthOf(x.d) !== k) return;
-    if ("cover" in x) add((x.cover && acctById(x.cover)) ? x.cover : "", num(x.a));
-    else if (x.acct && acctById(x.acct)) add(x.acct, num(x.a));
-  });
-  // carried-in from last month: a deficit (−) raises what to put in; a surplus (+) lowers it
-  const carry = acctCarryIn(k);
-  for (const id in carry) add(id, -num(carry[id]));
+  // a NORMAL withdrawal's cash lands in its destination account, reducing what to add there (x.a is negative). Covers fund the whole-budget deficit, not a single account.
+  for (const n in (data.poolTx || {})) (data.poolTx[n] || []).forEach(x => { if (x.t === "withdraw" && !("cover" in x) && monthOf(x.d) === k && x.acct && acctById(x.acct)) add(x.acct, num(x.a)); });
   return totals;
 }
 function renderAccountSummary(m) {
   const box = $("acctSummary"); if (!box) return;
-  const accts = data.accounts || [], carry = acctCarryIn(mkeyOf(m));
-  const hasCarry = Object.keys(carry).some(id => Math.abs(num(carry[id])) > 0.005);
-  if (!accts.length && !hasCarry) { box.style.display = "none"; box.innerHTML = ""; return; }
+  const accts = data.accounts || [], k = mkeyOf(m), ci = carryIn(k), deficit = totalDeficit(m), prevName = monthName(prevKey(k)).split(" ")[0];
+  if (!accts.length && Math.abs(ci) < 0.005 && deficit < 0.005) { box.style.display = "none"; box.innerHTML = ""; return; }
   const totals = accountSetAside(m);
-  const mkRow = (name, id, un) => {
-    const amt = totals[id] || 0, c = num(carry[id]);
-    const carryNote = c ? `<span class="acct-carry ${c < 0 ? "owed" : "spare"}">${c < 0 ? "incl. " + eur(-c) + " carried debt" : "less " + eur(c) + " carried spare"}</span>` : "";
-    return `<div class="acct-sum-row${un ? " unassigned" : ""}"><span>${esc(name)}${carryNote}</span><span class="num${amt < 0 ? " pos" : ""}">${amt < 0 ? eur(-amt) + " spare" : eur(amt)}</span></div>`;
-  };
+  const mkRow = (name, id, un) => { const amt = totals[id] || 0; return `<div class="acct-sum-row${un ? " unassigned" : ""}"><span>${esc(name)}</span><span class="num${amt < 0 ? " pos" : ""}">${amt < 0 ? eur(-amt) + " spare" : eur(amt)}</span></div>`; };
+  const footRow = (label, val, col) => `<div class="acct-sum-row foot"><span style="color:var(--${col})">${label}</span><span class="num" style="color:var(--${col})">${val}</span></div>`;
+  let foot = "";
+  if (ci < -0.005) foot += footRow(`Carried-over deficit from ${prevName}`, "− " + eur(-ci), "over");
+  else if (ci > 0.005) foot += footRow(`Carried-over surplus from ${prevName}`, "+ " + eur(ci), "save");
+  if (deficit > 0.005) foot += footRow("Over budget — cover from a pool below", "− " + eur(deficit), "over");
   box.style.display = "block";
   box.innerHTML = `<div class="acct-sum-head">Put your money in this month</div>` +
     accts.map(a => mkRow(a.name, a.id, false)).join("") +
-    ((Math.abs(totals[""] || 0) > 0.005 || carry[""]) ? mkRow("Unassigned", "", true) : "") +
-    `<p class="hint" style="margin:8px 0 0">How much to have in each account this month — its bills + groceries/out-of-pocket + savings, minus cash pulled in, plus anything owed (or minus anything spare) carried from last month. Cover a shortfall from a savings pool with <b>Cover deficit</b> below.</p>`;
+    (Math.abs(totals[""] || 0) > 0.005 ? mkRow("Unassigned", "", true) : "") +
+    foot +
+    `<p class="hint" style="margin:8px 0 0">How much to move into each account this month for its bills, groceries/out-of-pocket &amp; savings.${deficit > 0.005 ? " You're <b>over budget</b> — use <b>Cover deficit</b> on a savings pool below to fund the gap." : ""}</p>`;
 }
 const totalSaved = () => Object.values(data.savings).reduce((s, v) => s + num(v), 0);
 const monthSaved = m => (m.finalized && m.applied) ? Object.values(m.applied.contributions).reduce((s,v)=>s+v,0) : savingsPlanned(m);
@@ -1381,10 +1351,12 @@ function liveRecalc() {
 const CAT_COLORS = ["#8b5cf6","#ec4899","#14b8a6","#f97316","#64748b","#a855f7","#d946ef","#0891b2","#e11d48","#7c3aed","#db2777","#4f8a4f"];
 function renderAllocation(m) {
   ensureSpend(m);
+  const k = mkeyOf(m), ci = carryIn(k), cov = coversTotal(k);
   const exp = expensesEff(m), sav = savingsPlanned(m), disc = discretionary(m);
   const gA = num(m.grocAmt), oA = num(m.oopAmt), budget = gA + oA;
-  const cashIn = num(m.income) + num(m.bonus) + withdrawnToSpend(mkeyOf(m));
-  const planOver = Math.max(0, exp + sav - cashIn); // expenses + savings alone exceed income (red)
+  const cashIn = num(m.income) + num(m.bonus) + withdrawnToSpend(k) + cov + Math.max(ci, 0); // money in (carried surplus + pool covers add)
+  const deficitIn = Math.max(0, -ci);               // carried-in debt (red)
+  const planOver = Math.max(0, exp + sav + deficitIn - cashIn); // fixed claims exceed money in (red)
   const affordable = Math.max(0, disc);             // what's actually left to spend
   const fit = Math.min(budget, affordable);         // the part of your spending budget you can afford
   const grocSeg = budget > 0 ? fit * gA / budget : 0, oopSeg = fit - grocSeg; // affordable budget, split groceries/OOP
@@ -1394,12 +1366,12 @@ function renderAllocation(m) {
   const cats = m.groups.map(g => ({ name:g.name, val:groupTotal(g, true) })).filter(c => c.val > 0);
   const ooTot = oneOffTotal(m); if (ooTot > 0) cats.push({ name:"One-off", val:ooTot });
   cats.forEach((c, i) => c.color = CAT_COLORS[i % CAT_COLORS.length]);
-  const sum = exp + sav + grocSeg + oopSeg + budgetOver + planOver;
+  const sum = exp + sav + deficitIn + grocSeg + oopSeg + budgetOver + planOver;
   const den = Math.max(cashIn, sum, 1), pc = v => Math.max(0, v) / den * 100;
   const seg = (cls, v, color) => v > 0 ? `<span class="${cls}" style="width:${pc(v)}%${color ? ";background:" + color : ""}"></span>` : "";
   $("allocBar").innerHTML =
     cats.map(c => seg("", c.val, c.color)).join("") +
-    seg("seg-sav", sav) + seg("seg-groc", grocSeg) + seg("seg-oop", oopSeg) + seg("seg-over", budgetOver) + seg("seg-over", planOver);
+    seg("seg-sav", sav) + seg("seg-over", deficitIn) + seg("seg-groc", grocSeg) + seg("seg-oop", oopSeg) + seg("seg-over", budgetOver) + seg("seg-over", planOver);
   // legend: one box per item — colour, then name, then amount
   const box = (color, name, v, over) => `<div class="leg-box"><span class="sw${over ? " seg-over" : ""}"${over ? "" : ` style="background:${color}"`}></span><span class="leg-name">${name}</span><span class="leg-amt"${over ? ' style="color:var(--over)"' : ""}>${eur(v)}</span></div>`;
   const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
@@ -1408,6 +1380,9 @@ function renderAllocation(m) {
     box("var(--save)", "Savings", sav) +
     box("var(--warn)", "Groceries", gA) +
     box("var(--spend)", "Out-of-pocket", oA) +
+    (ci > 0.005 ? box("var(--save)", "Carried surplus", ci) : "") +
+    (ci < -0.005 ? box(null, "Carried debt", -ci, true) : "") +
+    (cov > 0.005 ? box("var(--faint)", "Covered from savings", cov) : "") +
     (budgetOver > 0 ? box(null, "Over budget", budgetOver, true) : "") +
     (planOver > 0 ? box(null, "Over income", planOver, true) : "") +
     (leftover > 0 ? box("var(--faint)", "Unallocated", leftover) : "");
@@ -1417,9 +1392,8 @@ function renderRecap(m) {
   if (m.finalized && m.applied) {
     const toPools = Object.values(m.applied.contributions || {}).reduce((s,v)=>s+num(v),0);
     const [ny,nm] = mkeyOf(m).split("-").map(Number), nextName = monthName(monthKey(new Date(ny, nm, 1))).split(" ")[0];
-    const carry = m.applied.acctCarry || {};
-    const parts = Object.keys(carry).filter(id => Math.abs(num(carry[id])) > 0.005).map(id => { const nm2 = id ? (acctName(id) || "an account") : "Unassigned"; const v = num(carry[id]); return `${esc(nm2)} ${v < 0 ? "−" + eur(-v) : "+" + eur(v)}`; });
-    const carryTxt = parts.length ? ` Carried into ${nextName}: ${parts.join(", ")}.` : "";
+    const co = num(m.applied.carryover);
+    const carryTxt = co > 0 ? ` A surplus of <b>${eur(co)}</b> rolled into ${nextName}.` : co < 0 ? ` A shortfall of <b>${eur(-co)}</b> rolled into ${nextName}.` : "";
     r.className = "recap show";
     r.innerHTML = `<span class="ic">🎉</span><div>Month finalized — <b>${eur(toPools)}</b> went to your pools this month. Total saved is now <b>${eur(totalSaved())}</b>.${carryTxt}</div>`;
   } else r.className = "recap";
@@ -1526,7 +1500,7 @@ function renderPools(m) {
           <span class="btn-x lock" title="${m.finalized ? "Saved — locked in when you finalized this month." : "Planned — it's added to the pool when you finalize this month. Change it on the Pools tab."}">🔒</span>
         </div>`
       : `<div class="ptx-item">
-          <span class="tx-when">${parseDate(x.d).toLocaleDateString(undefined,{day:"numeric",month:"short"})} · ${("cover" in x) ? `Deficit cover → ${x.cover ? esc(acctName(x.cover) || "account") : "Unassigned"}` : (TX_LABEL[x.t] || x.t)}</span>
+          <span class="tx-when">${parseDate(x.d).toLocaleDateString(undefined,{day:"numeric",month:"short"})} · ${("cover" in x) ? "Deficit cover" : (TX_LABEL[x.t] || x.t)}</span>
           <span class="euro"><input class="mini-amt ptx-in" type="number" step="0.01" value="${num(x.a)}" data-ptx="${idx}" aria-label="Amount"></span>
           ${(x.t === "withdraw" && !("cover" in x) && (data.accounts || []).length) ? acctSelectHtml(x.acct || "", `data-txacct="${idx}"`, "→ into which account?") : ""}
           <button class="btn-x" data-ptxdel="${idx}" aria-label="Delete">✕</button>
@@ -1568,6 +1542,7 @@ function refreshSpend(m) {
   renderSpendSchedule(m, budget, dim, budget / dim);
   const cw = $("cWeek"); cw.textContent = eur(budget / dim * 7); cw.className = "kvalue" + (budget > Math.max(0, disc) ? " neg" : "");
   $("cWeekSub").textContent = eur(budget / dim) + " / day";
+  renderAccountSummary(m); // keep the "over budget" line in sync with the budget
 }
 // Set groceries as a fixed € — out-of-pocket stays put, so this changes the total spending budget.
 $("grocAmtInput").addEventListener("input", e => {
@@ -1747,23 +1722,7 @@ pools.addEventListener("click", e => {
     if (data.poolTx[name] && data.poolTx[name][idx]) data.poolTx[name].splice(idx, 1);
     render();
   } else if (t.dataset.covdef !== undefined) {
-    const name = t.dataset.covdef, m = getMonth(current), owed = accountOwed(m);
-    const defs = [...(data.accounts || []).map(a => ({ id: a.id, name: a.name })), { id: "", name: "Unassigned" }]
-      .map(a => ({ ...a, def: num(owed[a.id]) })).filter(a => a.def > 0.005).sort((a, b) => b.def - a.def);
-    if (!defs.length) { alert("No account is over budget this month — nothing to cover."); return; }
-    const v = prompt(`Withdraw from "${name}" to cover a deficit. It comes from this month's planned saving first, then your saved balance, and is NOT added to your spendable money. How much?`, "");
-    if (v == null || !num(v)) return;
-    const amt = Math.abs(num(v)); if (!amt) return;
-    let target = defs[0];
-    if (defs.length > 1) {
-      const pick = prompt("Which deficit to cover? Enter its number:\n" + defs.map((a, i) => `${i + 1}) ${a.name} — owes ${eur(a.def)}`).join("\n"), "1");
-      if (pick == null) return;
-      const idx = parseInt(pick, 10) - 1; if (isNaN(idx) || idx < 0 || idx >= defs.length) return;
-      target = defs[idx];
-    }
-    data.poolTx[name] = data.poolTx[name] || [];
-    data.poolTx[name].push({ d: current + "-15", a: -amt, t: "withdraw", n: "Deficit cover", cover: target.id });
-    recomputeSavings(); render(); playSavingsAnim();
+    openCoverModal(t.dataset.covdef);
   }
 });
 
@@ -1800,79 +1759,122 @@ $("finalizeBtn").addEventListener("click", () => {
   if (m.finalized) { if (confirm("Re-open this month for editing? Your pool contributions stay as they are.")) { reverseFinalize(m); render(); } return; }
   openFinalize(m);
 });
+let modalCover = ""; // pool chosen at finalize to cover the month's shortfall from
 function openFinalize(m) {
+  modalCover = "";
   $("modalMonth").textContent = monthName(current);
   $("mBonus").value = m.bonus || "";
   updateModalSummary();
   overlay.classList.add("show");
 }
+// Actual money that lands in a pool this month = its target + deposits − withdrawals (incl. covers).
+function poolActual(name) {
+  return poolTxOf(name).reduce((s, x) => String(x.d).startsWith(current + "-") ? s + num(x.a) : s, 0);
+}
+const poolWithdrawn = name => poolTxOf(name).reduce((s, x) => (x.t === "withdraw" && String(x.d).startsWith(current + "-")) ? s + (-num(x.a)) : s, 0);
 function updateModalSummary() {
-  const m = getMonth(current);
-  const bonus = num($("mBonus").value), exp = expensesEff(m), sav = savingsPlanned(m), pulled = withdrawnToSpend(mkeyOf(m));
+  const m = getMonth(current), k = mkeyOf(m);
+  const bonus = num($("mBonus").value), exp = expensesEff(m), sav = savingsPlanned(m), pulled = withdrawnToSpend(k), cov = coversTotal(k), ci = carryIn(k);
   const segs = spendSegments(current), weeks = segs.length, locks = m.spendLocks || {};
   const ticked = segs.filter(s => (current + "-" + String(s.start).padStart(2,"0")) in locks).length;
   const spent = spentLocked(m, current);
   const [ny,nm] = current.split("-").map(Number), nextName = monthName(monthKey(new Date(ny, nm, 1))).split(" ")[0];
-  const nets = accountNet(m);
   const pools = (m.savingsGoals || []).filter(g => num(g.planned) > 0);
-  const acctRow = (name, id) => {
-    const v = num(nets[id]), cls = v >= 0 ? "var(--save)" : "var(--over)", label = v >= 0 ? `+ ${eur(v)} spare` : `− ${eur(-v)} short`;
-    const cover = (v < -0.005 && pools.length) ? `<select class="text cover-sel" data-cover="${id}" style="margin-top:5px;width:100%;font-size:12.5px">
-        <option value="">↩ Carry the ${eur(-v)} into ${nextName}</option>
-        ${pools.map(g => `<option value="${esc(g.name)}">Take ${eur(Math.min(-v, num(g.planned)))} from ${esc(g.name)}'s saving instead</option>`).join("")}
-      </select>` : "";
-    return `<div class="mrow" style="align-items:flex-start"><span>${esc(name)}${cover}</span><span class="num" style="color:${cls}">${label}</span></div>`;
-  };
-  const accountRows = (data.accounts || []).filter(a => Math.abs(num(nets[a.id])) > 0.005).map(a => acctRow(a.name, a.id)).join("")
-    + (Math.abs(num(nets[""])) > 0.005 ? acctRow("Unassigned", "") : "");
+  const netBefore = num(m.income) + bonus + ci + pulled + cov - exp - sav - spent; // before any finalize cover-from-savings
+  const shortfall = Math.max(0, -netBefore);
+  const coverGoal = modalCover ? m.savingsGoals.find(g => g.name === modalCover) : null;
+  const coverAmt = coverGoal ? Math.min(shortfall, num(coverGoal.planned)) : 0;
+  const net = netBefore + coverAmt;
+  const coverSel = (shortfall > 0.005 && pools.length) ? `<select class="text" data-cover style="margin-top:6px;width:100%;font-size:12.5px">
+      <option value="" ${modalCover === "" ? "selected" : ""}>↩ Carry the ${eur(shortfall)} shortfall into ${nextName}</option>
+      ${pools.map(g => `<option value="${esc(g.name)}" ${modalCover === g.name ? "selected" : ""}>Take ${eur(Math.min(shortfall, num(g.planned)))} from ${esc(g.name)}'s saving to cover it</option>`).join("")}
+    </select>` : "";
+  // TRANSFER instructions: what actually lands in each pool this month (net of withdrawals + any finalize cover), with its bank account
+  const transfers = (m.savingsGoals || []).map(g => {
+    const wd = poolWithdrawn(g.name), fc = (g.name === modalCover) ? coverAmt : 0;
+    const actual = Math.round((poolActual(g.name) - fc) * 100) / 100;
+    return { name: g.name, wd: wd + fc, planned: num(g.planned), actual, acct: acctName((data.poolAccounts || {})[g.name]) };
+  }).filter(t => t.planned > 0 || Math.abs(t.actual) > 0.005 || t.wd > 0);
+  const transferHtml = transfers.length ? `<div class="set-label" style="margin-top:12px">Transfer into savings</div>` +
+    transfers.map(t => `<div class="mrow" style="align-items:flex-start"><span>${esc(t.name)}${t.acct ? ` <span class="hint">→ ${esc(t.acct)}</span>` : ""}${t.wd > 0.005 ? `<br><span class="hint">planned ${eur(t.planned)}, ${eur(t.wd)} taken out</span>` : ""}</span><span class="num" style="color:${t.actual >= 0 ? "var(--save)" : "var(--over)"}">${t.actual >= 0 ? eur(t.actual) : "−" + eur(-t.actual)}</span></div>`).join("") : "";
   $("modalSummary").innerHTML = `
     <div class="mrow"><span>Income</span><span class="num">${eur(m.income)}</span></div>
     <div class="mrow"><span>Bonus / found money</span><span class="num">+ ${eur(bonus)}</span></div>
+    ${ci !== 0 ? `<div class="mrow"><span>Carried in from ${monthName(prevKey(k)).split(" ")[0]}</span><span class="num" style="color:${ci>0?"var(--save)":"var(--over)"}">${ci>0?"+":"−"} ${eur(Math.abs(ci))}</span></div>` : ""}
     ${pulled > 0 ? `<div class="mrow"><span>Pulled from savings</span><span class="num">+ ${eur(pulled)}</span></div>` : ""}
+    ${cov > 0 ? `<div class="mrow"><span>Covered from savings (during month)</span><span class="num">+ ${eur(cov)}</span></div>` : ""}
     <div class="mrow"><span>Expenses (bills + one-off)</span><span class="num">− ${eur(exp)}</span></div>
     <div class="mrow"><span>Saved to pools</span><span class="num">− ${eur(sav)}</span></div>
     <div class="mrow"><span>Spending money spent <span class="hint">(${ticked} of ${weeks} weeks ticked)</span></span><span class="num">− ${eur(spent)}</span></div>
-    ${accountRows ? `<div class="set-label" style="margin-top:12px">How each account ends the month → carries into ${nextName}</div>${accountRows}` : `<p class="hint" style="margin-top:10px">Every account is on plan — nothing to carry.</p>`}
+    <div class="mrow total" style="align-items:flex-start"><span>${net >= 0 ? "Surplus" : "Shortfall"} → rolls into ${nextName}${coverSel}</span><span class="num" style="color:${net>=0?"var(--save)":"var(--over)"}">${net>=0?"+":"−"} ${eur(Math.abs(net))}</span></div>
+    ${transferHtml}
     ${ticked < weeks ? `<p class="hint" style="margin:8px 2px 0">Unticked weeks count as <b>not</b> spent. If you did spend them, cancel and tick them on the Budget tab first.</p>` : ""}`;
 }
 $("mBonus").addEventListener("input", updateModalSummary);
+$("modalSummary").addEventListener("change", e => { if (e.target.dataset.cover !== undefined) { modalCover = e.target.value; updateModalSummary(); } });
 $("modalCancel").addEventListener("click", () => overlay.classList.remove("show"));
 overlay.addEventListener("click", e => { if (e.target === overlay) overlay.classList.remove("show"); });
 $("modalConfirm").addEventListener("click", () => {
-  const m = getMonth(current);
+  const m = getMonth(current), k = mkeyOf(m);
   m.bonus = num($("mBonus").value);
-  const nets = accountNet(m), covers = {};
-  // apply any "cover from savings" choices: this month only reduces that pool's contribution, and shrinks the account's deficit
-  $("modalSummary").querySelectorAll("[data-cover]").forEach(sel => {
-    const id = sel.dataset.cover, poolName = sel.value; if (!poolName) return;
-    const deficit = -num(nets[id]); if (deficit <= 0) return;
-    const goal = m.savingsGoals.find(g => g.name === poolName); if (!goal) return;
-    const cover = Math.min(deficit, num(goal.planned) - (covers[poolName] || 0)); if (cover <= 0) return;
-    covers[poolName] = (covers[poolName] || 0) + cover;
-    nets[id] = num(nets[id]) + cover;
-  });
-  applyFinalize(m, nets, covers);
+  const covers = {};
+  if (modalCover) {
+    const goal = m.savingsGoals.find(g => g.name === modalCover);
+    if (goal) {
+      const shortfall = Math.max(0, -(num(m.income) + num(m.bonus) + carryIn(k) + withdrawnToSpend(k) + coversTotal(k) - expensesEff(m) - savingsPlanned(m) - spentLocked(m, k)));
+      const cover = Math.min(shortfall, num(goal.planned));
+      if (cover > 0) covers[modalCover] = cover;
+    }
+  }
+  applyFinalize(m, covers);
   overlay.classList.remove("show");
   shiftMonth(1);
 });
-function applyFinalize(m, acctNets, covers) {
+function applyFinalize(m, covers) {
   if (m.finalized) return;
   covers = covers || {};
-  // Lock in this month's targets (a cover-from-savings trims THIS month's contribution only; the ongoing target is untouched).
+  // Lock in this month's targets (a finalize cover-from-savings trims THIS month's contribution only; the ongoing target is untouched).
   (m.savingsGoals || []).forEach(g => setContribution(g.name, current, Math.max(0, num(g.planned) - (covers[g.name] || 0))));
   const snapshot = { contributions:{} };
   (m.savingsGoals || []).forEach(g => { snapshot.contributions[g.name] = monthTarget(g.name, current); });
-  const nets = acctNets || accountNet(m), acctCarry = {};
-  for (const id in nets) if (Math.abs(num(nets[id])) > 0.005) acctCarry[id] = Math.round(num(nets[id]) * 100) / 100;
-  snapshot.acctCarry = acctCarry; // each account's surplus/deficit rolls into next month
+  const coverTotal = Object.values(covers).reduce((s, v) => s + num(v), 0);
+  const net = discretionary(m) - spentLocked(m, mkeyOf(m)) + coverTotal; // single carryover; cover-from-savings lifts the net
+  snapshot.carryover = Math.round(net * 100) / 100;
   m.finalized = true; m.applied = snapshot;
-  recomputeSavings(); // this month's targets now count toward the pools
+  recomputeSavings();
 }
 function reverseFinalize(m) {
   // Targets go back to pending (out of the pool balance) but stay as the month's entries.
   m.finalized = false; m.applied = null;
   recomputeSavings();
 }
+/* ===== cover deficit (in-app popup) ===== */
+const coverModal = $("coverModal");
+let coverPool = "";
+function openCoverModal(poolName) {
+  coverPool = poolName;
+  const m = getMonth(current), deficit = totalDeficit(m), body = $("coverBody"), acts = $("coverActions");
+  if (deficit < 0.005) {
+    body.innerHTML = `<p class="note" style="margin:0">You're on budget this month — nothing to cover. 🎉</p>`;
+    acts.innerHTML = `<button class="btn primary" id="coverClose">OK</button>`;
+    $("coverClose").onclick = () => coverModal.classList.remove("show");
+  } else {
+    body.innerHTML = `<p class="note" style="margin-top:0">You're <b style="color:var(--over)">${eur(deficit)}</b> over budget this month. Pull money from <b>${esc(poolName)}</b> to cover it — it comes from this month's planned saving first, then the saved balance, and is <b>not</b> added to your spendable money.</p>
+      <div class="field"><label for="coverAmt">Amount to cover</label><span class="euro"><input class="money" type="number" id="coverAmt" min="0" step="0.01" value="${deficit.toFixed(2)}"></span></div>`;
+    acts.innerHTML = `<button class="btn" id="coverCancel">Cancel</button><button class="btn primary" id="coverDo">Cover ${eur(deficit)}</button>`;
+    $("coverCancel").onclick = () => coverModal.classList.remove("show");
+    const doBtn = $("coverDo");
+    $("coverAmt").addEventListener("input", e => { const v = num(e.target.value); doBtn.textContent = "Cover " + eur(v > 0 ? v : 0); });
+    doBtn.onclick = () => {
+      const amt = Math.abs(num($("coverAmt").value)); if (!amt) return;
+      data.poolTx[coverPool] = data.poolTx[coverPool] || [];
+      data.poolTx[coverPool].push({ d: current + "-15", a: -amt, t: "withdraw", n: "Deficit cover", cover: true });
+      recomputeSavings(); coverModal.classList.remove("show"); render(); playSavingsAnim();
+    };
+  }
+  coverModal.classList.add("show");
+}
+coverModal.addEventListener("click", e => { if (e.target === coverModal) coverModal.classList.remove("show"); });
 $("clearBtn").addEventListener("click", () => {
   const m = data.months[current];
   if (m && m.finalized) { alert("Re-open the month before clearing it."); return; }
