@@ -188,6 +188,7 @@
   .carry-line.pos { background:var(--save-soft); color:var(--save); }
   .carry-line.neg { background:color-mix(in srgb,var(--over) 15%,transparent); color:var(--over); }
   .seg-exp { background:var(--expense); } .seg-sav { background:var(--save); } .seg-wk { background:var(--spend); }
+  .seg-groc { background:var(--warn); } .seg-oop { background:var(--spend); }
   .seg-over { background:repeating-linear-gradient(45deg,var(--over),var(--over) 6px,#00000022 6px,#00000022 12px); }
   .legend { display:flex; flex-wrap:wrap; gap:16px; margin-top:14px; }
   .legend > div { display:flex; align-items:center; gap:8px; font-size:13px; }
@@ -234,8 +235,8 @@
   .add-sg { display:flex; gap:8px; padding:4px 14px 12px; }
   .add-sg input { flex:1; }
   /* drag-to-move expense items */
-  .name-wrap { display:flex; align-items:center; gap:5px; }
-  .name-wrap .cell { flex:1; }
+  .name-wrap { display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+  .name-wrap .cell { flex:1; min-width:90px; }
   .drag-handle { cursor:grab; color:var(--faint); font-size:13px; line-height:1; padding:2px 1px; user-select:none; -webkit-user-select:none; touch-action:none; flex:0 0 auto; }
   .drag-handle:hover { color:var(--primary); }
   .drag-handle:active { cursor:grabbing; }
@@ -281,6 +282,28 @@
   .split-tag.groc { color:var(--save); } .split-tag.oop { color:var(--spend); }
   .pctin { width:48px; border:none; border-bottom:1.5px solid currentColor; background:transparent; font:inherit; font-weight:750; text-align:right; color:inherit; outline:none; -moz-appearance:textfield; }
   .pctin::-webkit-outer-spin-button, .pctin::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+  .sp-euro { position:relative; display:inline-flex; align-items:center; }
+  .sp-euro::before { content:var(--cursym); position:absolute; left:7px; color:var(--faint); font-size:12px; pointer-events:none; }
+  .money.sp-amt { width:104px; font-size:13.5px; font-weight:700; padding:5px 8px 5px 20px; }
+  /* accounts */
+  .acct-row { display:flex; gap:8px; align-items:center; margin-bottom:6px; }
+  .acct-row .acct-name { flex:1; }
+  .acct-sel { font-size:11px; font-weight:600; color:var(--muted); background:var(--surface-2); border:1px solid var(--border-soft); border-radius:999px; padding:3px 8px; max-width:150px; cursor:pointer; }
+  .acct-sel.inherited { color:var(--faint); font-style:italic; }
+  .acct-sel:hover { border-color:var(--primary); }
+  .acct-line { display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:12.5px; color:var(--muted); flex-wrap:wrap; }
+  .acct-line-label { font-weight:600; }
+  .pool-acct { margin:7px 0 2px; }
+  .acct-summary { background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius); padding:15px 18px; margin-bottom:16px; box-shadow:var(--shadow); }
+  .acct-sum-head { font-weight:700; font-size:15px; margin-bottom:4px; display:flex; align-items:center; gap:8px; }
+  .acct-sum-row { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--border-soft); font-size:14px; font-weight:600; }
+  .acct-sum-row:last-of-type { border-bottom:none; }
+  .acct-sum-row .num { font-weight:750; letter-spacing:-.01em; }
+  .acct-sum-row.unassigned { color:var(--muted); }
+  .acct-sum-row .num.pos { color:var(--save); }
+  .acct-sum-row .acct-carry { display:block; font-size:11.5px; font-weight:500; margin-top:2px; }
+  .acct-carry.owed { color:var(--over); }
+  .acct-carry.spare { color:var(--save); }
   .sched { display:flex; flex-direction:column; gap:7px; margin-top:14px; }
   .sched-row { display:grid; grid-template-columns:1fr auto; gap:3px 12px; align-items:center; background:var(--surface-2); border:1px solid var(--border-soft); border-left:3px solid var(--border-soft); border-radius:var(--radius-sm); padding:10px 13px; transition:opacity .2s; }
   .sched-row .sched-date { font-weight:600; font-size:14px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
@@ -410,8 +433,8 @@
   .pmonth { font-size:12.5px; font-weight:650; margin-top:3px; }
   .pmonth.pos { color:var(--save); } .pmonth.neg { color:var(--over); } .pmonth.zero { color:var(--muted); }
   .ptx-list { display:flex; flex-direction:column; gap:4px; margin:8px 0 4px; }
-  .ptx-item { display:flex; align-items:center; gap:8px; font-size:12.5px; }
-  .ptx-item .tx-when { color:var(--muted); flex:1; }
+  .ptx-item { display:flex; align-items:center; gap:8px; font-size:12.5px; flex-wrap:wrap; }
+  .ptx-item .tx-when { color:var(--muted); flex:1; min-width:120px; }
   .ptx-item input.mini-amt { width:92px; text-align:right; padding:5px 7px; border-radius:8px; border:1px solid var(--border); background:var(--surface); }
   .ptx-item input.mini-amt.locked { border-style:dashed; color:var(--save); -webkit-text-fill-color:var(--save); font-weight:650; background:color-mix(in srgb,var(--save) 8%,transparent); cursor:default; }
   .btn-x.lock { cursor:default; color:var(--faint); font-size:13px; }
@@ -515,6 +538,7 @@
   <!-- ============ BUDGET TAB ============ -->
   <div id="page-budget" class="page active">
     <div class="recap" id="recap" role="status"></div>
+    <div id="acctSummary" class="acct-summary" style="display:none"></div>
 
     <div class="cards">
       <div class="card"><div class="klabel"><span class="kdot" style="background:var(--primary)"></span>Income + bonus</div><div class="kvalue" id="cIncome">€0</div><div class="ksub" id="cIncomeSub"></div></div>
@@ -528,6 +552,37 @@
       <p class="desc">Every euro of income, allocated. Aim to give all of it a job — expenses, savings, then what's left to spend.</p>
       <div class="alloc-bar" id="allocBar" role="img" aria-label="Income allocation breakdown"></div>
       <div class="legend" id="allocLegend"></div>
+    </div>
+
+    <div class="section" id="oneOffSection">
+      <h2><span class="sec-icon" style="background:color-mix(in srgb,var(--over) 16%,transparent);color:var(--over)">⚡</span>One-off expenses <span class="hint" style="font-weight:500;font-size:12px">· this month only</span></h2>
+      <p class="desc">Spontaneous, single expenses that should <strong>not</strong> carry to next month (a gift, a repair, concert tickets…). Quick to jot down — they still count toward this month's spending and the breakdown.</p>
+      <div id="oneOffAcctLine" class="acct-line" style="display:none"></div>
+      <div id="oneOffContainer"></div>
+      <div class="add-cat" style="margin-top:10px">
+        <input class="text" type="text" id="newOneOffName" placeholder="What was it?" style="flex:2">
+        <span class="euro"><input class="money" type="number" id="newOneOffAmt" min="0" step="0.01" placeholder="0.00"></span>
+        <button class="btn-add" id="addOneOffBtn">+ Add</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2><span class="sec-icon" style="background:var(--spend-soft);color:var(--spend)">◷</span>Weekly spending money</h2>
+      <p class="desc">What's left after expenses &amp; savings, transferred to yourself on the <strong>1st</strong> and every <strong>Sunday</strong> — each transfer is sized by the real days it covers. <strong>Tick</strong> a week once you've spent it to lock that amount; only the unticked weeks adjust when your budget changes.</p>
+      <div class="field split-field">
+        <label for="grocAmtInput">Spending money — set groceries &amp; out-of-pocket (type € on either, or set the %)</label>
+        <div class="split-inputs">
+          <span class="split-tag groc">🛒 Groceries <span class="sp-euro"><input class="money sp-amt" type="number" id="grocAmtInput" min="0" step="0.01" placeholder="0.00"></span> <input class="pctin" type="number" id="grocPctInput" min="0" max="100" step="1">% <span id="grocAcctWrap"></span></span>
+          <span class="split-tag oop">💸 Out-of-pocket <span class="sp-euro"><input class="money sp-amt" type="number" id="oopAmtInput" min="0" step="0.01" placeholder="0.00"></span> <b id="oopPct">—</b>% <span id="oopAcctWrap"></span></span>
+        </div>
+      </div>
+      <div class="weekly-grid">
+        <div class="wbox hero"><div class="wl">To spend this month</div><div class="wv" id="spendTotal">€0</div></div>
+        <div class="wbox"><div class="wl">Per day</div><div class="wv" id="spendDaily">€0</div></div>
+        <div class="wbox"><div class="wl">Per full week</div><div class="wv" id="spendWeek">€0</div></div>
+      </div>
+      <div class="sched" id="spendSchedule"></div>
+      <p class="hint" id="spendHint" style="margin-top:12px"></p>
     </div>
 
     <div class="section" id="incomeSection">
@@ -546,36 +601,6 @@
         <input class="text" type="text" id="newGroup" placeholder="New category name…">
         <button class="btn-add" id="addGroupBtn">+ Add category</button>
       </div>
-    </div>
-
-    <div class="section" id="oneOffSection">
-      <h2><span class="sec-icon" style="background:color-mix(in srgb,var(--over) 16%,transparent);color:var(--over)">⚡</span>One-off expenses <span class="hint" style="font-weight:500;font-size:12px">· this month only</span></h2>
-      <p class="desc">Spontaneous, single expenses that should <strong>not</strong> carry to next month (a gift, a repair, concert tickets…). Quick to jot down — they still count toward this month's spending and the breakdown.</p>
-      <div id="oneOffContainer"></div>
-      <div class="add-cat" style="margin-top:10px">
-        <input class="text" type="text" id="newOneOffName" placeholder="What was it?" style="flex:2">
-        <span class="euro"><input class="money" type="number" id="newOneOffAmt" min="0" step="0.01" placeholder="0.00"></span>
-        <button class="btn-add" id="addOneOffBtn">+ Add</button>
-      </div>
-    </div>
-
-    <div class="section">
-      <h2><span class="sec-icon" style="background:var(--spend-soft);color:var(--spend)">◷</span>Weekly spending money</h2>
-      <p class="desc">What's left after expenses &amp; savings, transferred to yourself on the <strong>1st</strong> and every <strong>Sunday</strong> — each transfer is sized by the real days it covers. <strong>Tick</strong> a week once you've spent it to lock that amount; only the unticked weeks adjust when your budget changes.</p>
-      <div class="field split-field">
-        <label for="grocPctInput">Split each transfer — groceries vs. out-of-pocket</label>
-        <div class="split-inputs">
-          <span class="split-tag groc">🛒 Groceries <input class="pctin" type="number" id="grocPctInput" min="0" max="100" step="5">%</span>
-          <span class="split-tag oop">💸 Out-of-pocket <b id="oopPct">—</b>%</span>
-        </div>
-      </div>
-      <div class="weekly-grid">
-        <div class="wbox hero"><div class="wl">To spend this month</div><div class="wv" id="spendTotal">€0</div></div>
-        <div class="wbox"><div class="wl">Per day</div><div class="wv" id="spendDaily">€0</div></div>
-        <div class="wbox"><div class="wl">Per full week</div><div class="wv" id="spendWeek">€0</div></div>
-      </div>
-      <div class="sched" id="spendSchedule"></div>
-      <p class="hint" id="spendHint" style="margin-top:12px"></p>
     </div>
 
     <div class="section" id="savingsSection">
@@ -669,7 +694,7 @@
   <div class="modal">
     <h3>Finalize <span id="modalMonth"></span></h3>
     <div class="field"><label for="mBonus">Bonus / gifts received</label><span class="euro"><input class="money" type="number" id="mBonus" min="0" step="0.01"></span></div>
-    <p class="note">The weeks you ticked as "spent" count as spent; anything left over (or any shortfall from late one-offs) rolls into next month. Finalizing locks the month and keeps this month's pool contributions.</p>
+    <p class="note">Each account's over/under for the month (bills vs plan, one-offs, groceries/out-of-pocket vs what you ticked as spent) rolls into next month. You can cover a shortfall from savings below instead. Finalizing locks the month.</p>
     <div id="modalSummary"></div>
     <div class="actions">
       <button class="btn" id="modalCancel">Cancel</button>
@@ -687,6 +712,11 @@
     <div class="set-label">Currency</div>
     <select id="currencySelect" class="text" style="width:100%"></select>
     <p class="note">Currency changes how amounts are displayed everywhere. It doesn't convert existing numbers — it relabels them.</p>
+    <div class="set-label" style="margin-top:18px">Bank accounts</div>
+    <p class="note">Name the accounts your money lives in (bank, sub-account, credit card…). Then tag categories, items, groceries, savings &amp; one-offs with an account to see how much to put where each month.</p>
+    <div id="acctList" style="margin:8px 0"></div>
+    <div class="field"><input class="text" type="text" id="acctAddName" placeholder="e.g. Main bank, Bills account, Credit card" autocomplete="off" style="flex:1;min-width:160px"><button class="btn primary" id="acctAddBtn">Add</button></div>
+    <div class="field" style="margin-top:8px"><label style="min-width:auto">Default account</label><select id="acctDefaultSel" class="text" style="flex:1"></select></div>
     <div id="adminAccessSection" style="display:none;margin-top:18px;border-top:1px solid var(--border);padding-top:14px">
       <div class="set-label">🔒 Manage access (invite-only)</div>
       <p class="note">Only people whose email is on this list can use the app. You're always allowed. Changes take effect immediately.</p>
@@ -810,7 +840,8 @@ const $ = id => document.getElementById(id);
 const monthName = key => { const [y,mo]=key.split("-"); return new Date(y,mo-1,1).toLocaleString(undefined,{month:"long",year:"numeric"}); };
 const parseDate = s => { const p=String(s).split("-").map(Number); return new Date(p[0],(p[1]||1)-1,p[2]||15); };
 const todayStr = () => { const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); };
-const grocPct = () => { const v = (data.settings && data.settings.grocPct); const n = Number(v); return (v===undefined||v===null||isNaN(n)) ? 70 : Math.min(100, Math.max(0, n)); };
+// Groceries % is now DERIVED from the month's fixed groceries/out-of-pocket amounts (falls back to the saved default split for a fresh month).
+const grocPct = () => { const m = data.months[current]; if (m) { const g = num(m.grocAmt), o = num(m.oopAmt); if (g + o > 0) return Math.round(g / (g + o) * 100); } const v = (data.settings && data.settings.grocPct); const n = Number(v); return (v==null||isNaN(n)) ? 70 : Math.min(100, Math.max(0, n)); };
 const monthDayCount = key => { const [y,mo]=key.split("-").map(Number); return new Date(y, mo, 0).getDate(); };
 /* Spending transfer schedule: pay yourself on the 1st and every Sunday; each segment spans the days until the next transfer (so it sums to the month). */
 function spendSegments(key) {
@@ -855,7 +886,7 @@ const invWindow = {}; // per-pool selected return window (months|null)
 function blankMonth() {
   return { income:0, bonus:0, groups:[], oneOff:[], savingsGoals:[], finalized:false, applied:null };
 }
-function normalize(d) { d.settings ??= {}; d.savings ??= {}; d.investments ??= {}; d.poolTx ??= {}; d.months ??= {}; d.settings.grocPct ??= 70; Object.values(d.months).forEach(m => { m.oneOff ??= []; m.spendLocks ??= {}; (m.groups || []).forEach(g => { g.subgroups ??= []; g.subgroups.forEach(sg => { sg.items ??= []; }); }); }); migrateBuffer(d); migrateContribTx(d); return d; }
+function normalize(d) { d.settings ??= {}; d.savings ??= {}; d.investments ??= {}; d.poolTx ??= {}; d.months ??= {}; d.accounts ??= []; d.poolAccounts ??= {}; d.settings.grocPct ??= 70; Object.values(d.months).forEach(m => { m.oneOff ??= []; m.spendLocks ??= {}; (m.groups || []).forEach(g => { g.subgroups ??= []; g.subgroups.forEach(sg => { sg.items ??= []; }); }); }); migrateBuffer(d); migrateContribTx(d); return d; }
 function load() {
   let raw; try { raw = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch {}
   if (raw && raw.months) return normalize(raw);
@@ -893,10 +924,11 @@ function getMonth(key) {
   const m = blankMonth();
   if (src) {
     m.income = src.income;
-    m.groups = src.groups.map(g => ({ name:g.name, collapsed:g.collapsed||false,
-      items:g.items.map(it => ({ name:it.name, planned:it.planned, actual:null })),
-      subgroups:(g.subgroups||[]).map(sg => ({ name:sg.name, collapsed:sg.collapsed||false, items:sg.items.map(it => ({ name:it.name, planned:it.planned, actual:null })) })) }));
+    m.groups = src.groups.map(g => ({ name:g.name, collapsed:g.collapsed||false, account:g.account,
+      items:g.items.map(it => ({ name:it.name, planned:it.planned, actual:null, account:it.account })),
+      subgroups:(g.subgroups||[]).map(sg => ({ name:sg.name, collapsed:sg.collapsed||false, account:sg.account, items:sg.items.map(it => ({ name:it.name, planned:it.planned, actual:null, account:it.account })) })) }));
     m.savingsGoals = src.savingsGoals.map(s => ({ name:s.name, planned:s.planned, target:s.target||0, indefinite:s.indefinite }));
+    if (src.grocAmt != null || src.oopAmt != null) { m.grocAmt = num(src.grocAmt); m.oopAmt = num(src.oopAmt); } // carry the spending budget forward
   }
   data.months[key] = m; save();
   return m;
@@ -912,16 +944,106 @@ const savingsPlanned = m => m.savingsGoals.reduce((s, g) => s + num(g.planned), 
 const mkeyOf = m => { for (const k in data.months) if (data.months[k] === m) return k; return current; };
 // Money withdrawn from savings pools this month flows back into spendable cash (and is shown in Income).
 const withdrawnToSpend = mkey => { let s = 0; const px = data.poolTx || {}; for (const n in px) (px[n] || []).forEach(x => { if (x.t === "withdraw" && String(x.d).slice(0, 7) === mkey) s += -num(x.a); }); return s; };
-// ----- month-to-month carryover (net surplus/deficit rolled into the next month) -----
+// ----- per-account carryover (each account carries its own surplus/deficit into the next month) -----
 // Key of the previous calendar month, e.g. "2026-08" -> "2026-07".
 const prevKey = k => { const [y,mo] = k.split("-").map(Number); return monthKey(new Date(y, mo-2, 1)); };
-// Money rolled INTO a month = the previous month's net, but only once that month is finalized (+surplus / −deficit).
-const carryIn = k => { const p = data.months[prevKey(k)]; return (p && p.finalized && p.applied) ? num(p.applied.carryover) : 0; };
 // Spending money actually spent = sum of the weeks you ticked as "spent" (ignoring stale locks from other month lengths).
 const spentLocked = (m, k) => { const valid = new Set(spendSegments(k).map(s => k + "-" + String(s.start).padStart(2,"0"))); return Object.entries(m.spendLocks || {}).reduce((s,[key,v]) => valid.has(key) ? s + num(v) : s, 0); };
-const discretionary = m => { const k = mkeyOf(m); return num(m.income) + num(m.bonus) + carryIn(k) - expensesEff(m) - savingsPlanned(m) + withdrawnToSpend(k); };
-// A month's net result = spending money budgeted minus what you actually spent (ticked weeks). +surplus / −deficit; rolls into next month.
-const monthNet = (m, k) => discretionary(m) - spentLocked(m, k);
+const discretionary = m => { const k = mkeyOf(m); return num(m.income) + num(m.bonus) - expensesEff(m) - savingsPlanned(m) + withdrawnToSpend(k); };
+// Spending money is now the SUM of a fixed groceries amount + a fixed out-of-pocket amount (both set by hand).
+const spendBudget = m => num(m.grocAmt) + num(m.oopAmt);
+// First time a month is shown, seed groceries/OOP from whatever's left after expenses & savings, using the saved % split.
+function ensureSpend(m) {
+  if (m.grocAmt == null && m.oopAmt == null) {
+    const avail = Math.max(0, discretionary(m));
+    const gp = (data.settings && data.settings.grocPct != null) ? num(data.settings.grocPct) : 70;
+    m.grocAmt = Math.round(avail * gp) / 100;
+    m.oopAmt = Math.round((avail - m.grocAmt) * 100) / 100;
+  }
+}
+
+/* ===== accounts: which bank account each expense / pool draws from ===== */
+const uid = () => "a" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const acctById = id => (data.accounts || []).find(a => a.id === id) || null;
+const acctName = id => { const a = acctById(id); return a ? a.name : ""; };
+// Walk the inherit chain (item → subcategory → category → global default); return the first real account id, else "".
+function resolveAcct(...ids) {
+  for (const id of ids) if (id && acctById(id)) return id;
+  const d = data.settings && data.settings.defaultAccount;
+  return (d && acctById(d)) ? d : "";
+}
+const inhLabel = name => name ? "↳ " + name : "— no account —";
+// A compact account picker. currentId = the raw stored tag (blank = inherit); inheritLabel names what it falls back to.
+function acctSelectHtml(currentId, attr, inheritLabel) {
+  const accts = data.accounts || [], set = currentId && acctById(currentId);
+  return `<select class="acct-sel${set ? "" : " inherited"}" ${attr}>` +
+    `<option value="">${esc(inheritLabel)}</option>` +
+    accts.map(a => `<option value="${a.id}" ${a.id === currentId ? "selected" : ""}>${esc(a.name)}</option>`).join("") +
+    `</select>`;
+}
+// Paint the account pickers that live in static HTML (groceries, out-of-pocket, one-offs). They all inherit the global default.
+function paintAcctPickers() {
+  const has = (data.accounts || []).length > 0, s = data.settings, dflt = inhLabel(acctName(resolveAcct()));
+  const gw = $("grocAcctWrap"), ow = $("oopAcctWrap"), oo = $("oneOffAcctLine");
+  if (gw) gw.innerHTML = has ? acctSelectHtml(s.grocAccount, 'data-grocacct', dflt) : "";
+  if (ow) ow.innerHTML = has ? acctSelectHtml(s.oopAccount, 'data-oopacct', dflt) : "";
+  if (oo) { oo.style.display = has ? "flex" : "none"; oo.innerHTML = has ? `<span class="acct-line-label">Draw all one-offs from:</span> ${acctSelectHtml(s.oneOffAccount, 'data-ooacct', dflt)}` : ""; }
+}
+// Per-account net at month end = what you funded (planned) minus what actually drew from it.
+// One-offs are pure deficits (unplanned); groceries/OOP compare the budget to what you actually spent (ticked weeks).
+// +surplus (spare) / −deficit (owed). Returns { acctId(or "" for unassigned): net }.
+function accountNet(m) {
+  const k = mkeyOf(m), nets = {}, add = (id, v) => { if (Math.abs(v) > 0.0000001) { const kk = id || ""; nets[kk] = (nets[kk] || 0) + v; } };
+  m.groups.forEach(g => {
+    g.items.forEach(it => add(resolveAcct(it.account, g.account), num(it.planned) - num(it.actual ?? it.planned)));
+    (g.subgroups || []).forEach(sg => sg.items.forEach(it => add(resolveAcct(it.account, sg.account, g.account), num(it.planned) - num(it.actual ?? it.planned))));
+  });
+  (m.oneOff || []).forEach(o => add(resolveAcct(data.settings.oneOffAccount), -num(o.amount)));
+  ensureSpend(m);
+  const budget = spendBudget(m), spent = spentLocked(m, k), grocSpent = budget > 0 ? spent * num(m.grocAmt) / budget : 0;
+  add(resolveAcct(data.settings.grocAccount), num(m.grocAmt) - grocSpent);
+  add(resolveAcct(data.settings.oopAccount), num(m.oopAmt) - (spent - grocSpent));
+  return nets;
+}
+// Balances carried INTO a month from the previous finalized month (+surplus / −deficit), keyed by account id ("" = unassigned).
+const acctCarryIn = k => { const p = data.months[prevKey(k)]; return (p && p.finalized && p.applied && p.applied.acctCarry) ? p.applied.acctCarry : {}; };
+// How much to set aside in each account this month = everything drawn from it, minus cash pulled into it from savings.
+function accountSetAside(m) {
+  const totals = {}, add = (id, amt) => { const kk = id || ""; totals[kk] = (totals[kk] || 0) + amt; };
+  const k = mkeyOf(m);
+  m.groups.forEach(g => {
+    g.items.forEach(it => add(resolveAcct(it.account, g.account), num(it.actual ?? it.planned)));
+    (g.subgroups || []).forEach(sg => sg.items.forEach(it => add(resolveAcct(it.account, sg.account, g.account), num(it.actual ?? it.planned))));
+  });
+  const ooTot = oneOffTotal(m); if (ooTot) add(resolveAcct(data.settings.oneOffAccount), ooTot);
+  ensureSpend(m);
+  if (num(m.grocAmt)) add(resolveAcct(data.settings.grocAccount), num(m.grocAmt));
+  if (num(m.oopAmt)) add(resolveAcct(data.settings.oopAccount), num(m.oopAmt));
+  m.savingsGoals.forEach(gl => { const t = num(gl.planned); if (t) add(resolveAcct((data.poolAccounts || {})[gl.name]), t); });
+  // a withdrawal's cash lands in its chosen destination account, reducing what you need to add there (x.a is negative)
+  for (const n in (data.poolTx || {})) (data.poolTx[n] || []).forEach(x => { if (x.t === "withdraw" && monthOf(x.d) === k && x.acct && acctById(x.acct)) add(x.acct, num(x.a)); });
+  // carried-in from last month: a deficit (−) raises what to put in; a surplus (+) lowers it
+  const carry = acctCarryIn(k);
+  for (const id in carry) add(id, -num(carry[id]));
+  return totals;
+}
+function renderAccountSummary(m) {
+  const box = $("acctSummary"); if (!box) return;
+  const accts = data.accounts || [], carry = acctCarryIn(mkeyOf(m));
+  const hasCarry = Object.keys(carry).some(id => Math.abs(num(carry[id])) > 0.005);
+  if (!accts.length && !hasCarry) { box.style.display = "none"; box.innerHTML = ""; return; }
+  const totals = accountSetAside(m);
+  const mkRow = (name, id, un) => {
+    const amt = totals[id] || 0, c = num(carry[id]);
+    const note = c ? `<span class="acct-carry ${c < 0 ? "owed" : "spare"}">${c < 0 ? "incl. " + eur(-c) + " carried debt" : "less " + eur(c) + " carried spare"}</span>` : "";
+    return `<div class="acct-sum-row${un ? " unassigned" : ""}"><span>${esc(name)}${note}</span><span class="num${amt < 0 ? " pos" : ""}">${amt < 0 ? eur(-amt) + " spare" : eur(amt)}</span></div>`;
+  };
+  box.style.display = "block";
+  box.innerHTML = `<div class="acct-sum-head">🏦 Put your money in this month</div>` +
+    accts.map(a => mkRow(a.name, a.id, false)).join("") +
+    ((Math.abs(totals[""] || 0) > 0.005 || carry[""]) ? mkRow("Unassigned", "", true) : "") +
+    `<p class="hint" style="margin:8px 0 0">How much to have in each account to cover this month's plan — its bills + groceries/out-of-pocket + savings, minus cash pulled in, plus anything owed (or minus anything spare) carried from last month.</p>`;
+}
 const totalSaved = () => Object.values(data.savings).reduce((s, v) => s + num(v), 0);
 const monthSaved = m => (m.finalized && m.applied) ? Object.values(m.applied.contributions).reduce((s,v)=>s+v,0) : savingsPlanned(m);
 
@@ -1094,17 +1216,17 @@ function render() {
   save();
 }
 function updateSummary(m) {
+  ensureSpend(m);
   renderAllocation(m);
   const expEff = expensesEff(m), sav = savingsPlanned(m), base = num(m.income)+num(m.bonus);
   $("cIncome").textContent = eur(base);
   $("cIncomeSub").textContent = m.bonus ? "incl. " + eur(m.bonus) + " bonus" : "monthly income";
-  renderCarryLine(m);
   $("cExp").textContent = eur(expEff);
   $("cExpSub").textContent = m.groups.length + " categor" + (m.groups.length === 1 ? "y" : "ies");
-  const disc = discretionary(m), dim = monthDayCount(current), daily = disc / dim;
-  const cw = $("cWeek"); cw.textContent = eur(daily * 7); cw.className = "kvalue" + (disc < 0 ? " neg" : "");
+  const disc = discretionary(m), dim = monthDayCount(current), budget = spendBudget(m), daily = budget / dim;
+  const cw = $("cWeek"); cw.textContent = eur(daily * 7); cw.className = "kvalue" + (budget > Math.max(0, disc) ? " neg" : "");
   $("cWeekSub").textContent = eur(daily) + " / day";
-  renderSpendSchedule(m, disc, dim, daily);
+  renderSpendSchedule(m, budget, dim, daily);
   renderIncomeWithdrawals(current);
   const ts = totalSaved();
   $("cSaved").textContent = eur0(ts);
@@ -1112,7 +1234,18 @@ function updateSummary(m) {
   $("cSavedSub").textContent = np + " pool" + (np === 1 ? "" : "s");
   $("totalSaved").textContent = eur(ts);
   $("savedBreak").innerHTML = `across ${np} pool${np === 1 ? "" : "s"}`;
+  paintAcctPickers();
+  renderAccountSummary(m);
 }
+// Account tags for groceries / out-of-pocket / one-offs / pools (all live inside the Budget page).
+$("page-budget").addEventListener("change", e => {
+  const d = e.target.dataset;
+  if (d.grocacct !== undefined) { data.settings.grocAccount = e.target.value; save(); updateSummary(getMonth(current)); }
+  else if (d.oopacct !== undefined) { data.settings.oopAccount = e.target.value; save(); updateSummary(getMonth(current)); }
+  else if (d.ooacct !== undefined) { data.settings.oneOffAccount = e.target.value; save(); updateSummary(getMonth(current)); }
+  else if (d.poolacct !== undefined) { data.poolAccounts = data.poolAccounts || {}; data.poolAccounts[d.poolacct] = e.target.value; save(); e.target.classList.toggle("inherited", !e.target.value); updateSummary(getMonth(current)); }
+  else if (d.txacct !== undefined) { const card = e.target.closest("[data-pool]"); const tx = card && (data.poolTx[card.dataset.pool] || [])[+d.txacct]; if (tx) { tx.acct = e.target.value; save(); e.target.classList.toggle("inherited", !e.target.value); updateSummary(getMonth(current)); } }
+});
 function renderIncomeWithdrawals(mkey) {
   const c = $("incomeWithdrawals"); if (!c) return;
   const list = [];
@@ -1124,22 +1257,26 @@ function renderIncomeWithdrawals(mkey) {
     list.map(x => `<div class="inc-wd-row"><span>${parseDate(x.d).toLocaleDateString(undefined, { day:"numeric", month:"short" })} · ${esc(x.pool)}${x.note ? ` · ${esc(x.note)}` : ""}</span><span class="pos">+ ${eur(-num(x.a))}</span></div>`).join("") +
     `<p class="hint" style="margin:2px 0 0">Withdrawing from a pool (in Savings pools below) adds that money to this month's spendable budget.</p>`;
 }
-function renderSpendSchedule(m, disc, dim, daily) {
-  const gp = grocPct();
-  const gpEl = $("grocPctInput"); if (gpEl && document.activeElement !== gpEl) gpEl.value = gp; // don't clobber while typing
-  $("oopPct").textContent = 100 - gp;
+function renderSpendSchedule(m, budget, dim, daily) {
+  ensureSpend(m);
+  const gA = num(m.grocAmt), oA = num(m.oopAmt), gp = grocPct();
+  const setIf = (id, val) => { const el = $(id); if (el && document.activeElement !== el) el.value = val; }; // don't clobber the field being typed in
+  setIf("grocAmtInput", gA ? gA : "");
+  setIf("oopAmtInput", oA ? oA : "");
+  setIf("grocPctInput", gp);
+  $("oopPct").textContent = (gA + oA) > 0 ? (100 - gp) : "—";
   const segs = spendSegments(current);
   m.spendLocks = m.spendLocks || {};
   // Forget locks for weeks that no longer exist (e.g. a different month length).
   const valid = new Set(segs.map(segKey));
   Object.keys(m.spendLocks).forEach(k => { if (!valid.has(k)) delete m.spendLocks[k]; });
-  // Weeks marked "already spent" keep their amount; only the rest share what's left.
+  // Weeks marked "already spent" keep their amount; only the rest share what's left of the budget.
   let lockedTotal = 0, openDays = 0;
   segs.forEach(s => { const k = segKey(s); if (k in m.spendLocks) lockedTotal += num(m.spendLocks[k]); else openDays += s.days; });
-  const remaining = disc - lockedTotal;
+  const remaining = budget - lockedTotal;
   const openDaily = openDays > 0 ? remaining / openDays : 0;
   const amtOf = s => { const k = segKey(s); return (k in m.spendLocks) ? num(m.spendLocks[k]) : openDaily * s.days; };
-  $("spendTotal").textContent = eur(disc);
+  $("spendTotal").textContent = eur(budget);
   $("spendDaily").textContent = eur(openDays > 0 ? openDaily : daily);
   $("spendWeek").textContent = eur((openDays > 0 ? openDaily : daily) * 7);
   const now = new Date(), isThisMonth = current === monthKey(now), today = now.getDate();
@@ -1147,22 +1284,25 @@ function renderSpendSchedule(m, disc, dim, daily) {
   // "this week" label tracks the calendar week that actually contains today — it stays put even if you mark that week spent.
   const thisWeekStart = isThisMonth ? (segs.find(s => s.start <= today && s.end >= today)?.start ?? -1) : -1;
   $("spendSchedule").innerHTML = segs.map(s => {
-    const k = segKey(s), spent = k in m.spendLocks, amt = amtOf(s), g = amt * gp / 100, o = amt - g;
+    const k = segKey(s), spent = k in m.spendLocks, amt = amtOf(s), gw = amt * gp / 100, ow = amt - gw;
     const past = isThisMonth && s.end < today && !spent, up = !spent && s.start === upcomingStart, isThisWeek = s.start === thisWeekStart;
     const label = s.date.toLocaleDateString(undefined, { weekday:"short", day:"numeric", month:"short" });
     const tip = spent ? "Marked as already spent — this amount is locked and won't change. Click to unlock." : "Mark this week as already spent — locks the amount so only the remaining weeks adjust to budget changes.";
     return `<div class="sched-row${past ? " past" : ""}${up ? " upcoming" : ""}${spent ? " spent" : ""}">
       <div class="sched-date"><button class="lock-btn" data-spendlock="${k}" data-amt="${amt.toFixed(2)}" aria-pressed="${spent}" aria-label="Mark week as spent" title="${tip}">${spent ? "✓" : ""}</button>${label}${isThisWeek ? ` <span class="now-tag">this week</span>` : ""}${spent ? ` <span class="spent-tag">spent</span>` : ""}<span class="sched-days">${s.days} day${s.days === 1 ? "" : "s"}</span></div>
       <div class="sched-amt${amt < 0 ? " neg" : ""}">${eur(amt)}</div>
-      <div class="sched-split"><span class="split-amt groc">🛒 ${eur(g)} <small>groceries</small></span><span class="split-amt oop">💸 ${eur(o)} <small>out-of-pocket</small></span></div>
+      <div class="sched-split"><span class="split-amt groc">🛒 ${eur(gw)} <small>groceries</small></span><span class="split-amt oop">💸 ${eur(ow)} <small>out-of-pocket</small></span></div>
     </div>`;
   }).join("");
   const lockedCount = Object.keys(m.spendLocks).length;
-  $("spendHint").textContent = disc < 0
-    ? "You're over budget — expenses and savings exceed your income. Trim them, or pull from a savings pool below to top up your spending money."
-    : lockedCount
-      ? `${eur(lockedTotal)} locked as already spent (${lockedCount} week${lockedCount === 1 ? "" : "s"}); the remaining ${eur(Math.max(remaining, 0))} is spread over the ${openDays} open day${openDays === 1 ? "" : "s"}. Only unlocked weeks change when your budget changes.`
-      : `${eur(disc)} ÷ ${dim} days = ${eur(daily)}/day. Transfer each amount to yourself on its date; together they cover the whole month. Tick a week once you've spent it to lock it.`;
+  const disc = discretionary(m), gap = disc - budget;
+  $("spendHint").textContent = lockedCount
+    ? `${eur(lockedTotal)} locked as already spent (${lockedCount} week${lockedCount === 1 ? "" : "s"}); the remaining ${eur(Math.max(remaining, 0))} is spread over the ${openDays} open day${openDays === 1 ? "" : "s"}. Only unlocked weeks change when your budget changes.`
+    : gap < -0.005
+      ? `Your ${eur(budget)} spending budget is ${eur(-gap)} more than what's left after expenses & savings — that shortfall carries into next month.`
+      : gap > 0.005
+        ? `${eur(budget)} budgeted; ${eur(gap)} of what's left after expenses & savings is unallocated and carries into next month as surplus.`
+        : `${eur(budget)} ÷ ${dim} days = ${eur(budget / dim)}/day. Transfer each amount to yourself on its date; together they cover the whole month. Tick a week once you've spent it to lock it.`;
 }
 function liveRecalc() {
   const m = getMonth(current);
@@ -1194,41 +1334,39 @@ function liveRecalc() {
   save();
 }
 function renderAllocation(m) {
-  const k = mkeyOf(m), ci = carryIn(k);
-  const exp = expensesEff(m), sav = savingsPlanned(m), disc = discretionary(m), spent = spentLocked(m, k);
-  const cashIn = num(m.income) + num(m.bonus) + withdrawnToSpend(k) + Math.max(ci, 0); // real money in (carried surplus adds; carried debt is shown as a red claim, below)
-  const deficitIn = Math.max(0, -ci);            // carried-in debt to repay (red)
-  const planOver = Math.max(0, exp + sav - cashIn); // expenses + savings alone exceed your income (red)
-  const toSpend = Math.max(0, disc);             // what you can actually afford to spend (blue)
-  const over = Math.max(0, spent - toSpend);     // money already spent beyond what you can afford (red overflow)
-  const sum = exp + sav + deficitIn + planOver + toSpend + over;
+  ensureSpend(m);
+  const exp = expensesEff(m), sav = savingsPlanned(m), disc = discretionary(m);
+  const gA = num(m.grocAmt), oA = num(m.oopAmt), budget = gA + oA;
+  const cashIn = num(m.income) + num(m.bonus) + withdrawnToSpend(mkeyOf(m));
+  const planOver = Math.max(0, exp + sav - cashIn); // expenses + savings alone exceed income (red)
+  const affordable = Math.max(0, disc);             // what's actually left to spend
+  const fit = Math.min(budget, affordable);         // the part of your spending budget you can afford
+  const grocSeg = budget > 0 ? fit * gA / budget : 0, oopSeg = fit - grocSeg; // affordable budget, split groceries/OOP
+  const budgetOver = Math.max(0, budget - affordable); // spending budget beyond your means (red)
+  const leftover = Math.max(0, affordable - budget);   // money not yet given a job
+  const sum = exp + sav + grocSeg + oopSeg + budgetOver + planOver;
   const den = Math.max(cashIn, sum, 1), pc = v => Math.max(0, v) / den * 100;
   const seg = (cls, v) => v > 0 ? `<span class="${cls}" style="width:${pc(v)}%"></span>` : "";
   $("allocBar").innerHTML =
-    seg("seg-exp", exp) + seg("seg-sav", sav) + seg("seg-over", deficitIn) +
-    seg("seg-wk", toSpend) + seg("seg-over", over) + seg("seg-over", planOver);
+    seg("seg-exp", exp) + seg("seg-sav", sav) +
+    seg("seg-groc", grocSeg) + seg("seg-oop", oopSeg) + seg("seg-over", budgetOver) + seg("seg-over", planOver);
   const item = (c,l,v) => `<div><span class="sw" style="background:${c}"></span><span class="lv">${eur(v)}</span> <span class="ll">${l}</span></div>`;
   const redItem = (l,v) => `<div><span class="sw seg-over"></span><span class="lv" style="color:var(--over)">${eur(v)}</span> <span class="ll">${l}</span></div>`;
   $("allocLegend").innerHTML =
-    (ci !== 0 ? `<div><span class="sw" style="background:${ci>0?"var(--save)":"var(--over)"}"></span><span class="lv" style="color:${ci>0?"var(--save)":"var(--over)"}">${ci>0?"+":"−"}${eur(Math.abs(ci))}</span> <span class="ll">carried over</span></div>` : "") +
-    item("var(--expense)","expenses",exp) + item("var(--save)","savings",sav) + item("var(--spend)","to spend",toSpend) +
-    (over > 0 ? redItem("overspent", over) : "") +
-    (planOver > 0 ? redItem("over budget", planOver) : "");
-}
-function renderCarryLine(m) {
-  const cl = $("carryLine"); if (!cl) return;
-  const k = mkeyOf(m), ci = carryIn(k);
-  if (!ci) { cl.style.display = "none"; cl.innerHTML = ""; return; }
-  cl.style.display = "flex";
-  cl.className = "carry-line " + (ci > 0 ? "pos" : "neg");
-  cl.innerHTML = `<span>↩ Carried over from ${monthName(prevKey(k)).split(" ")[0]} · ${ci > 0 ? "surplus" : "shortfall"}</span><span>${ci > 0 ? "+ " : "− "}${eur(Math.abs(ci))}</span>`;
+    item("var(--expense)","expenses",exp) + item("var(--save)","savings",sav) +
+    item("var(--warn)","🛒 groceries",gA) + item("var(--spend)","💸 out-of-pocket",oA) +
+    (budgetOver > 0 ? redItem("over budget", budgetOver) : "") +
+    (planOver > 0 ? redItem("expenses+savings over income", planOver) : "") +
+    (leftover > 0 ? item("var(--faint)","unallocated",leftover) : "");
 }
 function renderRecap(m) {
   const r = $("recap");
   if (m.finalized && m.applied) {
     const toPools = Object.values(m.applied.contributions || {}).reduce((s,v)=>s+num(v),0);
-    const co = num(m.applied.carryover), [ny,nm] = mkeyOf(m).split("-").map(Number), nextName = monthName(monthKey(new Date(ny, nm, 1))).split(" ")[0];
-    const carryTxt = co > 0 ? ` A surplus of <b>${eur(co)}</b> rolled into ${nextName}.` : co < 0 ? ` A shortfall of <b>${eur(-co)}</b> rolled into ${nextName}.` : "";
+    const [ny,nm] = mkeyOf(m).split("-").map(Number), nextName = monthName(monthKey(new Date(ny, nm, 1))).split(" ")[0];
+    const carry = m.applied.acctCarry || {};
+    const parts = Object.keys(carry).filter(id => Math.abs(num(carry[id])) > 0.005).map(id => { const nm2 = id ? (acctName(id) || "an account") : "Unassigned"; const v = num(carry[id]); return `${esc(nm2)} ${v < 0 ? "−" + eur(-v) : "+" + eur(v)}`; });
+    const carryTxt = parts.length ? ` Carried into ${nextName}: ${parts.join(", ")}.` : "";
     r.className = "recap show";
     r.innerHTML = `<span class="ic">🎉</span><div>Month finalized — <b>${eur(toPools)}</b> went to your pools this month. Total saved is now <b>${eur(totalSaved())}</b>.${carryTxt}</div>`;
   } else r.className = "recap";
@@ -1239,20 +1377,22 @@ function deltaHtml(it) {
   return `<span class="delta ${diff < 0 ? "over" : "under"}">${diff < 0 ? "▲" : "▼"} ${eur(Math.abs(diff))}</span>`;
 }
 // One expense row. sgi === null for a category's own items; otherwise the item lives in subcategory sgi.
-function itemRowHtml(gi, sgi, ii, it) {
+// parentAcct = the account this item inherits if it isn't tagged itself.
+function itemRowHtml(gi, sgi, ii, it, parentAcct) {
   const addr = sgi == null ? `data-gi="${gi}" data-ii="${ii}"` : `data-gi="${gi}" data-sgi="${sgi}" data-ii="${ii}"`;
   const dkey = sgi == null ? `${gi}:${ii}` : `${gi}:${sgi}:${ii}`;
   const del = sgi == null ? `data-delitem="${gi}:${ii}"` : `data-delsgitem="${gi}:${sgi}:${ii}"`;
+  const acctSel = (data.accounts || []).length ? acctSelectHtml(it.account, `data-iacct="${dkey}"`, inhLabel(acctName(parentAcct))) : "";
   return `<tr data-rowidx="${ii}">
-      <td><div class="name-wrap"><span class="drag-handle" data-drag="${dkey}" title="Drag to move to another category" aria-label="Drag to move">⠿</span><input class="cell name" type="text" value="${esc(it.name)}" ${addr} data-f="name" aria-label="Item name"></div></td>
+      <td><div class="name-wrap"><span class="drag-handle" data-drag="${dkey}" title="Drag to move to another category" aria-label="Drag to move">⠿</span><input class="cell name" type="text" value="${esc(it.name)}" ${addr} data-f="name" aria-label="Item name">${acctSel}</div></td>
       <td class="r"><input class="cell r amt" type="number" inputmode="decimal" min="0" step="0.01" value="${it.planned ?? ""}" ${addr} data-f="planned" aria-label="Planned"></td>
       <td class="r"><input class="cell r amt actual" type="number" inputmode="decimal" min="0" step="0.01" value="${it.actual ?? ""}" placeholder="${num(it.planned).toFixed(2)}" ${addr} data-f="actual" aria-label="Actual"></td>
       <td class="r" data-delta="${dkey}">${deltaHtml(it)}</td>
       <td class="r"><button class="btn-x" ${del} aria-label="Delete item">✕</button></td></tr>`;
 }
-function itemsTableHtml(gi, sgi, items, addName) {
+function itemsTableHtml(gi, sgi, items, addName, parentAcct) {
   const dropKey = sgi == null ? `${gi}` : `${gi}:${sgi}`;
-  const rows = items.map((it, ii) => itemRowHtml(gi, sgi, ii, it)).join("");
+  const rows = items.map((it, ii) => itemRowHtml(gi, sgi, ii, it, parentAcct)).join("");
   const addAttr = sgi == null ? `data-additem="${gi}"` : `data-addsgitem="${gi}:${sgi}"`;
   const addBtn = sgi == null ? `data-additembtn="${gi}"` : `data-addsgitembtn="${gi}:${sgi}"`;
   return `<div class="items-drop" data-drop="${dropKey}"><table><thead><tr><th>Item</th><th class="r">Planned</th><th class="r">Actual</th><th class="r">Δ</th><th></th></tr></thead>
@@ -1262,32 +1402,39 @@ function itemsTableHtml(gi, sgi, items, addName) {
 function renderGroups(m) {
   const c = $("groupsContainer"), totalExp = expensesEff(m) || 1; c.innerHTML = "";
   if (!m.groups.length) c.innerHTML = `<p class="hint" style="padding:6px 2px">No categories yet — add one below.</p>`;
+  const hasAccts = (data.accounts || []).length > 0;
   m.groups.forEach((g, gi) => {
     const gt = groupTotal(g, true);
+    const gParent = resolveAcct(g.account); // account this category's own items inherit
     const subHtml = (g.subgroups || []).map((sg, sgi) => {
       const sgt = itemsTotal(sg.items, true);
+      const sgParent = resolveAcct(sg.account, g.account); // account this subcategory's items inherit
+      const sgAcctSel = hasAccts ? acctSelectHtml(sg.account, `data-sgacct="${gi}:${sgi}"`, inhLabel(acctName(gParent))) : "";
       return `<div class="subgroup${sg.collapsed ? " collapsed" : ""}">
         <div class="subgroup-head">
           <span class="sg-handle" data-sgtoggle="${gi}:${sgi}" role="button" aria-label="Collapse subcategory" tabindex="0">▾</span>
           <input class="sgname" type="text" value="${esc(sg.name)}" data-sgname="${gi}:${sgi}" aria-label="Subcategory name">
+          ${sgAcctSel}
           <div class="sgtotal num" data-sgtotal="${gi}:${sgi}">${eur(sgt)}</div>
           <button class="btn-x" data-delsg="${gi}:${sgi}" aria-label="Delete subcategory">✕</button>
         </div>
-        <div class="sgbody" style="max-height:${sg.collapsed ? 0 : 2000}px">${itemsTableHtml(gi, sgi, sg.items, sg.name)}</div>
+        <div class="sgbody" style="max-height:${sg.collapsed ? 0 : 2000}px">${itemsTableHtml(gi, sgi, sg.items, sg.name, sgParent)}</div>
       </div>`;
     }).join("");
+    const gAcctSel = hasAccts ? acctSelectHtml(g.account, `data-gacct="${gi}"`, inhLabel(acctName(resolveAcct()))) : "";
     const div = document.createElement("div");
     div.className = "group" + (g.collapsed ? " collapsed" : "");
     div.innerHTML = `
       <div class="group-head">
         <span class="ghandle" data-toggle="${gi}" role="button" aria-label="Collapse category" tabindex="0">▾</span>
         <input class="gname" type="text" value="${esc(g.name)}" data-gname="${gi}" aria-label="Category name">
+        ${gAcctSel}
         <div class="gmeta"><div class="gtotal num" data-gtotal="${gi}">${eur(gt)}</div>
           <div class="gshare"><div data-gshare="${gi}" style="width:${Math.min(100, gt/totalExp*100)}%"></div></div></div>
         <button class="btn-x" data-delgroup="${gi}" aria-label="Delete category">✕</button>
       </div>
       <div class="gbody" style="max-height:${g.collapsed ? 0 : 6000}px">
-        ${itemsTableHtml(gi, null, g.items, g.name)}
+        ${itemsTableHtml(gi, null, g.items, g.name, gParent)}
         ${subHtml}
         <div class="add-sg"><input class="text" type="text" placeholder="New subcategory in ${esc(g.name)}…" data-addsg="${gi}"><button class="btn-add" data-addsgbtn="${gi}">+ Subcategory</button></div>
       </div>`;
@@ -1328,6 +1475,7 @@ function renderPools(m) {
       : `<div class="ptx-item">
           <span class="tx-when">${parseDate(x.d).toLocaleDateString(undefined,{day:"numeric",month:"short"})} · ${TX_LABEL[x.t] || x.t}</span>
           <span class="euro"><input class="mini-amt ptx-in" type="number" step="0.01" value="${num(x.a)}" data-ptx="${idx}" aria-label="Amount"></span>
+          ${(x.t === "withdraw" && (data.accounts || []).length) ? acctSelectHtml(x.acct || "", `data-txacct="${idx}"`, "→ into which account?") : ""}
           <button class="btn-x" data-ptxdel="${idx}" aria-label="Delete">✕</button>
         </div>`).join("") : `<div class="hint" style="padding:2px 0">No changes logged for ${monLabel} yet.</div>`;
     const goalTxt = indef ? "indefinite — no end goal" : (target > 0 ? `${Math.round(pc)}% of ${eur(target)} goal` : "no end goal set");
@@ -1344,6 +1492,7 @@ function renderPools(m) {
       </div>
       <div class="pbal num">${eur(bal)}</div>
       <div class="ptarget">${targetInfo}</div>
+      ${(data.accounts || []).length ? `<div class="pool-acct">🏦 ${acctSelectHtml(data.poolAccounts[name] || "", `data-poolacct="${esc(name)}"`, inhLabel(acctName(resolveAcct())))}</div>` : ""}
       ${target > 0 ? `<div class="pbar"><div style="width:${pc}%"></div></div>` : `<div style="height:6px"></div>`}
       <div class="${mLine.cls}">${mLine.text}</div>
       <div class="ptx-list">${itemsHtml}</div>
@@ -1358,12 +1507,35 @@ function renderPools(m) {
 /* ===== editing events ===== */
 $("incomeInput").addEventListener("input", e => { getMonth(current).income = num(e.target.value); liveRecalc(); });
 $("bonusInput").addEventListener("input", e => { getMonth(current).bonus = num(e.target.value); liveRecalc(); });
+// Re-render the spending section + allocation bar live, without stealing focus from the field being edited.
+function refreshSpend(m) {
+  renderAllocation(m);
+  const dim = monthDayCount(current), budget = spendBudget(m), disc = discretionary(m);
+  renderSpendSchedule(m, budget, dim, budget / dim);
+  const cw = $("cWeek"); cw.textContent = eur(budget / dim * 7); cw.className = "kvalue" + (budget > Math.max(0, disc) ? " neg" : "");
+  $("cWeekSub").textContent = eur(budget / dim) + " / day";
+}
+// Set groceries as a fixed € — out-of-pocket stays put, so this changes the total spending budget.
+$("grocAmtInput").addEventListener("input", e => {
+  const m = getMonth(current); ensureSpend(m);
+  m.grocAmt = Math.max(0, num(e.target.value));
+  refreshSpend(m); save();
+});
+// Set out-of-pocket as a fixed € — groceries stays put.
+$("oopAmtInput").addEventListener("input", e => {
+  const m = getMonth(current); ensureSpend(m);
+  m.oopAmt = Math.max(0, num(e.target.value));
+  refreshSpend(m); save();
+});
+// Adjust the % split — keeps the current total, just re-divides it between groceries and out-of-pocket.
 $("grocPctInput").addEventListener("input", e => {
-  data.settings.grocPct = Math.min(100, Math.max(0, Math.round(num(e.target.value))));
-  $("oopPct").textContent = 100 - grocPct();
-  const m = getMonth(current), disc = discretionary(m), dim = monthDayCount(current);
-  renderSpendSchedule(m, disc, dim, disc / dim); // live update without stealing focus
-  save();
+  const m = getMonth(current); ensureSpend(m);
+  const pct = Math.min(100, Math.max(0, num(e.target.value))), total = num(m.grocAmt) + num(m.oopAmt);
+  m.grocAmt = Math.round(total * pct) / 100;
+  m.oopAmt = Math.round((total - m.grocAmt) * 100) / 100;
+  data.settings.grocPct = Math.round(pct); // remember the preferred split for fresh months
+  $("oopPct").textContent = 100 - Math.round(pct);
+  refreshSpend(m); save();
 });
 // Tick / untick a week as "already spent": lock its amount so only the open weeks adjust.
 $("spendSchedule").addEventListener("click", e => {
@@ -1408,6 +1580,13 @@ groups.addEventListener("keydown", e => {
   else if (d.addsgitem !== undefined) addSubItem(d.addsgitem);
   else if (d.addsg !== undefined) addSubgroup(d.addsg);
   else if (d.toggle !== undefined || d.sgtoggle !== undefined) e.target.click();
+});
+// Tag a category / subcategory / item with a bank account (blank = inherit from parent).
+groups.addEventListener("change", e => {
+  const d = e.target.dataset, m = getMonth(current);
+  if (d.gacct !== undefined) { m.groups[d.gacct].account = e.target.value; render(); }
+  else if (d.sgacct !== undefined) { const [gi, sgi] = d.sgacct.split(":"); m.groups[gi].subgroups[sgi].account = e.target.value; render(); }
+  else if (d.iacct !== undefined) { const p = d.iacct.split(":"); if (p.length === 2) m.groups[p[0]].items[p[1]].account = e.target.value; else m.groups[p[0]].subgroups[p[1]].items[p[2]].account = e.target.value; render(); }
 });
 function addItem(gi) { const inp = groups.querySelector(`[data-additem="${gi}"]`), name = inp.value.trim(); if (!name) return; getMonth(current).groups[gi].items.push({ name, planned:0, actual:null }); render(); }
 function addSubItem(key) { const [gi, sgi] = key.split(":"), inp = groups.querySelector(`[data-addsgitem="${key}"]`), name = inp.value.trim(); if (!name) return; getMonth(current).groups[gi].subgroups[sgi].items.push({ name, planned:0, actual:null }); render(); }
@@ -1557,24 +1736,32 @@ function openFinalize(m) {
 }
 function updateModalSummary() {
   const m = getMonth(current);
-  const bonus = num($("mBonus").value), exp = expensesEff(m), sav = savingsPlanned(m), pulled = withdrawnToSpend(mkeyOf(m)), ci = carryIn(current);
+  const bonus = num($("mBonus").value), exp = expensesEff(m), sav = savingsPlanned(m), pulled = withdrawnToSpend(mkeyOf(m));
   const segs = spendSegments(current), weeks = segs.length, locks = m.spendLocks || {};
   const ticked = segs.filter(s => (current + "-" + String(s.start).padStart(2,"0")) in locks).length;
   const spent = spentLocked(m, current);
-  const disc = num(m.income) + bonus + ci + pulled - exp - sav; // spending money available this month
-  const net = disc - spent;                                     // rolls into next month
   const [ny,nm] = current.split("-").map(Number), nextName = monthName(monthKey(new Date(ny, nm, 1))).split(" ")[0];
-  const prevName = monthName(prevKey(current)).split(" ")[0];
+  const nets = accountNet(m);
+  const pools = (m.savingsGoals || []).filter(g => num(g.planned) > 0);
+  const acctRow = (name, id) => {
+    const v = num(nets[id]), cls = v >= 0 ? "var(--save)" : "var(--over)", label = v >= 0 ? `+ ${eur(v)} spare` : `− ${eur(-v)} short`;
+    const cover = (v < -0.005 && pools.length) ? `<select class="text cover-sel" data-cover="${id}" style="margin-top:5px;width:100%;font-size:12.5px">
+        <option value="">↩ Carry the ${eur(-v)} into ${nextName}</option>
+        ${pools.map(g => `<option value="${esc(g.name)}">Take ${eur(Math.min(-v, num(g.planned)))} from ${esc(g.name)}'s saving instead</option>`).join("")}
+      </select>` : "";
+    return `<div class="mrow" style="align-items:flex-start"><span>${esc(name)}${cover}</span><span class="num" style="color:${cls}">${label}</span></div>`;
+  };
+  const accountRows = (data.accounts || []).filter(a => Math.abs(num(nets[a.id])) > 0.005).map(a => acctRow(a.name, a.id)).join("")
+    + (Math.abs(num(nets[""])) > 0.005 ? acctRow("Unassigned", "") : "");
   $("modalSummary").innerHTML = `
     <div class="mrow"><span>Income</span><span class="num">${eur(m.income)}</span></div>
     <div class="mrow"><span>Bonus / found money</span><span class="num">+ ${eur(bonus)}</span></div>
-    ${ci !== 0 ? `<div class="mrow"><span>Carried in from ${prevName}</span><span class="num" style="color:${ci>0?"var(--save)":"var(--over)"}">${ci>0?"+":"−"} ${eur(Math.abs(ci))}</span></div>` : ""}
     ${pulled > 0 ? `<div class="mrow"><span>Pulled from savings</span><span class="num">+ ${eur(pulled)}</span></div>` : ""}
     <div class="mrow"><span>Expenses (bills + one-off)</span><span class="num">− ${eur(exp)}</span></div>
     <div class="mrow"><span>Saved to pools</span><span class="num">− ${eur(sav)}</span></div>
     <div class="mrow"><span>Spending money spent <span class="hint">(${ticked} of ${weeks} weeks ticked)</span></span><span class="num">− ${eur(spent)}</span></div>
-    <div class="mrow total"><span>${net >= 0 ? "Surplus" : "Shortfall"} → rolls into ${nextName}</span><span class="num" style="color:${net>=0?"var(--save)":"var(--over)"}">${net>=0?"+":"−"} ${eur(Math.abs(net))}</span></div>
-    ${ticked < weeks ? `<p class="hint" style="margin:8px 2px 0">Unticked weeks count as <b>not</b> spent (they add to the surplus). If you did spend them, cancel and tick them on the Budget tab first.</p>` : ""}`;
+    ${accountRows ? `<div class="set-label" style="margin-top:12px">How each account ends the month → carries into ${nextName}</div>${accountRows}` : `<p class="hint" style="margin-top:10px">Every account is on plan — nothing to carry.</p>`}
+    ${ticked < weeks ? `<p class="hint" style="margin:8px 2px 0">Unticked weeks count as <b>not</b> spent. If you did spend them, cancel and tick them on the Budget tab first.</p>` : ""}`;
 }
 $("mBonus").addEventListener("input", updateModalSummary);
 $("modalCancel").addEventListener("click", () => overlay.classList.remove("show"));
@@ -1582,17 +1769,30 @@ overlay.addEventListener("click", e => { if (e.target === overlay) overlay.class
 $("modalConfirm").addEventListener("click", () => {
   const m = getMonth(current);
   m.bonus = num($("mBonus").value);
-  applyFinalize(m);
+  const nets = accountNet(m), covers = {};
+  // apply any "cover from savings" choices: this month only reduces that pool's contribution, and shrinks the account's deficit
+  $("modalSummary").querySelectorAll("[data-cover]").forEach(sel => {
+    const id = sel.dataset.cover, poolName = sel.value; if (!poolName) return;
+    const deficit = -num(nets[id]); if (deficit <= 0) return;
+    const goal = m.savingsGoals.find(g => g.name === poolName); if (!goal) return;
+    const cover = Math.min(deficit, num(goal.planned) - (covers[poolName] || 0)); if (cover <= 0) return;
+    covers[poolName] = (covers[poolName] || 0) + cover;
+    nets[id] = num(nets[id]) + cover;
+  });
+  applyFinalize(m, nets, covers);
   overlay.classList.remove("show");
   shiftMonth(1);
 });
-function applyFinalize(m) {
+function applyFinalize(m, acctNets, covers) {
   if (m.finalized) return;
-  // Lock in this month's targets at their current planned amounts, then freeze them.
-  (m.savingsGoals || []).forEach(g => setContribution(g.name, current, num(g.planned)));
+  covers = covers || {};
+  // Lock in this month's targets (a cover-from-savings trims THIS month's contribution only; the ongoing target is untouched).
+  (m.savingsGoals || []).forEach(g => setContribution(g.name, current, Math.max(0, num(g.planned) - (covers[g.name] || 0))));
   const snapshot = { contributions:{} };
   (m.savingsGoals || []).forEach(g => { snapshot.contributions[g.name] = monthTarget(g.name, current); });
-  snapshot.carryover = monthNet(m, current); // net surplus/deficit that rolls into next month
+  const nets = acctNets || accountNet(m), acctCarry = {};
+  for (const id in nets) if (Math.abs(num(nets[id])) > 0.005) acctCarry[id] = Math.round(num(nets[id]) * 100) / 100;
+  snapshot.acctCarry = acctCarry; // each account's surplus/deficit rolls into next month
   m.finalized = true; m.applied = snapshot;
   recomputeSavings(); // this month's targets now count toward the pools
 }
@@ -2067,7 +2267,32 @@ function renderSettings() {
       <div class="tn">${t.name}</div></div>`).join("");
   const cur = (data.settings.currency) || "EUR";
   $("currencySelect").innerHTML = Object.keys(CURRENCIES).map(code => `<option value="${code}" ${code === cur ? "selected" : ""}>${code} — ${CURRENCIES[code].sym}</option>`).join("");
+  const accts = data.accounts || [];
+  $("acctList").innerHTML = accts.length
+    ? accts.map(a => `<div class="acct-row"><input class="text acct-name" data-acctid="${a.id}" value="${esc(a.name)}" aria-label="Account name"><button class="btn-x" data-acctdel="${a.id}" aria-label="Delete account">✕</button></div>`).join("")
+    : `<p class="hint" style="margin:0">No accounts yet — add one below.</p>`;
+  $("acctDefaultSel").innerHTML = `<option value="">— none —</option>` + accts.map(a => `<option value="${a.id}" ${data.settings.defaultAccount === a.id ? "selected" : ""}>${esc(a.name)}</option>`).join("");
 }
+function addAccount() { const inp = $("acctAddName"), name = inp.value.trim(); if (!name) return; data.accounts = data.accounts || []; data.accounts.push({ id: uid(), name }); inp.value = ""; save(); renderSettings(); if (activeTab === "budget") render(); }
+$("acctAddBtn").addEventListener("click", addAccount);
+$("acctAddName").addEventListener("keydown", e => { if (e.key === "Enter") addAccount(); });
+$("acctList").addEventListener("input", e => { const t = e.target; if (t.dataset.acctid === undefined) return; const a = acctById(t.dataset.acctid); if (a) { a.name = t.value; save(); if (activeTab === "budget") render(); } });
+$("acctList").addEventListener("click", e => {
+  const t = e.target.closest("[data-acctdel]"); if (!t) return;
+  const id = t.dataset.acctdel;
+  if (!confirm("Delete this account? Anything tagged with it becomes untagged.")) return;
+  data.accounts = (data.accounts || []).filter(a => a.id !== id);
+  if (data.settings.defaultAccount === id) data.settings.defaultAccount = "";
+  ["oneOffAccount", "grocAccount", "oopAccount"].forEach(kk => { if (data.settings[kk] === id) data.settings[kk] = ""; });
+  Object.keys(data.poolAccounts || {}).forEach(pn => { if (data.poolAccounts[pn] === id) delete data.poolAccounts[pn]; });
+  Object.values(data.months).forEach(m => (m.groups || []).forEach(g => {
+    if (g.account === id) g.account = "";
+    (g.items || []).forEach(it => { if (it.account === id) it.account = ""; });
+    (g.subgroups || []).forEach(sg => { if (sg.account === id) sg.account = ""; (sg.items || []).forEach(it => { if (it.account === id) it.account = ""; }); });
+  }));
+  save(); renderSettings(); render();
+});
+$("acctDefaultSel").addEventListener("change", e => { data.settings.defaultAccount = e.target.value; save(); if (activeTab === "budget") render(); });
 $("settingsBtn").addEventListener("click", () => { renderSettings(); settingsModal.classList.add("show"); });
 $("settingsClose").addEventListener("click", () => settingsModal.classList.remove("show"));
 settingsModal.addEventListener("click", e => { if (e.target === settingsModal) settingsModal.classList.remove("show"); });
