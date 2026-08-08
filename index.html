@@ -305,11 +305,6 @@
   .acct-sum-row .acct-carry { display:block; font-size:11.5px; font-weight:500; margin-top:2px; }
   .acct-carry.owed { color:var(--over); }
   .acct-carry.spare { color:var(--save); }
-  .acct-name-cell { min-width:0; }
-  .acct-right { display:inline-flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
-  .acct-topup { border:1px dashed var(--border); background:transparent; color:var(--muted); border-radius:999px; padding:4px 10px; font-size:11.5px; font-weight:600; cursor:pointer; white-space:nowrap; transition:all .15s; }
-  .acct-topup:hover { color:var(--primary); border-color:var(--primary); }
-  .acct-clear { border:none; background:transparent; color:inherit; text-decoration:underline; cursor:pointer; font:inherit; font-size:11px; padding:0 0 0 5px; }
   .sched { display:flex; flex-direction:column; gap:7px; margin-top:14px; }
   .sched-row { display:grid; grid-template-columns:1fr auto; gap:3px 12px; align-items:center; background:var(--surface-2); border:1px solid var(--border-soft); border-left:3px solid var(--border-soft); border-radius:var(--radius-sm); padding:10px 13px; transition:opacity .2s; }
   .sched-row .sched-date { font-weight:600; font-size:14px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
@@ -901,7 +896,7 @@ const invWindow = {}; // per-pool selected return window (months|null)
 function blankMonth() {
   return { income:0, bonus:0, groups:[], oneOff:[], savingsGoals:[], finalized:false, applied:null };
 }
-function normalize(d) { d.settings ??= {}; d.savings ??= {}; d.investments ??= {}; d.poolTx ??= {}; d.months ??= {}; d.accounts ??= []; d.poolAccounts ??= {}; d.settings.grocPct ??= 70; Object.values(d.months).forEach(m => { m.oneOff ??= []; m.spendLocks ??= {}; m.topUps ??= {}; (m.groups || []).forEach(g => { g.subgroups ??= []; g.subgroups.forEach(sg => { sg.items ??= []; }); }); }); migrateBuffer(d); migrateContribTx(d); migrateLocks(d); return d; }
+function normalize(d) { d.settings ??= {}; d.savings ??= {}; d.investments ??= {}; d.poolTx ??= {}; d.months ??= {}; d.accounts ??= []; d.poolAccounts ??= {}; d.settings.grocPct ??= 70; Object.values(d.months).forEach(m => { m.oneOff ??= []; m.spendLocks ??= {}; (m.groups || []).forEach(g => { g.subgroups ??= []; g.subgroups.forEach(sg => { sg.items ??= []; }); }); }); migrateBuffer(d); migrateContribTx(d); migrateLocks(d); return d; }
 function load() {
   let raw; try { raw = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch {}
   if (raw && raw.months) return normalize(raw);
@@ -958,7 +953,8 @@ const expensesEff = m => m.groups.reduce((s, g) => s + groupTotal(g, true), 0) +
 const savingsPlanned = m => m.savingsGoals.reduce((s, g) => s + num(g.planned), 0);
 const mkeyOf = m => { for (const k in data.months) if (data.months[k] === m) return k; return current; };
 // Money withdrawn from savings pools this month flows back into spendable cash (and is shown in Income).
-const withdrawnToSpend = mkey => { let s = 0; const px = data.poolTx || {}; for (const n in px) (px[n] || []).forEach(x => { if (x.t === "withdraw" && String(x.d).slice(0, 7) === mkey) s += -num(x.a); }); return s; };
+// Cash pulled from pools into this month's spending. A "cover" withdrawal (used to cover a deficit) is excluded — it never becomes spendable cash.
+const withdrawnToSpend = mkey => { let s = 0; const px = data.poolTx || {}; for (const n in px) (px[n] || []).forEach(x => { if (x.t === "withdraw" && !("cover" in x) && String(x.d).slice(0, 7) === mkey) s += -num(x.a); }); return s; };
 // ----- per-account carryover (each account carries its own surplus/deficit into the next month) -----
 // Key of the previous calendar month, e.g. "2026-08" -> "2026-07".
 const prevKey = k => { const [y,mo] = k.split("-").map(Number); return monthKey(new Date(y, mo-2, 1)); };
@@ -1013,17 +1009,23 @@ function paintAcctPickers() {
 // One-offs are pure deficits (unplanned); groceries/OOP compare the budget to what you actually spent (ticked weeks).
 // +surplus (spare) / −deficit (owed). Returns { acctId(or "" for unassigned): net }.
 function accountNet(m) {
-  const k = mkeyOf(m), nets = {}, add = (id, v) => { if (Math.abs(v) > 0.0000001) { const kk = id || ""; nets[kk] = (nets[kk] || 0) + v; } };
+  const k = mkeyOf(m), base = {}, cred = {};
+  const addB = (id, v) => { const kk = id || ""; base[kk] = (base[kk] || 0) + v; };
+  const addC = (id, v) => { const kk = id || ""; cred[kk] = (cred[kk] || 0) + v; };
   m.groups.forEach(g => {
-    g.items.forEach(it => add(resolveAcct(it.account, g.account), num(it.planned) - num(it.actual ?? it.planned)));
-    (g.subgroups || []).forEach(sg => sg.items.forEach(it => add(resolveAcct(it.account, sg.account, g.account), num(it.planned) - num(it.actual ?? it.planned))));
+    g.items.forEach(it => addB(resolveAcct(it.account, g.account), num(it.planned) - num(it.actual ?? it.planned)));
+    (g.subgroups || []).forEach(sg => sg.items.forEach(it => addB(resolveAcct(it.account, sg.account, g.account), num(it.planned) - num(it.actual ?? it.planned))));
   });
-  (m.oneOff || []).forEach(o => add(resolveAcct(data.settings.oneOffAccount), -num(o.amount)));
+  (m.oneOff || []).forEach(o => addB(resolveAcct(data.settings.oneOffAccount), -num(o.amount)));
   ensureSpend(m);
   const spent = spentLocked(m, k), grocSpent = spentLockedGroc(m, k, grocPct()); // use each ticked week's frozen split
-  add(resolveAcct(data.settings.grocAccount), num(m.grocAmt) - grocSpent);
-  add(resolveAcct(data.settings.oopAccount), num(m.oopAmt) - (spent - grocSpent));
-  const tu = m.topUps || {}; for (const id in tu) add(id, num(tu[id])); // money you added from outside credits the account (shrinks its deficit)
+  addB(resolveAcct(data.settings.grocAccount), num(m.grocAmt) - grocSpent);
+  addB(resolveAcct(data.settings.oopAccount), num(m.oopAmt) - (spent - grocSpent));
+  // "cover deficit" money pulled from a pool credits the account it covers (x.a is negative, so −x.a is the amount)
+  for (const n in (data.poolTx || {})) (data.poolTx[n] || []).forEach(x => { if (x.t === "withdraw" && monthOf(x.d) === k && "cover" in x) addC((x.cover && acctById(x.cover)) ? x.cover : "", -num(x.a)); });
+  // a credit only shrinks a deficit toward 0 — it never inflates a surplus that would carry forward
+  const nets = {}, ids = new Set([...Object.keys(base), ...Object.keys(cred)]);
+  ids.forEach(id => { const b = base[id] || 0, net = b < 0 ? Math.min(0, b + (cred[id] || 0)) : b; if (Math.abs(net) > 0.005) nets[id] = net; });
   return nets;
 }
 // Balances carried INTO a month from the previous finalized month (+surplus / −deficit), keyed by account id ("" = unassigned).
@@ -1041,50 +1043,34 @@ function accountSetAside(m) {
   if (num(m.grocAmt)) add(resolveAcct(data.settings.grocAccount), num(m.grocAmt));
   if (num(m.oopAmt)) add(resolveAcct(data.settings.oopAccount), num(m.oopAmt));
   m.savingsGoals.forEach(gl => { const t = num(gl.planned); if (t) add(resolveAcct((data.poolAccounts || {})[gl.name]), t); });
-  // a withdrawal's cash lands in its chosen destination account, reducing what you need to add there (x.a is negative)
-  for (const n in (data.poolTx || {})) (data.poolTx[n] || []).forEach(x => { if (x.t === "withdraw" && monthOf(x.d) === k && x.acct && acctById(x.acct)) add(x.acct, num(x.a)); });
+  // a withdrawal reduces what you need to add to an account: a "cover" withdrawal credits the deficit it covers; a normal one lands its cash in its destination account (x.a is negative)
+  for (const n in (data.poolTx || {})) (data.poolTx[n] || []).forEach(x => {
+    if (x.t !== "withdraw" || monthOf(x.d) !== k) return;
+    if ("cover" in x) add((x.cover && acctById(x.cover)) ? x.cover : "", num(x.a));
+    else if (x.acct && acctById(x.acct)) add(x.acct, num(x.a));
+  });
   // carried-in from last month: a deficit (−) raises what to put in; a surplus (+) lowers it
   const carry = acctCarryIn(k);
   for (const id in carry) add(id, -num(carry[id]));
-  // money you've already added from outside lowers what's still left to put in
-  const tu = m.topUps || {}; for (const id in tu) add(id, -num(tu[id]));
   return totals;
 }
 function renderAccountSummary(m) {
   const box = $("acctSummary"); if (!box) return;
-  const accts = data.accounts || [], carry = acctCarryIn(mkeyOf(m)), tu = m.topUps || {};
+  const accts = data.accounts || [], carry = acctCarryIn(mkeyOf(m));
   const hasCarry = Object.keys(carry).some(id => Math.abs(num(carry[id])) > 0.005);
   if (!accts.length && !hasCarry) { box.style.display = "none"; box.innerHTML = ""; return; }
   const totals = accountSetAside(m);
   const mkRow = (name, id, un) => {
-    const amt = totals[id] || 0, c = num(carry[id]), added = num(tu[id]);
+    const amt = totals[id] || 0, c = num(carry[id]);
     const carryNote = c ? `<span class="acct-carry ${c < 0 ? "owed" : "spare"}">${c < 0 ? "incl. " + eur(-c) + " carried debt" : "less " + eur(c) + " carried spare"}</span>` : "";
-    const addedNote = added > 0 ? `<span class="acct-carry spare">less ${eur(added)} you added <button class="acct-clear" data-topupclear="${id}">clear</button></span>` : "";
-    return `<div class="acct-sum-row${un ? " unassigned" : ""}">
-        <span class="acct-name-cell">${esc(name)}${carryNote}${addedNote}</span>
-        <span class="acct-right"><span class="num${amt < 0 ? " pos" : ""}">${amt < 0 ? eur(-amt) + " spare" : eur(amt)}</span><button class="acct-topup" data-topup="${id}">＋ add money</button></span>
-      </div>`;
+    return `<div class="acct-sum-row${un ? " unassigned" : ""}"><span>${esc(name)}${carryNote}</span><span class="num${amt < 0 ? " pos" : ""}">${amt < 0 ? eur(-amt) + " spare" : eur(amt)}</span></div>`;
   };
   box.style.display = "block";
   box.innerHTML = `<div class="acct-sum-head">Put your money in this month</div>` +
     accts.map(a => mkRow(a.name, a.id, false)).join("") +
-    ((Math.abs(totals[""] || 0) > 0.005 || carry[""] || tu[""]) ? mkRow("Unassigned", "", true) : "") +
-    `<p class="hint" style="margin:8px 0 0"><b>＋ add money</b> logs cash you put toward an account from outside your budget (e.g. you spent less than planned) — it lowers what's owed but is <b>not</b> counted as income. For real extra income, use Income → Bonus instead.</p>`;
+    ((Math.abs(totals[""] || 0) > 0.005 || carry[""]) ? mkRow("Unassigned", "", true) : "") +
+    `<p class="hint" style="margin:8px 0 0">How much to have in each account this month — its bills + groceries/out-of-pocket + savings, minus cash pulled in, plus anything owed (or minus anything spare) carried from last month. Cover a shortfall from a savings pool with <b>Cover deficit</b> below.</p>`;
 }
-// Add money to an account from outside the budget (covers a deficit; NOT income), or clear it.
-$("acctSummary").addEventListener("click", e => {
-  const clrBtn = e.target.closest("[data-topupclear]"), addBtn = e.target.closest("[data-topup]");
-  const m = getMonth(current);
-  if (clrBtn) { if (m.topUps) delete m.topUps[clrBtn.dataset.topupclear]; save(); updateSummary(m); return; }
-  if (addBtn) {
-    const id = addBtn.dataset.topup, name = id ? acctName(id) : "Unassigned";
-    const v = prompt(`Add money to "${name}" from outside your budget (e.g. you spent less than planned). This lowers what's owed but is NOT counted as income. How much?`, "");
-    if (v == null || !num(v)) return;
-    m.topUps = m.topUps || {};
-    m.topUps[id] = Math.round((num(m.topUps[id]) + Math.abs(num(v))) * 100) / 100;
-    save(); updateSummary(m);
-  }
-});
 const totalSaved = () => Object.values(data.savings).reduce((s, v) => s + num(v), 0);
 const monthSaved = m => (m.finalized && m.applied) ? Object.values(m.applied.contributions).reduce((s,v)=>s+v,0) : savingsPlanned(m);
 
@@ -1508,6 +1494,7 @@ function renderPools(m) {
   const names = poolList();
   if (!names.length) { c.innerHTML = `<p class="hint">No pools yet — add one on the <b>Pools</b> tab.</p>`; return; }
   const monLabel = monthName(current).split(" ")[0];
+  const nets = accountNet(m), anyDeficit = Object.values(nets).some(v => v < -0.005); // any account owing money this month?
   names.forEach(name => {
     const goal = m.savingsGoals.find(g => g.name === name);
     const indef = indefiniteGoal(goal);
@@ -1523,9 +1510,9 @@ function renderPools(m) {
           <span class="btn-x lock" title="${m.finalized ? "Saved — locked in when you finalized this month." : "Planned — it's added to the pool when you finalize this month. Change it on the Pools tab."}">🔒</span>
         </div>`
       : `<div class="ptx-item">
-          <span class="tx-when">${parseDate(x.d).toLocaleDateString(undefined,{day:"numeric",month:"short"})} · ${TX_LABEL[x.t] || x.t}</span>
+          <span class="tx-when">${parseDate(x.d).toLocaleDateString(undefined,{day:"numeric",month:"short"})} · ${("cover" in x) ? `Deficit cover → ${x.cover ? esc(acctName(x.cover) || "account") : "Unassigned"}` : (TX_LABEL[x.t] || x.t)}</span>
           <span class="euro"><input class="mini-amt ptx-in" type="number" step="0.01" value="${num(x.a)}" data-ptx="${idx}" aria-label="Amount"></span>
-          ${(x.t === "withdraw" && (data.accounts || []).length) ? acctSelectHtml(x.acct || "", `data-txacct="${idx}"`, "→ into which account?") : ""}
+          ${(x.t === "withdraw" && !("cover" in x) && (data.accounts || []).length) ? acctSelectHtml(x.acct || "", `data-txacct="${idx}"`, "→ into which account?") : ""}
           <button class="btn-x" data-ptxdel="${idx}" aria-label="Delete">✕</button>
         </div>`).join("") : `<div class="hint" style="padding:2px 0">No changes logged for ${monLabel} yet.</div>`;
     const goalTxt = indef ? "indefinite — no end goal" : (target > 0 ? `${Math.round(pc)}% of ${eur(target)} goal` : "no end goal set");
@@ -1549,6 +1536,7 @@ function renderPools(m) {
       <div class="inv-actions">
         <button class="btn sm primary" data-pdep="${esc(name)}">＋ Add</button>
         <button class="btn sm" data-pwd="${esc(name)}">− Withdraw</button>
+        ${anyDeficit ? `<button class="btn sm" data-covdef="${esc(name)}">Cover deficit</button>` : ""}
       </div>`;
     c.appendChild(div);
   });
@@ -1742,6 +1730,24 @@ pools.addEventListener("click", e => {
     const name = card.dataset.pool, idx = +t.dataset.ptxdel;
     if (data.poolTx[name] && data.poolTx[name][idx]) data.poolTx[name].splice(idx, 1);
     render();
+  } else if (t.dataset.covdef !== undefined) {
+    const name = t.dataset.covdef, m = getMonth(current), nets = accountNet(m);
+    const defs = [...(data.accounts || []).map(a => ({ id: a.id, name: a.name })), { id: "", name: "Unassigned" }]
+      .map(a => ({ ...a, def: -Math.min(0, num(nets[a.id])) })).filter(a => a.def > 0.005).sort((a, b) => b.def - a.def);
+    if (!defs.length) { alert("No account is in deficit this month — nothing to cover."); return; }
+    const v = prompt(`Withdraw from "${name}" to cover a deficit. It comes from this month's planned saving first, then your saved balance, and is NOT added to your spendable money. How much?`, "");
+    if (v == null || !num(v)) return;
+    const amt = Math.abs(num(v)); if (!amt) return;
+    let target = defs[0];
+    if (defs.length > 1) {
+      const pick = prompt("Which deficit to cover? Enter its number:\n" + defs.map((a, i) => `${i + 1}) ${a.name} — owes ${eur(a.def)}`).join("\n"), "1");
+      if (pick == null) return;
+      const idx = parseInt(pick, 10) - 1; if (isNaN(idx) || idx < 0 || idx >= defs.length) return;
+      target = defs[idx];
+    }
+    data.poolTx[name] = data.poolTx[name] || [];
+    data.poolTx[name].push({ d: current + "-15", a: -amt, t: "withdraw", n: "Deficit cover", cover: target.id });
+    recomputeSavings(); render(); playSavingsAnim();
   }
 });
 
