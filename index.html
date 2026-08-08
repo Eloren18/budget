@@ -305,6 +305,11 @@
   .acct-sum-row .acct-carry { display:block; font-size:11.5px; font-weight:500; margin-top:2px; }
   .acct-carry.owed { color:var(--over); }
   .acct-carry.spare { color:var(--save); }
+  .acct-name-cell { min-width:0; }
+  .acct-right { display:inline-flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+  .acct-topup { border:1px dashed var(--border); background:transparent; color:var(--muted); border-radius:999px; padding:4px 10px; font-size:11.5px; font-weight:600; cursor:pointer; white-space:nowrap; transition:all .15s; }
+  .acct-topup:hover { color:var(--primary); border-color:var(--primary); }
+  .acct-clear { border:none; background:transparent; color:inherit; text-decoration:underline; cursor:pointer; font:inherit; font-size:11px; padding:0 0 0 5px; }
   .sched { display:flex; flex-direction:column; gap:7px; margin-top:14px; }
   .sched-row { display:grid; grid-template-columns:1fr auto; gap:3px 12px; align-items:center; background:var(--surface-2); border:1px solid var(--border-soft); border-left:3px solid var(--border-soft); border-radius:var(--radius-sm); padding:10px 13px; transition:opacity .2s; }
   .sched-row .sched-date { font-weight:600; font-size:14px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
@@ -896,7 +901,7 @@ const invWindow = {}; // per-pool selected return window (months|null)
 function blankMonth() {
   return { income:0, bonus:0, groups:[], oneOff:[], savingsGoals:[], finalized:false, applied:null };
 }
-function normalize(d) { d.settings ??= {}; d.savings ??= {}; d.investments ??= {}; d.poolTx ??= {}; d.months ??= {}; d.accounts ??= []; d.poolAccounts ??= {}; d.settings.grocPct ??= 70; Object.values(d.months).forEach(m => { m.oneOff ??= []; m.spendLocks ??= {}; (m.groups || []).forEach(g => { g.subgroups ??= []; g.subgroups.forEach(sg => { sg.items ??= []; }); }); }); migrateBuffer(d); migrateContribTx(d); migrateLocks(d); return d; }
+function normalize(d) { d.settings ??= {}; d.savings ??= {}; d.investments ??= {}; d.poolTx ??= {}; d.months ??= {}; d.accounts ??= []; d.poolAccounts ??= {}; d.settings.grocPct ??= 70; Object.values(d.months).forEach(m => { m.oneOff ??= []; m.spendLocks ??= {}; m.topUps ??= {}; (m.groups || []).forEach(g => { g.subgroups ??= []; g.subgroups.forEach(sg => { sg.items ??= []; }); }); }); migrateBuffer(d); migrateContribTx(d); migrateLocks(d); return d; }
 function load() {
   let raw; try { raw = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch {}
   if (raw && raw.months) return normalize(raw);
@@ -1018,6 +1023,7 @@ function accountNet(m) {
   const spent = spentLocked(m, k), grocSpent = spentLockedGroc(m, k, grocPct()); // use each ticked week's frozen split
   add(resolveAcct(data.settings.grocAccount), num(m.grocAmt) - grocSpent);
   add(resolveAcct(data.settings.oopAccount), num(m.oopAmt) - (spent - grocSpent));
+  const tu = m.topUps || {}; for (const id in tu) add(id, num(tu[id])); // money you added from outside credits the account (shrinks its deficit)
   return nets;
 }
 // Balances carried INTO a month from the previous finalized month (+surplus / −deficit), keyed by account id ("" = unassigned).
@@ -1040,25 +1046,45 @@ function accountSetAside(m) {
   // carried-in from last month: a deficit (−) raises what to put in; a surplus (+) lowers it
   const carry = acctCarryIn(k);
   for (const id in carry) add(id, -num(carry[id]));
+  // money you've already added from outside lowers what's still left to put in
+  const tu = m.topUps || {}; for (const id in tu) add(id, -num(tu[id]));
   return totals;
 }
 function renderAccountSummary(m) {
   const box = $("acctSummary"); if (!box) return;
-  const accts = data.accounts || [], carry = acctCarryIn(mkeyOf(m));
+  const accts = data.accounts || [], carry = acctCarryIn(mkeyOf(m)), tu = m.topUps || {};
   const hasCarry = Object.keys(carry).some(id => Math.abs(num(carry[id])) > 0.005);
   if (!accts.length && !hasCarry) { box.style.display = "none"; box.innerHTML = ""; return; }
   const totals = accountSetAside(m);
   const mkRow = (name, id, un) => {
-    const amt = totals[id] || 0, c = num(carry[id]);
-    const note = c ? `<span class="acct-carry ${c < 0 ? "owed" : "spare"}">${c < 0 ? "incl. " + eur(-c) + " carried debt" : "less " + eur(c) + " carried spare"}</span>` : "";
-    return `<div class="acct-sum-row${un ? " unassigned" : ""}"><span>${esc(name)}${note}</span><span class="num${amt < 0 ? " pos" : ""}">${amt < 0 ? eur(-amt) + " spare" : eur(amt)}</span></div>`;
+    const amt = totals[id] || 0, c = num(carry[id]), added = num(tu[id]);
+    const carryNote = c ? `<span class="acct-carry ${c < 0 ? "owed" : "spare"}">${c < 0 ? "incl. " + eur(-c) + " carried debt" : "less " + eur(c) + " carried spare"}</span>` : "";
+    const addedNote = added > 0 ? `<span class="acct-carry spare">less ${eur(added)} you added <button class="acct-clear" data-topupclear="${id}">clear</button></span>` : "";
+    return `<div class="acct-sum-row${un ? " unassigned" : ""}">
+        <span class="acct-name-cell">${esc(name)}${carryNote}${addedNote}</span>
+        <span class="acct-right"><span class="num${amt < 0 ? " pos" : ""}">${amt < 0 ? eur(-amt) + " spare" : eur(amt)}</span><button class="acct-topup" data-topup="${id}">＋ add money</button></span>
+      </div>`;
   };
   box.style.display = "block";
-  box.innerHTML = `<div class="acct-sum-head">🏦 Put your money in this month</div>` +
+  box.innerHTML = `<div class="acct-sum-head">Put your money in this month</div>` +
     accts.map(a => mkRow(a.name, a.id, false)).join("") +
-    ((Math.abs(totals[""] || 0) > 0.005 || carry[""]) ? mkRow("Unassigned", "", true) : "") +
-    `<p class="hint" style="margin:8px 0 0">How much to have in each account to cover this month's plan — its bills + groceries/out-of-pocket + savings, minus cash pulled in, plus anything owed (or minus anything spare) carried from last month.</p>`;
+    ((Math.abs(totals[""] || 0) > 0.005 || carry[""] || tu[""]) ? mkRow("Unassigned", "", true) : "") +
+    `<p class="hint" style="margin:8px 0 0"><b>＋ add money</b> logs cash you put toward an account from outside your budget (e.g. you spent less than planned) — it lowers what's owed but is <b>not</b> counted as income. For real extra income, use Income → Bonus instead.</p>`;
 }
+// Add money to an account from outside the budget (covers a deficit; NOT income), or clear it.
+$("acctSummary").addEventListener("click", e => {
+  const clrBtn = e.target.closest("[data-topupclear]"), addBtn = e.target.closest("[data-topup]");
+  const m = getMonth(current);
+  if (clrBtn) { if (m.topUps) delete m.topUps[clrBtn.dataset.topupclear]; save(); updateSummary(m); return; }
+  if (addBtn) {
+    const id = addBtn.dataset.topup, name = id ? acctName(id) : "Unassigned";
+    const v = prompt(`Add money to "${name}" from outside your budget (e.g. you spent less than planned). This lowers what's owed but is NOT counted as income. How much?`, "");
+    if (v == null || !num(v)) return;
+    m.topUps = m.topUps || {};
+    m.topUps[id] = Math.round((num(m.topUps[id]) + Math.abs(num(v))) * 100) / 100;
+    save(); updateSummary(m);
+  }
+});
 const totalSaved = () => Object.values(data.savings).reduce((s, v) => s + num(v), 0);
 const monthSaved = m => (m.finalized && m.applied) ? Object.values(m.applied.contributions).reduce((s,v)=>s+v,0) : savingsPlanned(m);
 
