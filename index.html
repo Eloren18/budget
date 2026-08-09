@@ -329,6 +329,8 @@
   .inc-wd-head { font-size:13px; color:var(--muted); font-weight:600; }
   .inc-wd-row { display:flex; justify-content:space-between; gap:10px; align-items:center; background:var(--surface-2); border:1px solid var(--border-soft); border-radius:var(--radius-sm); padding:8px 12px; font-size:14px; }
   .inc-wd-row .pos { color:var(--save); font-weight:750; white-space:nowrap; }
+  .lnk-x { border:none; background:none; color:var(--muted); cursor:pointer; font-size:12px; padding:0 2px; margin-left:4px; line-height:1; }
+  .lnk-x:hover { color:var(--over); }
 
   .total-saved { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:8px;
     padding:16px 18px; border-radius:var(--radius-sm); margin-bottom:16px;
@@ -975,8 +977,10 @@ const lockGroc = (v, gp) => (v && typeof v === "object") ? num(v.g) : lockTotal(
 const spentLocked = (m, k) => { const valid = new Set(spendSegments(k).map(s => k + "-" + String(s.start).padStart(2,"0"))); return Object.entries(m.spendLocks || {}).reduce((s,[key,v]) => valid.has(key) ? s + lockTotal(v) : s, 0); };
 // Of that spent money, how much was groceries (frozen per-week at tick time).
 const spentLockedGroc = (m, k, gp) => { const valid = new Set(spendSegments(k).map(s => k + "-" + String(s.start).padStart(2,"0"))); return Object.entries(m.spendLocks || {}).reduce((s,[key,v]) => valid.has(key) ? s + lockGroc(v, gp) : s, 0); };
-// Money pulled from pools via "cover deficit" this month — it funds the over-budget but never becomes spendable cash.
-const coversTotal = mkey => { let s = 0; const px = data.poolTx || {}; for (const n in px) (px[n] || []).forEach(x => { if (x.t === "withdraw" && ("cover" in x) && String(x.d).slice(0, 7) === mkey) s += -num(x.a); }); return s; };
+// Money that funds the over-budget this month but never becomes spendable cash or bonus:
+//   (a) pulled from pools via "cover deficit", and (b) direct outside deposits added in the Income section.
+const covDepTotal = mkey => { const m = data.months[mkey]; return (m && m.covDeposits || []).reduce((s, x) => s + num(x.a), 0); };
+const coversTotal = mkey => { let s = 0; const px = data.poolTx || {}; for (const n in px) (px[n] || []).forEach(x => { if (x.t === "withdraw" && ("cover" in x) && String(x.d).slice(0, 7) === mkey) s += -num(x.a); }); return s + covDepTotal(mkey); };
 // One month-to-month carryover: the previous finalized month's net (+surplus / −deficit).
 const carryIn = k => { const p = data.months[prevKey(k)]; return (p && p.finalized && p.applied) ? num(p.applied.carryover) : 0; };
 const discretionary = m => { const k = mkeyOf(m); return num(m.income) + num(m.bonus) + carryIn(k) - expensesEff(m) - savingsPlanned(m) + withdrawnToSpend(k) + coversTotal(k); };
@@ -1262,14 +1266,29 @@ $("page-budget").addEventListener("change", e => {
 });
 function renderIncomeWithdrawals(mkey) {
   const c = $("incomeWithdrawals"); if (!c) return;
-  const list = [];
-  for (const n in (data.poolTx || {})) (data.poolTx[n] || []).forEach(x => { if (x.t === "withdraw" && String(x.d).slice(0, 7) === mkey) list.push({ pool:n, d:x.d, a:x.a, note:x.n }); });
-  if (!list.length) { c.innerHTML = ""; return; }
-  list.sort((a, b) => String(a.d).localeCompare(String(b.d)));
-  const tot = list.reduce((s, x) => s + (-num(x.a)), 0);
-  c.innerHTML = `<div class="inc-wd-head">＋ Pulled from savings into spending this month: <b>${eur(tot)}</b></div>` +
-    list.map(x => `<div class="inc-wd-row"><span>${parseDate(x.d).toLocaleDateString(undefined, { day:"numeric", month:"short" })} · ${esc(x.pool)}${x.note ? ` · ${esc(x.note)}` : ""}</span><span class="pos">+ ${eur(-num(x.a))}</span></div>`).join("") +
-    `<p class="hint" style="margin:2px 0 0">Withdrawing from a pool (in Savings pools below) adds that money to this month's spendable budget.</p>`;
+  const m = data.months[mkey];
+  const dt = d => parseDate(d).toLocaleDateString(undefined, { day:"numeric", month:"short" });
+  // split pool withdrawals: normal ones fund spending; "cover" ones plug the over-budget
+  const pulled = [], covers = [];
+  for (const n in (data.poolTx || {})) (data.poolTx[n] || []).forEach(x => {
+    if (x.t === "withdraw" && String(x.d).slice(0, 7) === mkey) ("cover" in x ? covers : pulled).push({ pool:n, d:x.d, a:x.a, note:x.n });
+  });
+  const deps = (m && m.covDeposits) || []; // direct outside deposits added here to cover the over-budget
+  let html = "";
+  if (pulled.length) {
+    pulled.sort((a, b) => String(a.d).localeCompare(String(b.d)));
+    const tot = pulled.reduce((s, x) => s + (-num(x.a)), 0);
+    html += `<div class="inc-wd-head">＋ Pulled from savings into spending this month: <b>${eur(tot)}</b></div>` +
+      pulled.map(x => `<div class="inc-wd-row"><span>${dt(x.d)} · ${esc(x.pool)}${x.note ? ` · ${esc(x.note)}` : ""}</span><span class="pos">+ ${eur(-num(x.a))}</span></div>`).join("") +
+      `<p class="hint" style="margin:2px 0 6px">Withdrawing from a pool (in Savings pools below) adds that money to this month's spendable budget.</p>`;
+  }
+  // deficit-cover group — pool covers + outside deposits; never spendable, never bonus
+  const coverTot = covers.reduce((s, x) => s + (-num(x.a)), 0) + deps.reduce((s, x) => s + num(x.a), 0);
+  html += `<div class="inc-wd-head" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">＋ Added to cover the over-budget: <b>${eur(coverTot)}</b><button class="btn sm" id="addCovDep" style="margin-left:auto">＋ Add money</button></div>` +
+    covers.map(x => `<div class="inc-wd-row"><span>${dt(x.d)} · ${esc(x.pool)} · Deficit cover</span><span class="pos">+ ${eur(-num(x.a))}</span></div>`).join("") +
+    deps.map((x, i) => `<div class="inc-wd-row"><span>${dt(x.d)} · Outside money${x.n ? ` · ${esc(x.n)}` : ""}</span><span class="pos">+ ${eur(num(x.a))} <button class="lnk-x" data-rmdep="${i}" title="Remove">✕</button></span></div>`).join("") +
+    `<p class="hint" style="margin:2px 0 0">Outside cash (e.g. from your main account) that plugs a deficit or over-budget. It is <b>not</b> counted as bonus and does <b>not</b> raise your spendable budget.</p>`;
+  c.innerHTML = html;
 }
 function renderSpendSchedule(m, budget, dim, daily) {
   ensureSpend(m);
@@ -1381,7 +1400,7 @@ function renderAllocation(m) {
     box("var(--warn)", "Groceries", gA) +
     box("var(--spend)", "Out-of-pocket", oA) +
     (ci > 0.005 ? box("var(--save)", "Carried surplus", ci) : "") +
-    (cov > 0.005 ? box("var(--faint)", "Covered from savings", cov) : "") +
+    (cov > 0.005 ? box("var(--faint)", "Covered over-budget", cov) : "") +
     (over > 0.005 ? box(null, "Over budget", over, true) : "") +
     (leftover > 0.005 ? box("var(--faint)", "Unallocated", leftover) : "");
 }
@@ -1723,6 +1742,12 @@ pools.addEventListener("click", e => {
     openCoverModal(t.dataset.covdef);
   }
 });
+// Income-section: add / remove outside money that covers the over-budget
+$("incomeWithdrawals").addEventListener("click", e => {
+  const t = e.target;
+  if (t.id === "addCovDep") openDepositModal();
+  else if (t.dataset.rmdep !== undefined) { const m = getMonth(current); if (m.covDeposits) { m.covDeposits.splice(+t.dataset.rmdep, 1); save(); render(); } }
+});
 
 /* one-off expenses editing */
 const oneOffC = $("oneOffContainer");
@@ -1800,7 +1825,7 @@ function updateModalSummary() {
     <div class="mrow"><span>Bonus / found money</span><span class="num">+ ${eur(bonus)}</span></div>
     ${ci !== 0 ? `<div class="mrow"><span>Carried in from ${monthName(prevKey(k)).split(" ")[0]}</span><span class="num" style="color:${ci>0?"var(--save)":"var(--over)"}">${ci>0?"+":"−"} ${eur(Math.abs(ci))}</span></div>` : ""}
     ${pulled > 0 ? `<div class="mrow"><span>Pulled from savings</span><span class="num">+ ${eur(pulled)}</span></div>` : ""}
-    ${cov > 0 ? `<div class="mrow"><span>Covered from savings (during month)</span><span class="num">+ ${eur(cov)}</span></div>` : ""}
+    ${cov > 0 ? `<div class="mrow"><span>Covered the over-budget (savings + outside)</span><span class="num">+ ${eur(cov)}</span></div>` : ""}
     <div class="mrow"><span>Expenses (bills + one-off)</span><span class="num">− ${eur(exp)}</span></div>
     <div class="mrow"><span>Saved to pools</span><span class="num">− ${eur(sav)}</span></div>
     <div class="mrow"><span>Spending money spent <span class="hint">(${ticked} of ${weeks} weeks ticked)</span></span><span class="num">− ${eur(spent)}</span></div>
@@ -1851,6 +1876,7 @@ const coverModal = $("coverModal");
 let coverPool = "";
 function openCoverModal(poolName) {
   coverPool = poolName;
+  coverModal.querySelector("h3").textContent = "Cover deficit";
   const m = getMonth(current), deficit = totalDeficit(m), body = $("coverBody"), acts = $("coverActions");
   if (deficit < 0.005) {
     body.innerHTML = `<p class="note" style="margin:0">You're on budget this month — nothing to cover. 🎉</p>`;
@@ -1870,6 +1896,23 @@ function openCoverModal(poolName) {
       recomputeSavings(); coverModal.classList.remove("show"); render(); playSavingsAnim();
     };
   }
+  coverModal.classList.add("show");
+}
+// Add outside money to plug the over-budget — NOT bonus, NOT spendable (reuses the cover modal shell).
+function openDepositModal() {
+  const m = getMonth(current), deficit = totalDeficit(m), body = $("coverBody"), acts = $("coverActions");
+  coverModal.querySelector("h3").textContent = "Add money to cover the over-budget";
+  body.innerHTML = `<p class="note" style="margin-top:0">${deficit > 0.005 ? `You're <b style="color:var(--over)">${eur(deficit)}</b> over budget this month. ` : "You're on budget this month. "}Add outside cash (e.g. from your main account) to plug it. This is <b>not</b> counted as bonus income and does <b>not</b> raise your spendable budget — it just covers the gap.</p>
+    <div class="field"><label for="depAmt">Amount to add</label><span class="euro"><input class="money" type="number" id="depAmt" min="0" step="0.01" value="${deficit > 0.005 ? deficit.toFixed(2) : ""}" placeholder="0.00"></span></div>
+    <div class="field"><label for="depNote">Note <span class="hint">(optional)</span></label><input class="text" type="text" id="depNote" placeholder="e.g. from ABN Main" style="width:100%"></div>`;
+  acts.innerHTML = `<button class="btn" id="depCancel">Cancel</button><button class="btn primary" id="depDo">Add money</button>`;
+  $("depCancel").onclick = () => coverModal.classList.remove("show");
+  $("depDo").onclick = () => {
+    const amt = Math.abs(num($("depAmt").value)); if (!amt) return;
+    m.covDeposits = m.covDeposits || [];
+    m.covDeposits.push({ d: current + "-15", a: amt, n: $("depNote").value.trim() });
+    save(); coverModal.classList.remove("show"); render(); playSavingsAnim();
+  };
   coverModal.classList.add("show");
 }
 coverModal.addEventListener("click", e => { if (e.target === coverModal) coverModal.classList.remove("show"); });
