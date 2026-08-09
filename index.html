@@ -1352,26 +1352,26 @@ const CAT_COLORS = ["#8b5cf6","#ec4899","#14b8a6","#f97316","#64748b","#a855f7",
 function renderAllocation(m) {
   ensureSpend(m);
   const k = mkeyOf(m), ci = carryIn(k), cov = coversTotal(k);
-  const exp = expensesEff(m), sav = savingsPlanned(m), disc = discretionary(m);
+  const exp = expensesEff(m), sav = savingsPlanned(m);
   const gA = num(m.grocAmt), oA = num(m.oopAmt), budget = gA + oA;
   const cashIn = num(m.income) + num(m.bonus) + withdrawnToSpend(k) + cov + Math.max(ci, 0); // money in (carried surplus + pool covers add)
-  const deficitIn = Math.max(0, -ci);               // carried-in debt (red)
-  const planOver = Math.max(0, exp + sav + deficitIn - cashIn); // fixed claims exceed money in (red)
-  const affordable = Math.max(0, disc);             // what's actually left to spend
-  const fit = Math.min(budget, affordable);         // the part of your spending budget you can afford
+  const carriedDebt = Math.max(0, -ci);             // owed from last month — folded into "over budget", never its own bar item
+  const spendable = Math.max(0, cashIn - exp - sav);// what money-in leaves for the spending budget (before repaying carried debt)
+  const fit = Math.min(budget, spendable);
   const grocSeg = budget > 0 ? fit * gA / budget : 0, oopSeg = fit - grocSeg; // affordable budget, split groceries/OOP
-  const budgetOver = Math.max(0, budget - affordable); // spending budget beyond your means (red)
-  const leftover = Math.max(0, affordable - budget);   // money not yet given a job
+  const rawLeftover = Math.max(0, spendable - budget);
+  const leftover = Math.max(0, rawLeftover - carriedDebt); // money not yet given a job (carried debt eats leftover first)
+  const over = Math.max(0, budget - spendable) + Math.max(0, carriedDebt - rawLeftover); // ONE "over budget" figure = whole-budget shortfall (incl. carried debt)
   // break expenses down by category (+ one-offs), each its own colour
   const cats = m.groups.map(g => ({ name:g.name, val:groupTotal(g, true) })).filter(c => c.val > 0);
   const ooTot = oneOffTotal(m); if (ooTot > 0) cats.push({ name:"One-off", val:ooTot });
   cats.forEach((c, i) => c.color = CAT_COLORS[i % CAT_COLORS.length]);
-  const sum = exp + sav + deficitIn + grocSeg + oopSeg + budgetOver + planOver;
+  const sum = exp + sav + grocSeg + oopSeg + over;
   const den = Math.max(cashIn, sum, 1), pc = v => Math.max(0, v) / den * 100;
   const seg = (cls, v, color) => v > 0 ? `<span class="${cls}" style="width:${pc(v)}%${color ? ";background:" + color : ""}"></span>` : "";
   $("allocBar").innerHTML =
     cats.map(c => seg("", c.val, c.color)).join("") +
-    seg("seg-sav", sav) + seg("seg-over", deficitIn) + seg("seg-groc", grocSeg) + seg("seg-oop", oopSeg) + seg("seg-over", budgetOver) + seg("seg-over", planOver);
+    seg("seg-sav", sav) + seg("seg-groc", grocSeg) + seg("seg-oop", oopSeg) + seg("seg-over", over);
   // legend: one box per item — colour, then name, then amount
   const box = (color, name, v, over) => `<div class="leg-box"><span class="sw${over ? " seg-over" : ""}"${over ? "" : ` style="background:${color}"`}></span><span class="leg-name">${name}</span><span class="leg-amt"${over ? ' style="color:var(--over)"' : ""}>${eur(v)}</span></div>`;
   const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
@@ -1381,11 +1381,9 @@ function renderAllocation(m) {
     box("var(--warn)", "Groceries", gA) +
     box("var(--spend)", "Out-of-pocket", oA) +
     (ci > 0.005 ? box("var(--save)", "Carried surplus", ci) : "") +
-    (ci < -0.005 ? box(null, "Carried debt", -ci, true) : "") +
     (cov > 0.005 ? box("var(--faint)", "Covered from savings", cov) : "") +
-    (budgetOver > 0 ? box(null, "Over budget", budgetOver, true) : "") +
-    (planOver > 0 ? box(null, "Over income", planOver, true) : "") +
-    (leftover > 0 ? box("var(--faint)", "Unallocated", leftover) : "");
+    (over > 0.005 ? box(null, "Over budget", over, true) : "") +
+    (leftover > 0.005 ? box("var(--faint)", "Unallocated", leftover) : "");
 }
 function renderRecap(m) {
   const r = $("recap");
