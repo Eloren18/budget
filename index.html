@@ -189,6 +189,7 @@
   .carry-line.neg { background:color-mix(in srgb,var(--over) 15%,transparent); color:var(--over); }
   .seg-exp { background:var(--expense); } .seg-sav { background:var(--save); } .seg-wk { background:var(--spend); }
   .seg-groc { background:var(--warn); } .seg-oop { background:var(--spend); }
+  .seg-cover { background:repeating-linear-gradient(45deg,var(--faint),var(--faint) 6px,#ffffff33 6px,#ffffff33 12px); }
   .seg-over { background:repeating-linear-gradient(45deg,var(--over),var(--over) 6px,#00000022 6px,#00000022 12px); }
   .legend { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
   .leg-box { display:inline-flex; align-items:center; gap:7px; font-size:12.5px; background:var(--surface-2); border:1px solid var(--border-soft); border-radius:var(--radius-sm); padding:5px 11px; }
@@ -1373,26 +1374,28 @@ function renderAllocation(m) {
   const k = mkeyOf(m), ci = carryIn(k), cov = coversTotal(k);
   const exp = expensesEff(m), sav = savingsPlanned(m);
   const gA = num(m.grocAmt), oA = num(m.oopAmt), budget = gA + oA;
-  const cashIn = num(m.income) + num(m.bonus) + withdrawnToSpend(k) + cov + Math.max(ci, 0); // money in (carried surplus + pool covers add)
-  const carriedDebt = Math.max(0, -ci);             // owed from last month — folded into "over budget", never its own bar item
-  const spendable = Math.max(0, cashIn - exp - sav);// what money-in leaves for the spending budget (before repaying carried debt)
+  const incomeIn = num(m.income) + num(m.bonus) + withdrawnToSpend(k) + Math.max(ci, 0); // real money in (covers excluded)
+  const carriedDebt = Math.max(0, -ci);             // owed from last month
+  const spendable = Math.max(0, incomeIn - exp - sav);// what income alone leaves for the spending budget
   const fit = Math.min(budget, spendable);
-  const grocSeg = budget > 0 ? fit * gA / budget : 0, oopSeg = fit - grocSeg; // affordable budget, split groceries/OOP
+  const grocSeg = budget > 0 ? fit * gA / budget : 0, oopSeg = fit - grocSeg; // income-funded budget, split groceries/OOP
   const rawLeftover = Math.max(0, spendable - budget);
-  const leftover = Math.max(0, rawLeftover - carriedDebt); // money not yet given a job (carried debt eats leftover first)
-  const over = Math.max(0, budget - spendable) + Math.max(0, carriedDebt - rawLeftover); // ONE "over budget" figure = whole-budget shortfall (incl. carried debt)
+  const shortfall = Math.max(0, budget - spendable) + Math.max(0, carriedDebt - rawLeftover); // budget + carried debt income can't fund
+  const covered = Math.min(cov, shortfall);         // covers (savings + outside) plug the shortfall — its own bar segment
+  const over = shortfall - covered;                 // what's STILL over after covering
+  const leftover = Math.max(0, rawLeftover - carriedDebt) + Math.max(0, cov - covered); // unbudgeted income + any covers beyond need
   // break expenses down by category (+ one-offs), each its own colour
   const cats = m.groups.map(g => ({ name:g.name, val:groupTotal(g, true) })).filter(c => c.val > 0);
   const ooTot = oneOffTotal(m); if (ooTot > 0) cats.push({ name:"One-off", val:ooTot });
   cats.forEach((c, i) => c.color = CAT_COLORS[i % CAT_COLORS.length]);
-  const sum = exp + sav + grocSeg + oopSeg + over;
-  const den = Math.max(cashIn, sum, 1), pc = v => Math.max(0, v) / den * 100;
+  const sum = exp + sav + grocSeg + oopSeg + covered + over;
+  const den = Math.max(incomeIn + cov, sum, 1), pc = v => Math.max(0, v) / den * 100;
   const seg = (cls, v, color) => v > 0 ? `<span class="${cls}" style="width:${pc(v)}%${color ? ";background:" + color : ""}"></span>` : "";
   $("allocBar").innerHTML =
     cats.map(c => seg("", c.val, c.color)).join("") +
-    seg("seg-sav", sav) + seg("seg-groc", grocSeg) + seg("seg-oop", oopSeg) + seg("seg-over", over);
+    seg("seg-sav", sav) + seg("seg-groc", grocSeg) + seg("seg-oop", oopSeg) + seg("seg-cover", covered) + seg("seg-over", over);
   // legend: one box per item — colour, then name, then amount
-  const box = (color, name, v, over) => `<div class="leg-box"><span class="sw${over ? " seg-over" : ""}"${over ? "" : ` style="background:${color}"`}></span><span class="leg-name">${name}</span><span class="leg-amt"${over ? ' style="color:var(--over)"' : ""}>${eur(v)}</span></div>`;
+  const box = (color, name, v, swClass) => `<div class="leg-box"><span class="sw${swClass ? " " + swClass : ""}"${swClass ? "" : ` style="background:${color}"`}></span><span class="leg-name">${name}</span><span class="leg-amt"${swClass === "seg-over" ? ' style="color:var(--over)"' : ""}>${eur(v)}</span></div>`;
   const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
   $("allocLegend").innerHTML =
     cats.map(c => box(c.color, esc(cap(c.name)), c.val)).join("") +
@@ -1400,8 +1403,8 @@ function renderAllocation(m) {
     box("var(--warn)", "Groceries", gA) +
     box("var(--spend)", "Out-of-pocket", oA) +
     (ci > 0.005 ? box("var(--save)", "Carried surplus", ci) : "") +
-    (cov > 0.005 ? box("var(--faint)", "Covered over-budget", cov) : "") +
-    (over > 0.005 ? box(null, "Over budget", over, true) : "") +
+    (covered > 0.005 ? box(null, "Covered over-budget", covered, "seg-cover") : "") +
+    (over > 0.005 ? box(null, "Over budget", over, "seg-over") : "") +
     (leftover > 0.005 ? box("var(--faint)", "Unallocated", leftover) : "");
 }
 function renderRecap(m) {
