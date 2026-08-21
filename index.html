@@ -731,6 +731,16 @@
     <div id="acctList" style="margin:8px 0"></div>
     <div class="field"><input class="text" type="text" id="acctAddName" placeholder="e.g. Main bank, Bills account, Credit card" autocomplete="off" style="flex:1;min-width:160px"><button class="btn primary" id="acctAddBtn">Add</button></div>
     <div class="field" style="margin-top:8px"><label style="min-width:auto">Default account</label><select id="acctDefaultSel" class="text" style="flex:1"></select></div>
+    <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px">
+      <div class="set-label">Backup</div>
+      <p class="note">Download a full copy of your budget as a file, or restore from one. Keep a backup before any big change.</p>
+      <div class="field">
+        <button class="btn" id="exportDataBtn">Export data</button>
+        <button class="btn" id="importDataBtn">Import data…</button>
+        <input type="file" id="importDataFile" accept=".json,application/json" style="display:none">
+      </div>
+      <p class="note" id="backupMsg" style="display:none"></p>
+    </div>
     <div id="adminAccessSection" style="display:none;margin-top:18px;border-top:1px solid var(--border);padding-top:14px">
       <div class="set-label">🔒 Manage access (invite-only)</div>
       <p class="note">Only people whose email is on this list can use the app. You're always allowed. Changes take effect immediately.</p>
@@ -2414,6 +2424,33 @@ $("acctDefaultSel").addEventListener("change", e => { data.settings.defaultAccou
 $("settingsBtn").addEventListener("click", () => { renderSettings(); settingsModal.classList.add("show"); });
 $("settingsClose").addEventListener("click", () => settingsModal.classList.remove("show"));
 settingsModal.addEventListener("click", e => { if (e.target === settingsModal) settingsModal.classList.remove("show"); });
+/* backup: export / import the whole budget as a JSON file */
+const backupSay = (t, col) => { const msg = $("backupMsg"); if (msg) { msg.style.display = ""; msg.style.color = col; msg.textContent = t; } };
+$("exportDataBtn").addEventListener("click", () => {
+  const stamp = new Date().toISOString().slice(0, 10);
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `budget-backup-${stamp}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  backupSay("Backup downloaded ✓ — keep the file somewhere safe.", "var(--save)");
+});
+$("importDataBtn").addEventListener("click", () => $("importDataFile").click());
+$("importDataFile").addEventListener("change", async e => {
+  const file = e.target.files && e.target.files[0]; e.target.value = "";
+  if (!file) return;
+  let parsed;
+  try { parsed = JSON.parse(await file.text()); } catch { return backupSay("That file isn't valid JSON.", "var(--over)"); }
+  if (!parsed || typeof parsed !== "object" || !parsed.months) return backupSay("That doesn't look like a budget backup (no months found).", "var(--over)");
+  if (!confirm(`Replace ALL budget data on this device${authedUser ? " and in the cloud" : ""} with the contents of "${file.name}"?\n\nThis can't be undone — export a backup of the current data first if unsure.`)) return backupSay("Import cancelled — nothing changed.", "var(--muted)");
+  booting = true;
+  data = normalize(parsed);
+  booting = false;
+  save(); // stamps a fresh updatedAt → this copy wins everywhere you're signed in
+  applyTheme(); applyCurrency(); render();
+  backupSay("Imported ✓ — this is now your budget on every signed-in device.", "var(--save)");
+});
 $("themeGrid").addEventListener("click", e => {
   const t = e.target.closest("[data-theme-opt]"); if (!t) return;
   data.settings.theme = t.dataset.themeOpt; save(); applyTheme(); renderSettings();
