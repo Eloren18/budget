@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { action, internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import {
@@ -18,9 +18,9 @@ export const requestCode = action({
   args: { email: v.string() },
   handler: async (ctx, args) => {
     const email = norm(args.email);
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error("Enter a valid email address.");
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new ConvexError("Enter a valid email address.");
     const allowed = await ctx.runQuery(internal.auth.checkAllowed, { email });
-    if (!allowed) throw new Error("This app is invite-only — that email isn't on the access list.");
+    if (!allowed) throw new ConvexError("This app is invite-only — that email isn't on the access list.");
 
     // 6-digit code from a CSPRNG.
     const a = new Uint32Array(1);
@@ -44,7 +44,7 @@ export const requestCode = action({
     });
     if (!r.ok) {
       console.error("Resend error", r.status, await r.text());
-      throw new Error("Couldn't send the email — try again in a minute.");
+      throw new ConvexError("Couldn't send the email — try again in a minute.");
     }
   },
 });
@@ -71,9 +71,9 @@ export const storeCode = internalMutation({
       .collect();
     const recent = existing.filter((o) => now - o.sentAt < 24 * 60 * 60 * 1000);
     if (recent.some((o) => now - o.sentAt < OTP_RESEND_COOLDOWN_MS))
-      throw new Error("A code was just sent — check your inbox (and spam) first.");
+      throw new ConvexError("A code was just sent — check your inbox (and spam) first.");
     if (recent.length >= OTP_DAILY_CAP)
-      throw new Error("Too many codes requested today — try again tomorrow.");
+      throw new ConvexError("Too many codes requested today — try again tomorrow.");
     // Prune rows older than the 24h counting window.
     for (const o of existing) if (now - o.sentAt >= 24 * 60 * 60 * 1000) await ctx.db.delete(o._id);
     await ctx.db.insert("otps", { email, codeHash, expiresAt: now + OTP_TTL_MS, attempts: 0, sentAt: now });
@@ -101,18 +101,18 @@ export const consumeCode = internalMutation({
       .withIndex("by_email", (q) => q.eq("email", email))
       .order("desc")
       .first(); // newest code wins
-    if (!otp) throw new Error("No pending code — request a new one.");
+    if (!otp) throw new ConvexError("No pending code — request a new one.");
     if (Date.now() > otp.expiresAt) {
       await ctx.db.delete(otp._id);
-      throw new Error("That code expired — request a new one.");
+      throw new ConvexError("That code expired — request a new one.");
     }
     if (otp.attempts >= 5) {
       await ctx.db.delete(otp._id);
-      throw new Error("Too many wrong tries — request a new code.");
+      throw new ConvexError("Too many wrong tries — request a new code.");
     }
     if (otp.codeHash !== codeHash) {
       await ctx.db.patch(otp._id, { attempts: otp.attempts + 1 });
-      throw new Error("That code didn't work — check it and try again.");
+      throw new ConvexError("That code didn't work — check it and try again.");
     }
     await ctx.db.delete(otp._id);
     await ctx.db.insert("sessions", { token, email, createdAt: Date.now() });

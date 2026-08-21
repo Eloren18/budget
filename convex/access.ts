@@ -1,10 +1,10 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { ADMIN_EMAIL, norm, sessionOf } from "./lib";
 
 async function requireAdmin(ctx: { db: any }, token: string) {
   const s = await sessionOf(ctx, token);
-  if (!s || s.email !== ADMIN_EMAIL) throw new Error("Only the admin can manage access.");
+  if (!s || s.email !== ADMIN_EMAIL) throw new ConvexError("Only the admin can manage access.");
   return s;
 }
 
@@ -25,13 +25,13 @@ export const add = mutation({
   handler: async (ctx, args) => {
     await requireAdmin(ctx, args.token);
     const email = norm(args.email);
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error("Enter a valid email address.");
-    if (email === ADMIN_EMAIL) throw new Error("That's you — you're always allowed.");
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new ConvexError("Enter a valid email address.");
+    if (email === ADMIN_EMAIL) throw new ConvexError("That's you — you're always allowed.");
     const dup = await ctx.db
       .query("access")
       .withIndex("by_email", (q) => q.eq("email", email))
       .first();
-    if (dup) throw new Error("Already on the list.");
+    if (dup) throw new ConvexError("Already on the list.");
     await ctx.db.insert("access", { email, addedAt: Date.now() });
   },
 });

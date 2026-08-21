@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { sessionOf } from "./lib";
 
@@ -21,8 +21,8 @@ export const save = mutation({
   args: { token: v.string(), data: v.string(), updatedAt: v.number() },
   handler: async (ctx, { token, data, updatedAt }) => {
     const s = await sessionOf(ctx, token);
-    if (!s) throw new Error("Not signed in.");
-    if (data.length > 900_000) throw new Error("Budget too large to sync."); // stay under Convex's 1MiB doc limit
+    if (!s) throw new ConvexError("Not signed in.");
+    if (data.length > 900_000) throw new ConvexError("Budget too large to sync."); // stay under Convex's 1MiB doc limit
     const row = await ctx.db
       .query("budgets")
       .withIndex("by_email", (q) => q.eq("email", s.email))
