@@ -405,6 +405,7 @@
   .overlay { position:fixed; inset:0; background:rgba(4,8,18,.55); backdrop-filter:blur(3px); display:none;
     align-items:center; justify-content:center; padding:20px; z-index:60; }
   .overlay.show { display:flex; animation:fade .2s ease; }
+  body.gated > :not(.overlay) { visibility:hidden; } /* sign-in screen: the app itself is hidden, not just blurred */
   .modal { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:24px; max-width:470px; width:100%;
     box-shadow:var(--shadow-lg); animation:rise .35s var(--ease); max-height:88vh; overflow:auto; }
   .modal h3 { margin:0 0 16px; font-size:18px; }
@@ -2435,7 +2436,7 @@ $("currencySelect").addEventListener("change", e => { data.settings.currency = e
    One budget blob per user, last-write-wins by updatedAt. Sign-in =
    email → 6-digit code → session token kept in localStorage.
    =================================================================== */
-let authedUser = null, pushTimer = null, budgetUnsub = null;
+let authedUser = null, pushTimer = null, budgetUnsub = null, dirty = false; // dirty = edits not yet confirmed saved to the cloud
 let sessionToken = localStorage.getItem(SESSION_KEY) || "";
 function setSync(state, text) {
   const dot = $("syncDot"), label = $("accountLabel");
@@ -2446,11 +2447,12 @@ function setSync(state, text) {
 const errText = (e, fallback) => (e && typeof e.data === "string" && e.data) ? e.data : fallback;
 function pushNow() {
   return convex.mutation("budget:save", { token: sessionToken, data: JSON.stringify(data), updatedAt: num(data.updatedAt) })
-    .then(() => setSync("on", authedUser && authedUser.email))
+    .then(() => { dirty = false; setSync("on", authedUser && authedUser.email); })
     .catch(e => { console.warn("Cloud save failed:", e); setSync("err", authedUser && authedUser.email); });
 }
 function cloudPush() {
   if (!authedUser || booting) return;
+  dirty = true;
   setSync("sync", authedUser.email);
   clearTimeout(pushTimer);
   pushTimer = setTimeout(pushNow, 800);
@@ -2481,14 +2483,26 @@ function startSync() {
 /* ---- sign-in gate ---- */
 const authGate = $("authGate");
 let pendingEmail = "";
-function openAuthGate() { authGate.classList.add("show"); showAuthStep(1); }
-function closeAuthGate() { authGate.classList.remove("show"); }
+function openAuthGate() { document.body.classList.add("gated"); authGate.classList.add("show"); showAuthStep(1); } // .gated hides the whole app behind the sign-in screen
+function closeAuthGate() { authGate.classList.remove("show"); document.body.classList.remove("gated"); }
 function showAuthStep(n) { $("authStep1").style.display = n === 1 ? "" : "none"; $("authStep2").style.display = n === 2 ? "" : "none"; $("authError").style.display = "none"; }
 function authErr(msg) { const e = $("authError"); e.textContent = msg; e.style.display = ""; }
 function signedIn(user) { authedUser = user; closeAuthGate(); setSync("on", user.email); updateAdminUI(); startSync(); }
+// Remove this device's copy of the budget so nothing of yours can appear (even blurred) behind the sign-in screen.
+// The cloud keeps everything; signing in again restores it. Back to the built-in example (updatedAt 0 → never pushed).
+function wipeLocal() {
+  const theme = data && data.settings && data.settings.theme, currency = data && data.settings && data.settings.currency;
+  localStorage.removeItem(STORAGE_KEY); localStorage.removeItem("myBudgetData_v2");
+  booting = true;
+  data = load();
+  if (theme) data.settings.theme = theme; if (currency) data.settings.currency = currency; // keep this device's look, not its data
+  applyTheme(); applyCurrency(); render();
+  booting = false; dirty = false;
+}
 function signedOut(msg) {
   stopSync(); stopAdminAccessWatch();
   authedUser = null; sessionToken = ""; localStorage.removeItem(SESSION_KEY);
+  wipeLocal();
   updateAdminUI(); setSync("", "Sign in"); openAuthGate(); if (msg) authErr(msg);
 }
 $("authSend").addEventListener("click", async () => {
@@ -2511,12 +2525,13 @@ $("authVerify").addEventListener("click", async () => {
 });
 $("authEmail").addEventListener("keydown", e => { if (e.key === "Enter") $("authSend").click(); });
 $("authCode").addEventListener("keydown", e => { if (e.key === "Enter") $("authVerify").click(); });
-$("accountBtn").addEventListener("click", () => {
-  if (authedUser) {
-    if (!confirm("Sign out of " + authedUser.email + "?")) return;
-    convex.mutation("auth:signOut", { token: sessionToken }).catch(() => {});
-    signedOut();
-  } else openAuthGate();
+$("accountBtn").addEventListener("click", async () => {
+  if (!authedUser) { openAuthGate(); return; }
+  if (!confirm("Sign out of " + authedUser.email + "?\n\nYour budget stays safely in the cloud. This device's copy is removed until you sign in again.")) return;
+  if (dirty) { clearTimeout(pushTimer); await pushNow(); }  // flush anything not yet saved
+  if (dirty && !confirm("Some recent changes could not be saved to the cloud (offline?). Sign out anyway and lose them?")) return;
+  convex.mutation("auth:signOut", { token: sessionToken }).catch(() => {});
+  signedOut();
 });
 
 /* ===== invite list (admin-only, lives in the ⚙ Settings modal) =====
