@@ -1,2 +1,5 @@
 .claude/
 Deploy.bat
+node_modules/
+.env
+.env.local

@@ -1,0 +1,8 @@
+{
+  "name": "budget-app",
+  "private": true,
+  "description": "Personal budget app — static frontend (index.html) + Convex backend (convex/)",
+  "devDependencies": {
+    "convex": "^1.17.0"
+  }
+}
