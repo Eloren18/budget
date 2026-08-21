@@ -3,3 +3,7 @@ Deploy.bat
 node_modules/
 .env
 .env.local
+# personal data backups + helper scripts — never publish
+Latest Backup.json
+*backup*.json
+*.bat
