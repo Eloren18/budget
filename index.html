@@ -211,6 +211,11 @@
   .main-row.pos .num { color:var(--save); } .main-row.neg .num { color:var(--over); }
   .main-row.total { border-bottom:none; font-size:15px; }
   .main-row .btn.sm { margin-top:4px; align-self:flex-start; }
+  .save-more { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
+    padding:14px 18px; border-radius:var(--radius-sm); margin-bottom:16px; background:var(--surface-2); border:1px solid var(--border-soft); }
+  .save-more .tlabel { color:var(--muted); font-size:13px; font-weight:600; }
+  .save-more .tval { font-size:26px; font-weight:800; color:var(--save); letter-spacing:-.025em; margin-top:2px; }
+  .save-more.short .tval { color:var(--over); }
   .seg-over { background:repeating-linear-gradient(45deg,var(--over),var(--over) 6px,#00000022 6px,#00000022 12px); }
   .legend { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
   .leg-box { display:inline-flex; align-items:center; gap:7px; font-size:12.5px; background:var(--surface-2); border:1px solid var(--border-soft); border-radius:var(--radius-sm); padding:5px 11px; }
@@ -604,11 +609,12 @@
 
     <div class="section" id="savingsSection">
       <h2><span class="sec-icon" style="background:var(--save-soft);color:var(--save)">★</span>Savings pools</h2>
-      <p class="desc">Each pool's monthly amount goes out on the <strong>1st</strong> automatically and counts in its balance from then on. <strong>Invest more</strong> moves extra money from Main into a pool, <strong>New money</strong> puts a windfall straight into one, <strong>Take out</strong> brings money back. Manage pools, monthly amounts &amp; goals on the <strong>Pools</strong> tab.</p>
+      <p class="desc">Each pool's monthly amount goes out on the <strong>1st</strong> automatically. Use <strong>Save some of it</strong> for spare money left in your main account, <strong>New money</strong> for a windfall, <strong>Take out</strong> to bring money back. Manage pools, amounts &amp; goals on the <strong>Pools</strong> tab.</p>
       <div class="total-saved" id="totalSavedBox">
         <div><div class="tlabel">Total saved across all pools</div><div class="tval" id="totalSaved">€0</div></div>
         <div class="tbreak" id="savedBreak"></div>
       </div>
+      <div id="saveMoreBox" style="display:none"></div>
       <div class="pools" id="poolsContainer"></div>
     </div>
 
@@ -1048,36 +1054,51 @@ function renderAccountSummary(m) {
   const accts = data.accounts || [], k = mkeyOf(m), ci = carryIn(k), prevName = monthName(prevKey(k)).split(" ")[0];
   const bills = expensesEff(m), inv = savingsPlanned(m), allow = spendBudget(m), extra = investedFromMain(k), newM = newMoneyToMain(k), pulled = pulledToMain(k);
   const moneyIn = num(m.income) + num(m.bonus) + pulled + newM + Math.max(ci, 0);
-  const needs = bills + inv + allow + Math.max(0, -ci);
+  const out = bills + inv + allow + extra + Math.max(0, -ci);
   const left = leftInMain(m), legacy = isLegacySpend(m), n = legacy ? 0 : allowanceDays(k).length, wk = weeklyAllowance(m);
   const mainName = acctName(resolveAcct()) || "Main account";
-  const isCur = k === monthKey(new Date()), open = !m.finalized;
   const row = (label, sub, val, cls) => `<div class="main-row${cls ? " " + cls : ""}"><span><span>${label}</span>${sub ? `<span class="hint">${sub}</span>` : ""}</span><span class="num">${val}</span></div>`;
   const inParts = ["income" + (num(m.bonus) ? " + bonus" : "")];
   if (ci > 0.005) inParts.push(`left over from ${prevName} ${eur(ci)}`);
   if (pulled > 0.005) inParts.push(`taken out of pools ${eur(pulled)}`);
   if (newM > 0.005) inParts.push(`new money ${eur(newM)}`);
-  const needParts = [`bills ${eur(bills)}`, `investments ${eur(inv)}`, legacy ? `spending money ${eur(allow)}` : `allowance ${n} × ${eur(wk)}`];
-  if (ci < -0.005) needParts.push(`shortfall carried from ${prevName} ${eur(-ci)}`);
-  const actions = open ? `<span style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${left > 0.005 ? `<button class="btn sm primary" data-mainact="invest">Invest it</button>` : ""}${left < -0.005 ? `<button class="btn sm primary" data-mainact="cover">Cover from a pool</button>` : ""}</span>` : "";
-  let main = `<div class="acct-sum-head">${esc(mainName)} this month</div>` +
-    row("Needs at the start of the month", needParts.join(" · "), eur(needs)) +
+  const outParts = [`bills ${eur(bills)}`, `investments ${eur(inv)}`, legacy ? `spending money ${eur(allow)}` : `allowance ${n} × ${eur(wk)}`];
+  if (extra > 0.005) outParts.push(`extra saved ${eur(extra)}`);
+  if (ci < -0.005) outParts.push(`shortfall carried from ${prevName} ${eur(-ci)}`);
+  const tail = m.finalized ? "rolled into next month" : "";
+  const main = `<div class="acct-sum-head">${esc(mainName)} this month</div>` +
     row("Money in", inParts.join(" · "), eur(moneyIn)) +
-    (extra > 0.005 ? row("Extra invested from " + esc(mainName), "", "− " + eur(extra)) : "") +
+    row("Goes out", outParts.join(" · "), "− " + eur(out)) +
     (left >= -0.005
-      ? row(`Left in ${esc(mainName)}` + (m.finalized ? ` <span class="hint">→ rolled into next month</span>` : ""), actions, "+ " + eur(Math.max(0, left)), "pos total")
-      : row(`Short in ${esc(mainName)}`, (open ? `<span>cover it from a savings pool, or it rolls into next month</span>` : "rolled into next month") + actions, "− " + eur(-left), "neg total"));
+      ? row(`Left in ${esc(mainName)}`, tail, "+ " + eur(Math.max(0, left)), "pos total")
+      : row(`Short in ${esc(mainName)}`, tail, "− " + eur(-left), "neg total"));
+  // per-account rows — only accounts that actually need money this month
   let acctHtml = "";
   if (accts.length) {
     const totals = accountSetAside(m);
     const mkRow = (name, id, un) => { const amt = totals[id] || 0; return `<div class="acct-sum-row${un ? " unassigned" : ""}"><span>${esc(name)}</span><span class="num${amt < 0 ? " pos" : ""}">${amt < 0 ? eur(-amt) + " spare" : eur(amt)}</span></div>`; };
-    acctHtml = `<div class="acct-sum-head" style="margin-top:16px">Put your money in this month</div>` +
-      accts.map(a => mkRow(a.name, a.id, false)).join("") +
-      (Math.abs(totals[""] || 0) > 0.005 ? mkRow("Unassigned", "", true) : "") +
-      `<p class="hint" style="margin:8px 0 0">What each account needs this month for its bills, one-offs &amp; the weekly allowance.</p>`;
+    const rows = accts.filter(a => Math.abs(totals[a.id] || 0) > 0.005).map(a => mkRow(a.name, a.id, false)).join("") +
+      (Math.abs(totals[""] || 0) > 0.005 ? mkRow("Unassigned", "", true) : "");
+    if (rows) acctHtml = `<div class="acct-sum-head" style="margin-top:16px">Put your money in this month</div>` + rows +
+      `<p class="hint" style="margin:8px 0 0">What each account needs for its bills, one-offs &amp; the weekly allowance.</p>`;
   }
   box.style.display = "block";
   box.innerHTML = `<div class="main-card">${main}</div>${acctHtml}`;
+}
+// Spare money in Main this month + the one action to put some of it into a pool (lives in the Savings section).
+function renderSaveMore(m) {
+  const box = $("saveMoreBox"); if (!box) return;
+  const k = mkeyOf(m), ci = carryIn(k), left = leftInMain(m), open = !m.finalized;
+  const mainName = acctName(resolveAcct()) || "Main", prevName = monthName(prevKey(k)).split(" ")[0];
+  const short = left < -0.005;
+  const carryTxt = ci > 0.005 ? (short ? `Even after the <b>${eur(ci)}</b> left over from ${prevName}.` : `Includes <b>${eur(ci)}</b> left over from ${prevName}.`) : ci < -0.005 ? `Includes the <b>${eur(-ci)}</b> shortfall carried over from ${prevName}.` : "";
+  box.className = "save-more" + (short ? " short" : "");
+  box.style.display = "flex";
+  box.innerHTML = `<div><div class="tlabel">${short ? `Short in ${esc(mainName)} this month` : `Unallocated in ${esc(mainName)} this month`}</div>` +
+      `<div class="tval">${short ? "− " + eur(-left) : eur(left)}</div>` +
+      (carryTxt ? `<div class="hint" style="margin-top:3px">${carryTxt}</div>` : "") + `</div>` +
+    (open && short ? `<button class="btn primary" data-mainact="cover">Cover it from a pool</button>`
+     : open && left > 0.005 ? `<button class="btn primary" data-mainact="invest">Save some of it</button>` : "");
 }
 const totalSaved = () => Object.values(data.savings).reduce((s, v) => s + num(v), 0);
 const monthSaved = m => (m.finalized && m.applied) ? Object.values(m.applied.contributions).reduce((s,v)=>s+v,0) : savingsPlanned(m);
@@ -1152,7 +1173,7 @@ function syncContributions() {
 }
 function poolMonthLine(name) {
   const mc = poolMonthSum(name, current), planned = monthTarget(name, current), verb = monthFinalized(current) ? "saved" : monthLanded(current) ? "sent" : "planned";
-  const text = `${monthName(current).split(" ")[0]}: ${(mc>=0?"+":"−")}${eur(Math.abs(mc))} ${verb}${planned>0?` · target ${eur(planned)} ${mc>=planned?"✓ met":"— not met"}`:""}`;
+  const text = `${monthName(current).split(" ")[0]}: ${(mc>=0?"+":"−")}${eur(Math.abs(mc))} ${verb}`;
   const cls = "pmonth " + (planned>0 ? (mc>=planned?"pos":"neg") : (mc>0?"pos":mc<0?"neg":"zero"));
   return { text, cls };
 }
@@ -1263,6 +1284,7 @@ function updateSummary(m) {
   $("savedBreak").innerHTML = `across ${np} pool${np === 1 ? "" : "s"}`;
   paintAcctPickers();
   renderAccountSummary(m);
+  renderSaveMore(m);
 }
 // Account tags for the allowance / one-offs / pools (all live inside the Budget page).
 $("page-budget").addEventListener("change", e => {
@@ -1502,8 +1524,8 @@ function renderPools(m) {
           <span class="euro"><input class="mini-amt ptx-in" type="number" step="0.01" value="${num(x.a)}" data-ptx="${idx}" aria-label="Amount"></span>
           <button class="btn-x" data-ptxdel="${idx}" aria-label="Delete">✕</button>
         </div>`).join("") : `<div class="hint" style="padding:2px 0">No changes logged for ${monLabel} yet.</div>`;
-    const goalTxt = indef ? "indefinite — no end goal" : (target > 0 ? `${Math.round(pc)}% of ${eur(target)} goal` : "no end goal set");
-    const targetInfo = (planned ? `${eur(planned)}/month on the 1st · ` : "") + goalTxt;
+    const goalTxt = (!indef && target > 0) ? `${Math.round(pc)}% of ${eur(target)} goal` : "";
+    const targetInfo = [planned ? `${eur(planned)}/month on the 1st` : "", goalTxt].filter(Boolean).join(" · ") || "no monthly amount set";
     const div = document.createElement("div");
     div.className = "pool" + (reached ? " reached" : "");
     div.dataset.pool = name;
@@ -1520,7 +1542,6 @@ function renderPools(m) {
       <div class="${mLine.cls}">${mLine.text}</div>
       <div class="ptx-list">${itemsHtml}</div>
       <div class="inv-actions">
-        <button class="btn sm primary" data-pinvest="${esc(name)}">＋ Invest more</button>
         <button class="btn sm" data-pnew="${esc(name)}">＋ New money</button>
         <button class="btn sm" data-pwd="${esc(name)}">− Take out</button>
       </div>`;
@@ -1746,7 +1767,7 @@ function updateModalSummary() {
     ${newM > 0 ? `<div class="mrow"><span>New money into ${esc(mainName)}</span><span class="num">+ ${eur(newM)}</span></div>` : ""}
     <div class="mrow"><span>Bills + one-offs</span><span class="num">− ${eur(exp)}</span></div>
     <div class="mrow"><span>Investments (sent on the 1st)</span><span class="num">− ${eur(sav)}</span></div>
-    ${extra > 0 ? `<div class="mrow"><span>Extra invested from ${esc(mainName)}</span><span class="num">− ${eur(extra)}</span></div>` : ""}
+    ${extra > 0 ? `<div class="mrow"><span>Extra saved from ${esc(mainName)}</span><span class="num">− ${eur(extra)}</span></div>` : ""}
     <div class="mrow"><span>${isLegacySpend(m) ? "Spending money" : `Weekly allowance <span class="hint">(${n} × ${eur(weeklyAllowance(m))})</span>`}</span><span class="num">− ${eur(allow)}</span></div>
     <div class="mrow total"><span>${net >= 0 ? `Left in ${esc(mainName)}` : `Short in ${esc(mainName)}`} → rolls into ${nextName}</span><span class="num" style="color:${net>=0?"var(--save)":"var(--over)"}">${net>=0?"+":"−"} ${eur(Math.abs(net))}</span></div>`;
 }
@@ -1814,7 +1835,7 @@ function openMoveModal(kind, poolName) {
       <label style="display:flex;gap:8px;align-items:center;font-weight:500"><input type="radio" name="mvDest" value="main" checked> Back into ${esc(mainName)} <span class="hint">— counts as money in this month</span></label>
       <label style="display:flex;gap:8px;align-items:center;font-weight:500"><input type="radio" name="mvDest" value="direct"> Spent directly from the pool <span class="hint">— ${esc(mainName)} untouched</span></label></div></div>`;
   const cfg = {
-    invest:  { title: "Invest more", verb: "Invest", fields: poolSel + amtField(Math.max(0, left), "Amount to invest") + noteField,
+    invest:  { title: "Save spare money", verb: "Save", fields: poolSel + amtField(Math.max(0, left), "Amount to invest") + noteField,
                intro: left > 0.005 ? `${esc(mainName)} has <b style="color:var(--save)">${eur(left)}</b> left this month after bills, investments and the allowance. Invest some or all of it — it moves from ${esc(mainName)} into the pool.` : `${esc(mainName)} has nothing left this month${short > 0.005 ? ` (it's ${eur(short)} short)` : ""}. Investing more would leave it short — only do this if you know the money is there.` },
     new:     { title: "New money into a pool", verb: "Add", fields: poolSel + amtField(0, "Amount") + noteField,
                intro: `Money from outside your budget (a gift, a refund, cash you found) that goes <b>straight into a pool</b>. ${esc(mainName)} is untouched — it's simply new savings.` },
@@ -1855,7 +1876,7 @@ function openMoveModal(kind, poolName) {
   coverModal.classList.add("show");
 }
 coverModal.addEventListener("click", e => { if (e.target === coverModal) closeMove(); });
-$("acctSummary").addEventListener("click", e => { const b = e.target.closest("[data-mainact]"); if (b) openMoveModal(b.dataset.mainact, null); });
+$("saveMoreBox").addEventListener("click", e => { const b = e.target.closest("[data-mainact]"); if (b) openMoveModal(b.dataset.mainact, null); });
 
 $("clearBtn").addEventListener("click", () => {
   const m = data.months[current];
