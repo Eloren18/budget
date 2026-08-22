@@ -316,7 +316,6 @@
   .acct-sel:hover { border-color:var(--primary); }
   .acct-line { display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:12.5px; color:var(--muted); flex-wrap:wrap; }
   .acct-line-label { font-weight:600; }
-  .pool-acct { margin:7px 0 2px; }
   .acct-summary { background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius); padding:15px 18px; margin-bottom:16px; box-shadow:var(--shadow); }
   .acct-sum-head { font-weight:700; font-size:15px; margin-bottom:4px; display:flex; align-items:center; gap:8px; }
   .acct-sum-row { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--border-soft); font-size:14px; font-weight:600; }
@@ -733,7 +732,7 @@
     <select id="currencySelect" class="text" style="width:100%"></select>
     <p class="note">Currency changes how amounts are displayed everywhere. It doesn't convert existing numbers — it relabels them.</p>
     <div class="set-label" style="margin-top:18px">Bank accounts</div>
-    <p class="note">Name the accounts your money lives in (bank, sub-account, credit card…). Then tag categories, items, the weekly allowance, savings &amp; one-offs with an account to see how much to put where each month.</p>
+    <p class="note">Name the accounts your money lives in (bank, sub-account, credit card…). Then tag categories, items, the weekly allowance &amp; one-offs with an account to see how much to put where each month. (Savings pools aren't tagged — what matters is the amount, not which account it sits in.)</p>
     <div id="acctList" style="margin:8px 0"></div>
     <div class="field"><input class="text" type="text" id="acctAddName" placeholder="e.g. Main bank, Bills account, Credit card" autocomplete="off" style="flex:1;min-width:160px"><button class="btn primary" id="acctAddBtn">Add</button></div>
     <div class="field" style="margin-top:8px"><label style="min-width:auto">Default account</label><select id="acctDefaultSel" class="text" style="flex:1"></select></div>
@@ -907,7 +906,7 @@ const invWindow = {}; // per-pool selected return window (months|null)
 function blankMonth() {
   return { income:0, bonus:0, groups:[], oneOff:[], savingsGoals:[], finalized:false, applied:null };
 }
-function normalize(d) { d.settings ??= {}; d.savings ??= {}; d.investments ??= {}; d.poolTx ??= {}; d.months ??= {}; d.accounts ??= []; d.poolAccounts ??= {}; d.settings.grocPct ??= 70; Object.values(d.months).forEach(m => { m.oneOff ??= []; m.spendLocks ??= {}; (m.groups || []).forEach(g => { g.subgroups ??= []; g.subgroups.forEach(sg => { sg.items ??= []; }); }); }); migrateBuffer(d); migrateContribTx(d); migrateAllowance(d); return d; }
+function normalize(d) { d.settings ??= {}; d.savings ??= {}; d.investments ??= {}; d.poolTx ??= {}; d.months ??= {}; d.accounts ??= []; d.settings.grocPct ??= 70; Object.values(d.months).forEach(m => { m.oneOff ??= []; m.spendLocks ??= {}; (m.groups || []).forEach(g => { g.subgroups ??= []; g.subgroups.forEach(sg => { sg.items ??= []; }); }); }); migrateBuffer(d); migrateContribTx(d); migrateAllowance(d); return d; }
 function load() {
   let raw; try { raw = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch {}
   if (raw && raw.months) return normalize(raw);
@@ -1027,7 +1026,7 @@ function paintAcctPickers() {
   if (aw) aw.innerHTML = has ? `<span class="hint">→ lands in</span> ${acctSelectHtml(s.allowanceAccount, 'data-allowacct', dflt)}` : "";
   if (oo) { oo.style.display = has ? "flex" : "none"; oo.innerHTML = has ? `<span class="acct-line-label">Draw all one-offs from:</span> ${acctSelectHtml(s.oneOffAccount, 'data-ooacct', dflt)}` : ""; }
 }
-// How much to set aside in each account this month = everything drawn from / landing in it (bills, the weekly allowance, investments), minus cash taken out of a pool back into it.
+// How much to set aside in each account this month = everything drawn from it (bills, one-offs, the weekly allowance), minus cash taken out of a pool back into it. Savings pools carry no account.
 function accountSetAside(m) {
   const totals = {}, add = (id, amt) => { const kk = id || ""; totals[kk] = (totals[kk] || 0) + amt; };
   const k = mkeyOf(m);
@@ -1037,11 +1036,9 @@ function accountSetAside(m) {
   });
   const ooTot = oneOffTotal(m); if (ooTot) add(resolveAcct(data.settings.oneOffAccount), ooTot);
   const allow = spendBudget(m); if (allow) add(resolveAcct(data.settings.allowanceAccount), allow);
-  m.savingsGoals.forEach(gl => { const t = num(gl.planned); if (t) add(resolveAcct((data.poolAccounts || {})[gl.name]), t); });
   for (const n in (data.poolTx || {})) (data.poolTx[n] || []).forEach(x => {
     if (!txIn(x, k)) return;
     if (x.t === "withdraw" && x.dest !== "direct") add(resolveAcct(x.acct), num(x.a));               // cash back into Main (x.a is negative)
-    else if (x.t === "deposit" && (x.from === "main" || x.sweep)) add(resolveAcct((data.poolAccounts || {})[n]), num(x.a)); // extra investment lands in the pool's account
   });
   return totals;
 }
@@ -1077,7 +1074,7 @@ function renderAccountSummary(m) {
     acctHtml = `<div class="acct-sum-head" style="margin-top:16px">Put your money in this month</div>` +
       accts.map(a => mkRow(a.name, a.id, false)).join("") +
       (Math.abs(totals[""] || 0) > 0.005 ? mkRow("Unassigned", "", true) : "") +
-      `<p class="hint" style="margin:8px 0 0">What each account needs this month for its bills, the weekly allowance &amp; investments.</p>`;
+      `<p class="hint" style="margin:8px 0 0">What each account needs this month for its bills, one-offs &amp; the weekly allowance.</p>`;
   }
   box.style.display = "block";
   box.innerHTML = `<div class="main-card">${main}</div>${acctHtml}`;
@@ -1272,7 +1269,6 @@ $("page-budget").addEventListener("change", e => {
   const d = e.target.dataset;
   if (d.allowacct !== undefined) { data.settings.allowanceAccount = e.target.value; save(); updateSummary(getMonth(current)); }
   else if (d.ooacct !== undefined) { data.settings.oneOffAccount = e.target.value; save(); updateSummary(getMonth(current)); }
-  else if (d.poolacct !== undefined) { data.poolAccounts = data.poolAccounts || {}; data.poolAccounts[d.poolacct] = e.target.value; save(); e.target.classList.toggle("inherited", !e.target.value); updateSummary(getMonth(current)); }
 });
 // Income section: money that came INTO Main this month from pools or from outside (on top of income + bonus).
 function renderIncomeWithdrawals(mkey) {
@@ -1520,7 +1516,6 @@ function renderPools(m) {
       </div>
       <div class="pbal num">${eur(bal)}</div>
       <div class="ptarget">${targetInfo}</div>
-      ${(data.accounts || []).length ? `<div class="pool-acct">🏦 ${acctSelectHtml(data.poolAccounts[name] || "", `data-poolacct="${esc(name)}"`, inhLabel(acctName(resolveAcct())))}</div>` : ""}
       ${target > 0 ? `<div class="pbar"><div style="width:${pc}%"></div></div>` : `<div style="height:6px"></div>`}
       <div class="${mLine.cls}">${mLine.text}</div>
       <div class="ptx-list">${itemsHtml}</div>
@@ -2345,7 +2340,6 @@ $("acctList").addEventListener("click", e => {
   data.accounts = (data.accounts || []).filter(a => a.id !== id);
   if (data.settings.defaultAccount === id) data.settings.defaultAccount = "";
   ["oneOffAccount", "allowanceAccount", "grocAccount", "oopAccount"].forEach(kk => { if (data.settings[kk] === id) data.settings[kk] = ""; });
-  Object.keys(data.poolAccounts || {}).forEach(pn => { if (data.poolAccounts[pn] === id) delete data.poolAccounts[pn]; });
   Object.values(data.months).forEach(m => (m.groups || []).forEach(g => {
     if (g.account === id) g.account = "";
     (g.items || []).forEach(it => { if (it.account === id) it.account = ""; });
