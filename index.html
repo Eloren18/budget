@@ -190,6 +190,19 @@
   .seg-sweep { background:repeating-linear-gradient(45deg,var(--save),var(--save) 6px,#ffffff44 6px,#ffffff44 12px); }
   .allow-field { flex-wrap:wrap; gap:8px; }
   .allow-field select { width:auto; min-width:120px; }
+  .section.compact { padding-top:14px; padding-bottom:14px; }
+  .section.compact h2 { margin-bottom:10px; flex-wrap:wrap; }
+  .allow-field .euro { width:120px; }
+  .allow-sum { margin-left:auto; font-weight:750; letter-spacing:-.01em; font-size:14px; }
+  .allow-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .allow-chip { font-size:12.5px; padding:3px 10px; border-radius:999px; background:var(--surface-2); border:1px solid var(--border-soft); color:var(--muted); font-weight:600; white-space:nowrap; }
+  .allow-chip.done { opacity:.55; }
+  .allow-chip.cur { background:var(--spend-soft); color:var(--spend); border-color:transparent; font-weight:750; }
+  .allow-chip.next { border-style:dashed; color:var(--text); }
+  .oo-row { display:flex; align-items:center; gap:8px; padding:4px 0; }
+  .oo-row .cell.name { flex:1; min-width:0; }
+  .oo-row .euro { width:120px; flex:none; }
+  .section.compact .add-cat { flex-wrap:wrap; }
   .main-card { padding-bottom:4px; }
   .main-row { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--border-soft); font-size:14px; flex-wrap:wrap; }
   .main-row > span:first-child { display:flex; flex-direction:column; gap:2px; }
@@ -553,13 +566,6 @@
     <div class="recap" id="recap" role="status"></div>
     <div id="acctSummary" class="acct-summary" style="display:none"></div>
 
-    <div class="cards">
-      <div class="card"><div class="klabel"><span class="kdot" style="background:var(--primary)"></span>Income + bonus</div><div class="kvalue" id="cIncome">€0</div><div class="ksub" id="cIncomeSub"></div></div>
-      <div class="card"><div class="klabel"><span class="kdot" style="background:var(--expense)"></span>Bills + one-offs</div><div class="kvalue" id="cExp">€0</div><div class="ksub" id="cExpSub"></div></div>
-      <div class="card"><div class="klabel"><span class="kdot" style="background:var(--spend)"></span>Weekly allowance</div><div class="kvalue" id="cWeek">€0</div><div class="ksub" id="cWeekSub"></div></div>
-      <div class="card"><div class="klabel"><span class="kdot" style="background:var(--save)"></span>Total saved</div><div class="kvalue pos" id="cSaved">€0</div><div class="ksub" id="cSavedSub"></div></div>
-    </div>
-
     <div class="section">
       <h2><span class="sec-icon" style="background:var(--spend-soft);color:var(--spend)">◧</span>Where this month's money goes</h2>
       <p class="desc">Every euro of this month's money, given a job — bills, investments, the weekly allowance — and what's left in your main account (or how short it is).</p>
@@ -567,35 +573,17 @@
       <div class="legend" id="allocLegend"></div>
     </div>
 
-    <div class="section" id="oneOffSection">
-      <h2><span class="sec-icon" style="background:color-mix(in srgb,var(--over) 16%,transparent);color:var(--over)">⚡</span>One-off expenses <span class="hint" style="font-weight:500;font-size:12px">· this month only</span></h2>
-      <p class="desc">Spontaneous, single expenses that should <strong>not</strong> carry to next month (a gift, a repair, concert tickets…). Quick to jot down — they still count toward this month's spending and the breakdown.</p>
-      <div id="oneOffAcctLine" class="acct-line" style="display:none"></div>
-      <div id="oneOffContainer"></div>
-      <div class="add-cat" style="margin-top:10px">
-        <input class="text" type="text" id="newOneOffName" placeholder="What was it?" style="flex:2">
-        <span class="euro"><input class="money" type="number" id="newOneOffAmt" min="0" step="0.01" placeholder="0.00"></span>
-        <button class="btn-add" id="addOneOffBtn">+ Add</button>
-      </div>
-    </div>
-
-    <div class="section" id="allowanceSection">
-      <h2><span class="sec-icon" style="background:var(--spend-soft);color:var(--spend)">◷</span>Weekly allowance</h2>
-      <p class="desc">Every <strong id="allowDayName">Monday</strong> a fixed amount moves from your main account to your spending account — that's <strong>all</strong> your day-to-day money (groceries, going out, everything). Nothing to tick or track: it counts as spent.</p>
+    <div class="section compact" id="allowanceSection">
+      <h2><span class="sec-icon" style="background:var(--spend-soft);color:var(--spend)">◷</span>Weekly allowance <span class="hint" style="font-weight:500;font-size:12px">· all your day-to-day money, every <b id="allowDayName">Monday</b> · counts as spent</span></h2>
       <div class="field allow-field">
-        <label for="allowanceInput">Allowance per week</label>
-        <span class="euro"><input class="money" type="number" id="allowanceInput" min="0" step="0.01" placeholder="150.00"></span>
+        <span class="euro"><input class="money" type="number" id="allowanceInput" min="0" step="0.01" placeholder="150.00" aria-label="Allowance per week"></span>
         <span class="hint">every</span>
         <select class="text" id="allowanceDaySel" aria-label="Transfer day"></select>
         <span id="allowAcctWrap"></span>
+        <span class="allow-sum" id="allowSum"></span>
       </div>
-      <div class="weekly-grid">
-        <div class="wbox hero"><div class="wl">Allowance this month</div><div class="wv" id="allowTotal">€0</div></div>
-        <div class="wbox"><div class="wl">Transfers</div><div class="wv" id="allowCount">—</div></div>
-        <div class="wbox"><div class="wl">Per day</div><div class="wv" id="allowDaily">€0</div></div>
-      </div>
-      <div class="sched" id="allowSchedule"></div>
-      <p class="hint" id="allowHint" style="margin-top:12px"></p>
+      <div class="allow-chips" id="allowSchedule"></div>
+      <p class="hint" id="allowHint" style="margin:8px 0 0"></p>
     </div>
 
     <div class="section" id="incomeSection">
@@ -623,6 +611,17 @@
         <div class="tbreak" id="savedBreak"></div>
       </div>
       <div class="pools" id="poolsContainer"></div>
+    </div>
+
+    <div class="section compact" id="oneOffSection">
+      <h2><span class="sec-icon" style="background:color-mix(in srgb,var(--over) 16%,transparent);color:var(--over)">⚡</span>One-off expenses <span class="hint" style="font-weight:500;font-size:12px">· this month only, not carried forward</span><span class="allow-sum" id="oneOffTotal"></span></h2>
+      <div id="oneOffContainer"></div>
+      <div class="add-cat" style="margin-top:8px">
+        <input class="text" type="text" id="newOneOffName" placeholder="What was it?" style="flex:2">
+        <span class="euro"><input class="money" type="number" id="newOneOffAmt" min="0" step="0.01" placeholder="0.00"></span>
+        <button class="btn-add" id="addOneOffBtn">+ Add</button>
+        <span id="oneOffAcctLine" class="acct-line" style="display:none"></span>
+      </div>
     </div>
 
     <footer>
@@ -1260,20 +1259,9 @@ function render() {
 }
 function updateSummary(m) {
   renderAllocation(m);
-  const expEff = expensesEff(m), base = num(m.income)+num(m.bonus);
-  $("cIncome").textContent = eur(base);
-  $("cIncomeSub").textContent = m.bonus ? "incl. " + eur(m.bonus) + " bonus" : "monthly income";
-  $("cExp").textContent = eur(expEff);
-  $("cExpSub").textContent = m.groups.length + " categor" + (m.groups.length === 1 ? "y" : "ies") + ((m.oneOff || []).length ? ` + ${m.oneOff.length} one-off` : "");
-  const k = mkeyOf(m), legacy = isLegacySpend(m), n = legacy ? 0 : allowanceDays(k).length, wk = weeklyAllowance(m), budget = spendBudget(m);
-  const cw = $("cWeek"); cw.textContent = eur(legacy ? budget : wk); cw.className = "kvalue" + (leftInMain(m) < -0.005 ? " neg" : "");
-  $("cWeekSub").textContent = legacy ? "spending money (old model)" : `${n} × ${eur(wk)} = ${eur(budget)} this month`;
   renderAllowanceCard(m);
   renderIncomeWithdrawals(current);
-  const ts = totalSaved();
-  $("cSaved").textContent = eur0(ts);
-  const np = Object.keys(data.savings).length;
-  $("cSavedSub").textContent = np + " pool" + (np === 1 ? "" : "s");
+  const ts = totalSaved(), np = Object.keys(data.savings).length;
   $("totalSaved").textContent = eur(ts);
   $("savedBreak").innerHTML = `across ${np} pool${np === 1 ? "" : "s"}`;
   paintAcctPickers();
@@ -1318,27 +1306,25 @@ function renderAllowanceCard(m) {
   sel.value = String(wd);
   setIf("allowanceInput", wk ? wk : "");
   $("allowanceInput").disabled = legacy || !!m.finalized; sel.disabled = legacy || !!m.finalized;
-  $("allowTotal").textContent = eur(budget);
-  $("allowCount").textContent = legacy ? "—" : `${days.length} × ${eur(wk)}`;
-  $("allowDaily").textContent = eur(budget / dim);
+  $("allowSum").textContent = legacy ? `${eur(budget)} spending money (old model)` : `${days.length} × ${eur(wk)} = ${eur(budget)} this month · ${eur(budget / dim)}/day`;
   const now = new Date(), nowKey = monthKey(now), isThisMonth = k === nowKey, isPast = k < nowKey, today = now.getDate();
   const [y, mo] = k.split("-").map(Number);
   const curIdx = isThisMonth ? days.reduce((a, d, i) => d <= today ? i : a, -1) : -1; // the transfer you're currently living on
   const nextIdx = isThisMonth ? days.findIndex(d => d > today) : -1;
   $("allowSchedule").innerHTML = legacy
-    ? `<div class="hint">This month was closed under the old groceries / out-of-pocket model: ${eur(num(m.grocAmt))} groceries + ${eur(num(m.oopAmt))} out-of-pocket.</div>`
+    ? `<span class="allow-chip">${eur(num(m.grocAmt))} groceries</span><span class="allow-chip">${eur(num(m.oopAmt))} out-of-pocket</span>`
     : days.map((d, i) => {
         const date = new Date(y, mo-1, d), done = isPast || (isThisMonth && i < curIdx), isCur = i === curIdx, isNext = i === nextIdx;
-        const label = date.toLocaleDateString(undefined, { weekday:"short", day:"numeric", month:"short" });
-        const tag = isCur ? `<span class="now-tag">${d === today ? "today" : "this week"}</span>` : isNext ? `<span class="now-tag" style="background:var(--faint)">next</span>` : done ? `<span class="spent-tag">done</span>` : "";
-        return `<div class="sched-row${done ? " past" : ""}${isCur ? " upcoming" : ""}"><div class="sched-date">${label} ${tag}</div><div class="sched-amt">${eur(wk)}</div></div>`;
+        const label = date.toLocaleDateString(undefined, { day:"numeric", month:"short" });
+        const tag = done ? " ✓" : isCur ? ` · ${d === today ? "today" : "this week"}` : isNext ? " · next" : "";
+        return `<span class="allow-chip${done ? " done" : ""}${isCur ? " cur" : ""}${isNext ? " next" : ""}" title="${eur(wk)} on ${date.toLocaleDateString(undefined, { weekday:"long", day:"numeric", month:"long" })}">${label}${tag}</span>`;
       }).join("");
-  const left = leftInMain(m), many = days.length >= 5, mName = monthName(k).split(" ")[0];
-  $("allowHint").innerHTML = legacy ? "" :
-    (many ? `<b>${mName} has ${days.length} ${WEEKDAYS[wd]}s</b> — ${eur(wk)} more leaves Main than in a ${days.length - 1}-${WEEKDAYS[wd]} month. ` : "") +
+  const left = leftInMain(m), many = days.length >= 5;
+  $("allowHint").innerHTML = legacy ? "Closed under the old groceries / out-of-pocket model." :
+    (many ? `<b>${days.length}-${WEEKDAYS[wd]} month</b> — ${eur(wk)} more than usual. ` : "") +
     (left < -0.005
-      ? `After bills, investments and the allowance, Main is <b style="color:var(--over)">${eur(-left)} short</b> this month — cover it from a savings pool, or it rolls into next month.`
-      : `After bills, investments and the allowance, <b style="color:var(--save)">${eur(left)}</b> is left in Main this month${left > 0.005 ? " — invest it, or let it roll into next month" : ""}.`);
+      ? `Main is <b style="color:var(--over)">${eur(-left)} short</b> after bills, investments &amp; allowance — cover it from a pool, or it rolls into next month.`
+      : `<b style="color:var(--save)">${eur(left)}</b> left in Main after bills, investments &amp; allowance${left > 0.005 ? " — invest it, or let it roll into next month" : ""}.`);
 }
 function liveRecalc() {
   const m = getMonth(current);
@@ -1486,15 +1472,14 @@ function renderGroups(m) {
   });
 }
 function renderOneOff(m) {
-  const c = $("oneOffContainer"), list = m.oneOff || [];
-  if (!list.length) { c.innerHTML = `<p class="hint">No one-off expenses this month.</p>`; return; }
-  const total = list.reduce((s, o) => s + num(o.amount), 0);
-  c.innerHTML = `<table><thead><tr><th>Expense</th><th class="r">Amount</th><th></th></tr></thead><tbody>` +
-    list.map((o, i) => `<tr>
-      <td><input class="cell name" type="text" value="${esc(o.name)}" data-oo="${i}" data-f="name" aria-label="One-off name"></td>
-      <td class="r"><input class="cell r amt" type="number" inputmode="decimal" min="0" step="0.01" value="${o.amount ?? ""}" data-oo="${i}" data-f="amount" aria-label="Amount"></td>
-      <td class="r"><button class="btn-x" data-deloo="${i}" aria-label="Delete">✕</button></td></tr>`).join("") +
-    `<tr><td><b>Total</b></td><td class="r"><b class="oo-total">${eur(total)}</b></td><td></td></tr></tbody></table>`;
+  const c = $("oneOffContainer"), list = m.oneOff || [], total = list.reduce((s, o) => s + num(o.amount), 0);
+  $("oneOffTotal").textContent = list.length ? eur(total) : "";
+  c.innerHTML = list.length
+    ? list.map((o, i) => `<div class="oo-row">
+        <input class="cell name" type="text" value="${esc(o.name)}" data-oo="${i}" data-f="name" aria-label="One-off name">
+        <span class="euro"><input class="money" type="number" inputmode="decimal" min="0" step="0.01" value="${o.amount ?? ""}" data-oo="${i}" data-f="amount" aria-label="Amount"></span>
+        <button class="btn-x" data-deloo="${i}" aria-label="Delete">✕</button></div>`).join("")
+    : `<p class="hint" style="margin:0">None this month — add one below (a gift, a repair, tickets…).</p>`;
 }
 
 function renderPools(m) {
@@ -1721,7 +1706,7 @@ oneOffC.addEventListener("input", e => {
   if (f === "name") { o.name = t.value; save(); }
   else {
     o.amount = num(t.value);
-    const totEl = oneOffC.querySelector(".oo-total"); if (totEl) totEl.textContent = eur(m.oneOff.reduce((s, x) => s + num(x.amount), 0));
+    $("oneOffTotal").textContent = eur(m.oneOff.reduce((s, x) => s + num(x.amount), 0));
     updateSummary(m); save();
   }
 });
