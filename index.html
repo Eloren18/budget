@@ -90,18 +90,12 @@
   /* theme-specific styling beyond colors */
   [data-theme="synthwave"] h1, [data-theme="synthwave"] .section > h2 { font-family:"Orbitron","Inter",sans-serif; text-transform:uppercase; letter-spacing:.05em; }
   [data-theme="synthwave"] .btn.primary, [data-theme="synthwave"] .tab.active { box-shadow:0 0 14px color-mix(in srgb,var(--primary) 60%,transparent); }
-  [data-theme="synthwave"] .total-saved .tval, [data-theme="synthwave"] .inv-val { text-shadow:0 0 16px color-mix(in srgb,var(--save) 55%,transparent); }
-  [data-theme="brutalist"] .card, [data-theme="brutalist"] .section, [data-theme="brutalist"] .kpi,
-  [data-theme="brutalist"] .pool, [data-theme="brutalist"] .inv-card, [data-theme="brutalist"] .wbox,
-  [data-theme="brutalist"] .group, [data-theme="brutalist"] .total-saved, [data-theme="brutalist"] .modal { box-shadow:4px 4px 0 var(--text) !important; }
+  [data-theme="synthwave"] .total-saved .tval { text-shadow:0 0 16px color-mix(in srgb,var(--save) 55%,transparent); }
+  [data-theme="brutalist"] .card, [data-theme="brutalist"] .section, [data-theme="brutalist"] .kpi, [data-theme="brutalist"] .pool, [data-theme="brutalist"] .inv-card, [data-theme="brutalist"] .group, [data-theme="brutalist"] .total-saved, [data-theme="brutalist"] .modal { box-shadow:4px 4px 0 var(--text) !important; }
   [data-theme="brutalist"] .btn, [data-theme="brutalist"] .chip, [data-theme="brutalist"] .tabs, [data-theme="brutalist"] .seg { box-shadow:3px 3px 0 var(--text); }
   [data-theme="brutalist"] .btn:active, [data-theme="brutalist"] .chip:active { transform:translate(2px,2px); box-shadow:1px 1px 0 var(--text); }
   [data-theme="brutalist"] h1, [data-theme="brutalist"] .section > h2 { text-transform:uppercase; }
-  [data-theme="glass"] .card, [data-theme="glass"] .section, [data-theme="glass"] .modal, [data-theme="glass"] .tabs,
-  [data-theme="glass"] .seg, [data-theme="glass"] .chip, [data-theme="glass"] .badge, [data-theme="glass"] .kpi,
-  [data-theme="glass"] .pool, [data-theme="glass"] .inv-card, [data-theme="glass"] .wbox, [data-theme="glass"] .group,
-  [data-theme="glass"] .total-saved, [data-theme="glass"] .btn, [data-theme="glass"] input.text, [data-theme="glass"] input.money,
-  [data-theme="glass"] select.text { backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); }
+  [data-theme="glass"] .card, [data-theme="glass"] .section, [data-theme="glass"] .modal, [data-theme="glass"] .tabs, [data-theme="glass"] .seg, [data-theme="glass"] .chip, [data-theme="glass"] .badge, [data-theme="glass"] .kpi, [data-theme="glass"] .pool, [data-theme="glass"] .inv-card, [data-theme="glass"] .group, [data-theme="glass"] .total-saved, [data-theme="glass"] .btn, [data-theme="glass"] input.text, [data-theme="glass"] input.money, [data-theme="glass"] select.text { backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); }
 
   * { box-sizing: border-box; }
   html, body { height: 100%; }
@@ -155,21 +149,14 @@
   .page { display:none; }
   .page.active { display:block; animation:fade .25s ease; }
 
-
   .recap { display:none; align-items:center; gap:12px; padding:13px 16px; border-radius:var(--radius);
     background:var(--save-soft); border:1px solid transparent; margin-bottom:18px; animation:rise .5s var(--ease); }
   .recap.show { display:flex; }
   .recap .ic { font-size:18px; } .recap b { color:var(--save); }
 
-  .cards { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:18px; }
   .card { background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius); padding:16px 17px;
     box-shadow:var(--shadow); transition:transform .25s var(--ease),border-color .2s; position:relative; overflow:hidden; }
   .card:hover { transform:translateY(-2px); border-color:var(--border); }
-  .card .klabel { color:var(--muted); font-size:12px; font-weight:600; letter-spacing:.02em; display:flex; align-items:center; gap:6px; }
-  .card .kdot { width:8px; height:8px; border-radius:3px; }
-  .card .kvalue { font-size:25px; font-weight:750; margin-top:7px; letter-spacing:-.02em; transition:color .3s; }
-  .card .ksub { color:var(--muted); font-size:12px; margin-top:3px; }
-  .kvalue.pos { color:var(--save); } .kvalue.neg { color:var(--over); }
 
   .section { background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius); padding:20px;
     box-shadow:var(--shadow); margin-bottom:16px; }
@@ -179,12 +166,9 @@
 
   .alloc-bar { height:16px; border-radius:999px; overflow:hidden; display:flex; background:var(--surface-2); border:1px solid var(--border-soft); }
   .alloc-bar > span { display:block; transition:width .55s var(--ease); }
-  .carry-line { margin-top:12px; padding:9px 13px; border-radius:var(--radius-sm); font-size:13.5px; font-weight:650; display:flex; justify-content:space-between; align-items:center; gap:10px; }
-  .carry-line.pos { background:var(--save-soft); color:var(--save); }
-  .carry-line.neg { background:color-mix(in srgb,var(--over) 15%,transparent); color:var(--over); }
-  .seg-exp { background:var(--expense); } .seg-sav { background:var(--save); } .seg-wk { background:var(--spend); }
-  .seg-groc { background:var(--warn); } .seg-oop { background:var(--spend); }
-  .seg-cover { background:repeating-linear-gradient(45deg,var(--faint),var(--faint) 6px,#ffffff33 6px,#ffffff33 12px); }
+
+ .seg-sav { background:var(--save); }
+
   .seg-allow { background:var(--spend); }
   .seg-left { background:color-mix(in srgb,var(--save) 38%,transparent); }
   .seg-sweep { background:repeating-linear-gradient(45deg,var(--save),var(--save) 6px,#ffffff44 6px,#ffffff44 12px); }
@@ -298,21 +282,6 @@
     display:grid; place-items:center; transition:background .15s,color .15s; }
   .btn-x:hover { background:var(--over); color:#fff; }
 
-  .weekly-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:4px; }
-  .wbox { background:var(--surface-2); border:1px solid var(--border-soft); border-radius:var(--radius-sm); padding:15px; transition:opacity .2s; }
-  .wbox .wl { color:var(--muted); font-size:12.5px; font-weight:550; }
-  .wbox .wv { font-size:23px; font-weight:750; margin-top:3px; letter-spacing:-.02em; }
-  .wbox.hero { background:var(--spend-soft); border-color:transparent; }
-  .wbox.hero .wv { color:var(--spend); }
-  .split-field { display:flex; flex-direction:column; gap:8px; }
-  .split-inputs { display:flex; gap:10px; flex-wrap:wrap; }
-  .split-tag { display:inline-flex; align-items:center; gap:6px; background:var(--surface-2); border:1px solid var(--border-soft); border-radius:var(--radius-sm); padding:7px 11px; font-size:13.5px; font-weight:600; }
-  .split-tag.groc { color:var(--save); } .split-tag.oop { color:var(--spend); }
-  .pctin { width:48px; border:none; border-bottom:1.5px solid currentColor; background:transparent; font:inherit; font-weight:750; text-align:right; color:inherit; outline:none; -moz-appearance:textfield; }
-  .pctin::-webkit-outer-spin-button, .pctin::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
-  .sp-euro { position:relative; display:inline-flex; align-items:center; }
-  .sp-euro::before { content:var(--cursym); position:absolute; left:7px; color:var(--faint); font-size:12px; pointer-events:none; }
-  .money.sp-amt { width:104px; font-size:13.5px; font-weight:700; padding:5px 8px 5px 20px; }
   /* accounts */
   .acct-row { display:flex; gap:8px; align-items:center; margin-bottom:6px; }
   .acct-row .acct-name { flex:1; }
@@ -327,30 +296,9 @@
   .acct-sum-row:last-of-type { border-bottom:none; }
   .acct-sum-row .num { font-weight:750; letter-spacing:-.01em; }
   .acct-sum-row.unassigned { color:var(--muted); }
-  .acct-sum-row.foot { border-top:1px dashed var(--border); font-size:13px; }
+
   .acct-sum-row .num.pos { color:var(--save); }
-  .acct-sum-row .acct-carry { display:block; font-size:11.5px; font-weight:500; margin-top:2px; }
-  .acct-carry.owed { color:var(--over); }
-  .acct-carry.spare { color:var(--save); }
-  .sched { display:flex; flex-direction:column; gap:7px; margin-top:14px; }
-  .sched-row { display:grid; grid-template-columns:1fr auto; gap:3px 12px; align-items:center; background:var(--surface-2); border:1px solid var(--border-soft); border-left:3px solid var(--border-soft); border-radius:var(--radius-sm); padding:10px 13px; transition:opacity .2s; }
-  .sched-row .sched-date { font-weight:600; font-size:14px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-  .sched-row .sched-days { color:var(--muted); font-weight:500; font-size:12px; }
-  .sched-row .sched-amt { font-weight:750; font-size:17px; letter-spacing:-.02em; }
-  .sched-row .sched-split { grid-column:1 / -1; display:flex; gap:7px 16px; flex-wrap:wrap; margin-top:3px; }
-  .sched-row .split-amt { font-size:13.5px; font-weight:700; display:inline-flex; align-items:baseline; gap:5px; }
-  .sched-row .split-amt small { font-weight:500; font-size:11.5px; color:var(--muted); }
-  .sched-row .split-amt.groc { color:var(--save); }
-  .sched-row .split-amt.oop { color:var(--spend); }
-  .sched-row.past { opacity:.45; }
-  .sched-row.upcoming { border-left-color:var(--spend); background:var(--spend-soft); }
-  .now-tag { background:var(--spend); color:#fff; font-size:10.5px; font-weight:700; padding:1px 7px; border-radius:999px; letter-spacing:.02em; }
-  .lock-btn { flex:none; width:24px; height:24px; padding:0; border:1.5px solid var(--border); background:var(--surface); color:var(--save); border-radius:7px; font-size:13px; font-weight:800; line-height:1; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:border-color .15s, background .15s; }
-  .lock-btn:hover { border-color:var(--save); }
-  .sched-row.spent { opacity:1; border-left-color:var(--save); background:color-mix(in srgb,var(--save) 8%,transparent); }
-  .sched-row.spent .lock-btn { background:var(--save); border-color:var(--save); color:#fff; }
-  .sched-row.spent .sched-amt { color:var(--save); }
-  .spent-tag { background:var(--save); color:#fff; font-size:10.5px; font-weight:700; padding:1px 7px; border-radius:999px; letter-spacing:.02em; }
+
   #incomeWithdrawals { display:flex; flex-direction:column; gap:6px; margin-top:10px; }
   .inc-wd-head { font-size:13px; color:var(--muted); font-weight:600; }
   .inc-wd-row { display:flex; justify-content:space-between; gap:10px; align-items:center; background:var(--surface-2); border:1px solid var(--border-soft); border-radius:var(--radius-sm); padding:8px 12px; font-size:14px; }
@@ -380,8 +328,7 @@
   .pool-controls { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:6px; }
   .pool-controls .mini { font-size:12px; color:var(--muted); display:inline-flex; align-items:center; gap:5px; }
   .pool-controls input.mini-amt { width:78px; text-align:right; padding:6px 8px; border-radius:8px; border:1px solid var(--border); background:var(--surface); }
-  .link-btn { border:none; background:transparent; color:var(--primary); cursor:pointer; font-weight:600; font-size:12.5px; padding:4px 6px; border-radius:7px; }
-  .link-btn:hover { background:var(--surface); }
+
   .reached-tag { font-size:11px; font-weight:700; color:var(--save); }
 
   footer { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:26px; }
@@ -409,15 +356,12 @@
   .kpi .kl { color:var(--muted); font-size:12px; font-weight:600; }
   .kpi .kv { font-size:22px; font-weight:780; margin-top:4px; letter-spacing:-.02em; }
   .chartwrap { margin-top:6px; }
-  .chart-legend { display:flex; gap:16px; margin-top:8px; font-size:12.5px; color:var(--muted); }
-  .chart-legend span { display:inline-flex; align-items:center; gap:6px; }
-  .chart-legend i { width:11px; height:11px; border-radius:3px; display:inline-block; }
 
   /* Investments */
   .inv-card { border:1px solid var(--border-soft); border-radius:var(--radius); padding:18px; background:var(--surface-2); margin-bottom:14px; }
   .inv-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
   .inv-name { font-size:16px; font-weight:700; }
-  .inv-val { font-size:28px; font-weight:800; letter-spacing:-.025em; }
+
   .inv-val-euro { margin-top:4px; }
   .inv-val-input { font-size:24px; font-weight:800; letter-spacing:-.02em; width:170px; max-width:100%; }
   .inv-val-euro::before { font-size:16px; }
@@ -460,7 +404,7 @@
   .pool-float { position:absolute; right:16px; top:42px; font-weight:800; font-size:16px; color:var(--save); opacity:0; pointer-events:none; }
   .pool-float.neg { color:var(--over); }
   .pool-float.go { animation:floatUp 1.05s var(--ease) forwards; }
-  @keyframes floatUp { 0%{opacity:0; transform:translateY(12px) scale(.8);} 20%{opacity:1; transform:translateY(2px) scale(1.08);} 65%{opacity:1; transform:translateY(-16px) scale(1);} 100%{opacity:0; transform:translateY(-38px) scale(1);} }
+  @keyframes floatUp { 0% {opacity:0; transform:translateY(12px) scale(.8);} 20% {opacity:1; transform:translateY(2px) scale(1.08);} 65% {opacity:1; transform:translateY(-16px) scale(1);} 100% {opacity:0; transform:translateY(-38px) scale(1);} }
   .pmonth { font-size:12.5px; font-weight:650; margin-top:3px; }
   .pmonth.pos { color:var(--save); } .pmonth.neg { color:var(--over); } .pmonth.zero { color:var(--muted); }
   .ptx-list { display:flex; flex-direction:column; gap:4px; margin:8px 0 4px; }
@@ -484,13 +428,12 @@
 
   @keyframes rise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
   @keyframes fade { from { opacity:0; } to { opacity:1; } }
-  @keyframes pop { 0%{transform:scale(1);} 40%{transform:scale(1.18);} 100%{transform:scale(1);} }
+  @keyframes pop { 0% {transform:scale(1);} 40% {transform:scale(1.18);} 100% {transform:scale(1);} }
 
   @media (max-width:760px) {
     body { padding:18px 14px 48px; }
-    .cards, .kpis { grid-template-columns:repeat(2,1fr); gap:10px; }
-    .weekly-grid { grid-template-columns:1fr 1fr; }
-    .weekly-grid .hero { grid-column:1 / -1; }
+    .kpis { grid-template-columns:repeat(2,1fr); gap:10px; }
+
     .pools, .inv-stats { grid-template-columns:1fr; }
     .field label { min-width:100%; }
     .theme-grid { grid-template-columns:repeat(2,1fr); }
@@ -509,12 +452,11 @@
     .tabs { width:100%; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
     .tabs::-webkit-scrollbar { display:none; }
     .tab { padding:8px 12px; font-size:13px; }
-    /* compact cards */
-    .cards { gap:9px; }
-    .card { padding:13px; } .card .kvalue { font-size:21px; } .card .klabel { font-size:11.5px; }
+
+    .card { padding:13px; }
     .section { padding:14px 13px; } .section > h2 { font-size:15px; } .section .desc { font-size:12.5px; }
     .total-saved .tval { font-size:26px; }
-    .wbox { padding:12px; } .wbox .wv { font-size:20px; }
+
     /* data-entry tables: shrink amounts, drop the Δ column so item names get real room */
     th, td { padding:7px 4px; }
     td .cell { padding:6px 4px; }
@@ -525,7 +467,7 @@
     .group-head { padding:10px 11px; gap:7px; }
     .gshare { width:54px; }
     input.money { width:132px; }
-    .win-chips button { padding:5px 9px; } .inv-val { font-size:24px; }
+    .win-chips button { padding:5px 9px; }
     footer .btn { flex:1 1 calc(50% - 5px); }
   }
   @media (prefers-reduced-motion: reduce) { * { animation:none !important; transition:none !important; } }
@@ -994,9 +936,7 @@ const weeklyAllowance = m => isLegacySpend(m) ? 0 : num(m.allowance ?? (data.set
 const spendBudget = m => isLegacySpend(m) ? num(m.grocAmt) + num(m.oopAmt) : weeklyAllowance(m) * allowanceDays(mkeyOf(m)).length;
 // Left in Main at the end of the month (+) or short (−). The allowance counts as spent, so this is the month's net — it rolls into next month.
 const leftInMain = m => discretionary(m) - spendBudget(m);
-const monthNet = m => leftInMain(m);
 // How short Main is this month (0 when there's money left). Includes any carried-in shortfall.
-const totalDeficit = m => Math.max(0, -leftInMain(m));
 // Human label for a pool transaction.
 function txLabel(x) {
   if (x.t === "contribution") return "Monthly transfer";
@@ -1116,7 +1056,6 @@ function logPoolTx(name, amount, type, note, dateStr) {
   recomputeSavings();
 }
 const poolMonthSum = (name, mkey) => poolTxOf(name).reduce((s, x) => s + (String(x.d).startsWith(mkey + "-") ? num(x.a) : 0), 0);
-const monthChangeTotal = mkey => { let s = 0; new Set([...Object.keys(data.poolTx || {}), ...Object.keys(data.savings || {})]).forEach(n => { s += poolMonthSum(n, mkey); }); return s; };
 const indefiniteGoal = g => g ? (g.indefinite !== undefined ? !!g.indefinite : !(num(g.target) > 0)) : true;
 /* A month's target amount (the contribution entry for that month) — frozen for finalized months, live for unfinalized. */
 const monthTarget = (name, mkey) => { const t = poolTxOf(name).find(x => x.t === "contribution" && monthOf(x.d) === mkey); return t ? num(t.a) : 0; };
@@ -2115,92 +2054,6 @@ $("invConnect").addEventListener("click", e => {
   if (val != null && val.trim() !== "") inv.snapshots.push({ date: todayStr(), value: num(val) });
   data.investments[name] = inv; save(); renderInvest(); render();
 });
-
-/* ===== OVERVIEW tab ===== */
-function buildYearOptions() {
-  const years = [...new Set(Object.keys(data.months).map(k => k.split("-")[0]))].sort().reverse();
-  if (!years.length) years.push(String(new Date().getFullYear()));
-  const sel = $("ovYear"), prev = sel.value;
-  sel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join("") + `<option value="all">All time</option>`;
-  sel.value = years.includes(prev) || prev === "all" ? prev : years[0];
-}
-function renderOverview() {
-  buildYearOptions();
-  const yr = $("ovYear").value;
-  const keys = Object.keys(data.months).filter(k => yr === "all" ? true : k.startsWith(yr + "-")).sort();
-  const withData = keys.filter(k => { const m = data.months[k]; return num(m.income) || expensesEff(m) || savingsPlanned(m); });
-  if (!withData.length) { $("ovContent").innerHTML = `<p class="hint">No data for ${yr === "all" ? "any month" : yr} yet.</p>`; return; }
-  let totInc = 0, totExp = 0, totSav = 0;
-  withData.forEach(k => { const m = data.months[k]; totInc += num(m.income)+num(m.bonus); totExp += expensesEff(m); totSav += monthSaved(m); });
-  const months = withData.length;
-  const catTotals = {};
-  withData.forEach(k => { const m = data.months[k]; m.groups.forEach(g => { catTotals[g.name] = (catTotals[g.name]||0) + groupTotal(g, true); }); const oo = oneOffTotal(m); if (oo > 0) catTotals["One-off ⚡"] = (catTotals["One-off ⚡"]||0) + oo; });
-  const cats = Object.entries(catTotals).map(([name,val]) => ({ name, val })).filter(c => c.val > 0).sort((a,b) => b.val - a.val);
-  const maxCat = cats.length ? cats[0].val : 1;
-
-  const savingsRate = totInc > 0 ? totSav/totInc*100 : 0;
-  const priciest = withData.map(k => ({ k, v: expensesEff(data.months[k]) })).sort((a,b)=>b.v-a.v)[0];
-  let goalsAchieved = 0, goalsTotal = 0; const seenG = new Set();
-  Object.values(data.months).forEach(mm => (mm.savingsGoals||[]).forEach(g => { if (num(g.target) > 0 && !seenG.has(g.name)) { seenG.add(g.name); goalsTotal++; if (num(data.savings[g.name]) >= num(g.target)) goalsAchieved++; } }));
-  let invGains = 0, anyInv = false;
-  Object.keys(data.investments).forEach(n => { const cv = currentValue(n); if (cv != null) { anyInv = true; invGains += cv - investCashflows(n).reduce((s,f)=>s+f.amount,0); } });
-
-  let html = `<div class="set-label" style="margin-top:0">🎉 ${yr==="all"?"All-time":yr} in review</div>
-    <div class="kpis">
-      <div class="kpi"><div class="kl">Earned</div><div class="kv">${eur0(totInc)}</div></div>
-      <div class="kpi"><div class="kl">Spent</div><div class="kv">${eur0(totExp)}</div></div>
-      <div class="kpi"><div class="kl">Saved</div><div class="kv pos">${eur0(totSav)}</div></div>
-      <div class="kpi"><div class="kl">Savings rate</div><div class="kv ${savingsRate>=0?"pos":"neg"}">${pct(savingsRate)}</div></div>
-      <div class="kpi"><div class="kl">Biggest category</div><div class="kv" style="font-size:16px">${cats[0]?esc(cats[0].name):"—"}</div></div>
-      <div class="kpi"><div class="kl">Priciest month</div><div class="kv" style="font-size:16px">${priciest?monthName(priciest.k).split(" ")[0]:"—"}</div></div>
-      <div class="kpi"><div class="kl">Goals achieved</div><div class="kv">${goalsAchieved}/${goalsTotal}</div></div>
-      <div class="kpi"><div class="kl">Avg spend / mo</div><div class="kv">${eur0(totExp/months)}</div></div>
-      ${anyInv?`<div class="kpi"><div class="kl">Investment gains</div><div class="kv ${invGains>=0?"pos":"neg"}">${invGains>=0?"+":""}${eur0(invGains)}</div></div>`:""}
-    </div>`;
-
-  html += `<div class="set-label">Income vs spending by month</div><div class="chartwrap">${chartIncomeExpense(withData)}</div>
-    <div class="chart-legend"><span><i style="background:var(--save)"></i>Income</span><span><i style="background:var(--expense)"></i>Spending</span></div>`;
-
-  html += `<div class="set-label">Money saved (cumulative)</div><div class="chartwrap">${chartCumSaved(withData)}</div>`;
-
-  if (cats.length) {
-    html += `<div class="set-label">Where it went — top categories ${yr === "all" ? "(all time)" : "this year"}</div><div class="rank">`;
-    cats.slice(0, 8).forEach((c, i) => {
-      const colors = ["var(--spend)","var(--save)","var(--primary)","var(--warn)","var(--over)","var(--expense)"];
-      html += `<div class="rank-row"><div class="rank-top"><span class="rl">${esc(c.name)}</span><span><span class="rv">${eur0(c.val)}</span> <span class="rp">${pct(totExp ? c.val/totExp*100 : 0)}</span></span></div>
-        <div class="rbar"><div style="width:${c.val/maxCat*100}%;background:${colors[i % colors.length]}"></div></div></div>`;
-    });
-    html += `</div>`;
-  }
-  $("ovContent").innerHTML = html;
-}
-/* Overview tab removed — its renderer is unused. */
-function chartIncomeExpense(keys) {
-  const W = 660, H = 230, pad = 28, n = keys.length;
-  const rows = keys.map(k => { const m = data.months[k]; return { k, inc: num(m.income)+num(m.bonus), exp: expensesEff(m) }; });
-  const max = Math.max(1, ...rows.map(r => Math.max(r.inc, r.exp)));
-  const cw = (W-2*pad)/n, bw = Math.max(4, Math.min(16, cw/3));
-  let bars = "", labels = "";
-  const MI = ["J","F","M","A","M","J","J","A","S","O","N","D"];
-  rows.forEach((r, idx) => {
-    const x = pad + idx*cw + cw/2;
-    const hi = (r.inc/max)*(H-2*pad-12), he = (r.exp/max)*(H-2*pad-12);
-    bars += `<rect x="${(x-bw-1).toFixed(1)}" y="${(H-pad-hi).toFixed(1)}" width="${bw}" height="${hi.toFixed(1)}" rx="2" fill="var(--save)"/>`;
-    bars += `<rect x="${(x+1).toFixed(1)}" y="${(H-pad-he).toFixed(1)}" width="${bw}" height="${he.toFixed(1)}" rx="2" fill="var(--expense)"/>`;
-    const mm = Number(r.k.split("-")[1]);
-    labels += `<text x="${x.toFixed(1)}" y="${H-pad+14}" text-anchor="middle" font-size="10" fill="var(--muted)">${n<=14?MI[mm-1]:(idx%2?"":MI[mm-1])}</text>`;
-  });
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%"><line x1="${pad}" y1="${H-pad}" x2="${W-pad}" y2="${H-pad}" stroke="var(--border)"/>${bars}${labels}</svg>`;
-}
-function chartCumSaved(keys) {
-  const W = 660, H = 170, pad = 26, n = keys.length;
-  let cum = 0; const pts = keys.map((k, i) => { cum += monthSaved(data.months[k]); return { i, cum }; });
-  const max = Math.max(1, ...pts.map(p => p.cum)), min = Math.min(0, ...pts.map(p => p.cum));
-  const X = i => pad + (n === 1 ? 0 : (i/(n-1))*(W-2*pad));
-  const Y = v => H-pad - ((v-min)/((max-min)||1))*(H-2*pad);
-  const poly = pts.map(p => `${X(p.i).toFixed(1)},${Y(p.cum).toFixed(1)}`).join(" ");
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%"><polyline points="${pad},${(H-pad).toFixed(1)} ${poly} ${(W-pad).toFixed(1)},${(H-pad).toFixed(1)}" fill="color-mix(in srgb,var(--save) 16%,transparent)" stroke="none"/><polyline points="${poly}" fill="none" stroke="var(--save)" stroke-width="2.5"/></svg>`;
-}
 
 /* ===== POOLS tab (full history) ===== */
 function renderPoolsTab() {

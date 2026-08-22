@@ -1,77 +1,139 @@
 ==========================================================
-  BUDGET APP — HOW IT'S HOSTED (Convex backend + GitHub Pages)
+  BUDGET APP — HOW IT WORKS, WHERE IT LIVES, HOW TO UPDATE
+  (last updated 2026-08-22)
 ==========================================================
 
-The app has two halves:
+----------------------------------------------------------
+1. HOW THE BUDGET WORKS
+----------------------------------------------------------
+One equation runs each month:
 
-  FRONTEND  index.html  ......  hosted free on GitHub Pages
-                                https://eloren18.github.io/budget/
-  BACKEND   convex/ folder ...  hosted free on Convex (database + sign-in)
-                                dashboard: https://dashboard.convex.dev
-                                project "claude-budget-app", team "kerem-ekdal"
-                                production URL: https://enduring-hare-88.convex.cloud
+   money in  -  goes out  =  left in your main account
 
-Your budget is stored in Convex, tied to your email, and syncs live across
-every device you sign in on. Sign-in = your email + a 6-digit code emailed
-to you. Codes are sent through Resend (https://resend.com) — the free plan
-delivers only to the email the Resend account was created with
-(keremladkeholland@gmail.com), which is also the app's admin email. That's
-fine for one person; to let other people sign in you'd add a custom domain
-in Resend, then add their emails under ⚙ Settings → Manage access.
+   money in  = income + bonus + anything left over from last month
+               + money taken out of a pool + "new money" (refunds, gifts)
+   goes out  = bills + one-offs + investments + the weekly allowance
+               (+ anything extra you chose to save, + a shortfall carried
+                over from last month)
 
-Backups: ⚙ Settings → Backup → "Export data" downloads your whole budget as
-a JSON file; "Import data…" restores one. Do an export now and then.
+WEEKLY ALLOWANCE
+  A fixed amount (default EUR 150) leaves your main account every Monday
+  and is ALL your day-to-day money - groceries, going out, everything.
+  It counts as spent: there is nothing to tick or track.
+  Change the amount or the weekday on the Budget tab; the change applies
+  to that month and every later open month. A month with 5 Mondays costs
+  one extra allowance - the app flags it.
+
+INVESTMENTS / SAVINGS POOLS
+  Each pool has a monthly amount that goes out on the 1st automatically
+  and counts in the pool's balance from then on ("sent on the 1st").
+  Pools are NOT tied to a bank account - only the amount matters.
+  Ways to move money (each opens the same small popup):
+    - "Save some of it"   (Savings section)  main account -> a pool.
+                          Shows what is unallocated this month and how
+                          much of it was left over from last month.
+    - "Cover it from a pool" (same spot, when the month is short)
+                          pool -> main account, prefilled with the gap.
+    - "New money"         (on a pool)        a windfall straight into it.
+    - "Take out"          (on a pool)        back to main, or spent
+                          directly from the pool.
+
+MONTHS CLOSE THEMSELVES
+  Once a month is over it closes automatically: investments land in the
+  pools and whatever is left in your main account (or the shortfall)
+  rolls into the next month. Nothing to remember. You can re-open a past
+  month to edit it - it then stays open until you close it by hand.
+
+BANK-ACCOUNT TAGS (optional)
+  Expense categories, items and one-offs can be tagged with an account,
+  so the "Put your money in this month" list tells you what each account
+  needs. Accounts that need nothing are not listed. Savings pools are
+  deliberately not tagged.
+
+BACKUPS
+  Settings -> Backup -> "Export data" downloads your whole budget as a
+  JSON file; "Import data..." restores one. Do an export now and then,
+  and always before a big change.
 
 
 ----------------------------------------------------------
-UPDATING THE APP
+2. WHERE IT LIVES
 ----------------------------------------------------------
-- Frontend change (index.html): run Deploy.bat (commits + pushes; GitHub
-  Actions republishes the site within a minute).
-- Backend change (anything in convex/): in this folder run
-      npx convex deploy -y
-  (or double-click Deploy-Backend.bat). The frontend and backend are
-  independent — deploy whichever you changed. The browser client version
-  pinned in index.html (convex@1.44.0) should match package.json.
-- Local testing against the DEV deployment: `npx convex dev` pushes to
-  dev (little-ibis-573); the page can be pointed at another backend via
-  localStorage key "budgetConvexUrl" (never needed in normal use).
+  FRONTEND   index.html  ->  GitHub Pages
+             repo    https://github.com/Eloren18/budget
+             live    https://eloren18.github.io/budget/
+
+  BACKEND    convex/ folder  ->  Convex (database + sign-in)
+             dashboard  https://dashboard.convex.dev
+             team kerem-ekdal / project claude-budget-app
+             production  https://enduring-hare-88.convex.cloud
+             development https://little-ibis-573.eu-west-1.convex.cloud
+
+  EMAIL      Sign-in codes are sent through Resend (resend.com).
+             The free plan only delivers to the address the Resend
+             account was created with - keremladkeholland@gmail.com,
+             which is also the app's admin email.
+
+  SIGN-IN    Your email + a 6-digit code. Invite-only: only the admin
+             email, or an address added under Settings -> Manage access,
+             can even request a code. Codes expire in 10 minutes, allow
+             5 wrong tries, 30s between sends, 15 sends a day. A signed-in
+             device stays signed in for ~6 months.
+
+  PRIVACY    Your budget lives in Convex tied to your email. Signing out
+             (or a session expiring) wipes this device's copy, so nothing
+             of yours sits behind the sign-in screen. Removing someone
+             from the access list signs them out everywhere immediately.
+
+  NOTE       The app used to run on InstantDB. It no longer does - no
+             InstantDB code, keys or connections remain anywhere.
 
 
 ----------------------------------------------------------
-ONE-TIME SETUP (already done — for reference / a new machine)
+3. UPDATING THE APP
 ----------------------------------------------------------
-1. Convex account at convex.dev; in this folder: `npx convex dev --once`
-   (logs in, creates/links the project, writes .env.local — git-ignored).
-2. Resend account (signed up with the admin email) → API key →
-      npx convex env set RESEND_API_KEY re_xxx
-      npx convex env set --prod RESEND_API_KEY re_xxx
-3. `npx convex deploy -y` to push the backend to production.
-4. GitHub Pages: repo → Settings → Pages → Source "GitHub Actions"
-   (.github/workflows/deploy.yml publishes index.html on every push).
+  Changed index.html (the app itself)?
+      double-click  Deploy.bat
+      -> commits, pushes, and GitHub Actions republishes the live site
+         within about a minute (watch it in the repo's Actions tab).
+
+  Changed anything in convex/ (the backend)?
+      double-click  Deploy-Backend.bat        (= npx convex deploy -y)
+
+  The two halves are independent - deploy whichever you changed.
+  The Convex client version pinned in index.html (convex@1.44.0) should
+  match the one in package.json.
 
 
 ----------------------------------------------------------
-SECURITY NOTES
+4. SETTING UP ON A NEW COMPUTER
 ----------------------------------------------------------
-- Only the admin email, or emails on the access list, can request a
-  sign-in code (enforced on the server). Codes are hashed, expire after
-  10 minutes, allow 5 wrong tries, 30s between sends, 15 sends/day.
-- Sessions last ~6 months per device; removing someone from the access
-  list signs them out everywhere immediately.
-- The admin email is set in TWO places: index.html (ADMIN_EMAIL) and
-  convex/lib.ts (ADMIN_EMAIL). Change both if it ever changes, then
-  deploy both halves.
+  1. Install Node.js, then in this folder:  npm install
+  2. Link the folder to your Convex account:
+         npx convex dev --once
+     (opens a browser to log in; writes .env.local, which is private
+      and never committed)
+  3. Give the backend the Resend key (from resend.com -> API Keys):
+         npx convex env set RESEND_API_KEY re_xxx
+         npx convex env set --prod RESEND_API_KEY re_xxx
+  4. Publish the backend:  npx convex deploy -y
+  GitHub Pages is already configured (repo -> Settings -> Pages ->
+  Source: "GitHub Actions"); .github/workflows/deploy.yml does the rest.
 
 
 ----------------------------------------------------------
-TROUBLESHOOTING
+5. TROUBLESHOOTING
 ----------------------------------------------------------
-- Code email not arriving: check spam; make sure you typed the admin
-  email; Resend free plan only delivers to that address.
-- "A code was just sent": wait 30 seconds and try again.
-- Header shows a red sync dot: the browser can't reach Convex (offline, or
-  a network blocking *.convex.cloud). Your edits are kept on the device
-  and pushed when the connection is back.
-- See what's stored: dashboard.convex.dev → claude-budget-app → Data.
+  Code email not arriving
+      Check spam. Make sure you typed the admin email - the free Resend
+      plan only delivers to that address.
+  "A code was just sent"
+      Wait 30 seconds and try again.
+  Red dot next to your email in the header
+      The browser cannot reach Convex (offline, or a network blocking
+      *.convex.cloud). Your edits stay on the device and sync when the
+      connection returns.
+  Want to see what is stored
+      dashboard.convex.dev -> claude-budget-app -> Data. Or, without
+      showing any amounts:  npx convex run admin:budgetStats --prod
 ==========================================================

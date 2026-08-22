@@ -7,3 +7,6 @@ node_modules/
 Latest Backup.json
 *backup*.json
 *.bat
+# Convex AI helper files — duplicated in .claude/skills (which Claude Code actually loads)
+.agents/
+AGENTS.md
