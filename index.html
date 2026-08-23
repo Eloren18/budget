@@ -170,8 +170,9 @@
  .seg-sav { background:var(--save); }
 
   .seg-allow { background:var(--spend); }
-  .seg-left { background:color-mix(in srgb,var(--save) 38%,transparent); }
+  .seg-left { background:color-mix(in srgb,var(--faint) 55%,transparent); }
   .seg-sweep { background:repeating-linear-gradient(45deg,var(--save),var(--save) 6px,#ffffff44 6px,#ffffff44 12px); }
+  .seg-carry { background:repeating-linear-gradient(45deg,var(--faint),var(--faint) 6px,#ffffff33 6px,#ffffff33 12px); }
   .allow-field { flex-wrap:wrap; gap:8px; }
   .allow-field select { width:auto; min-width:120px; }
   .section.compact { padding-top:14px; padding-bottom:14px; }
@@ -198,7 +199,7 @@
   .save-more { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
     padding:14px 18px; border-radius:var(--radius-sm); margin-bottom:16px; background:var(--surface-2); border:1px solid var(--border-soft); }
   .save-more .tlabel { color:var(--muted); font-size:13px; font-weight:600; }
-  .save-more .tval { font-size:26px; font-weight:800; color:var(--save); letter-spacing:-.025em; margin-top:2px; }
+  .save-more .tval { font-size:26px; font-weight:800; letter-spacing:-.025em; margin-top:2px; }
   .save-more.short .tval { color:var(--over); }
   .seg-over { background:repeating-linear-gradient(45deg,var(--over),var(--over) 6px,#00000022 6px,#00000022 12px); }
   .legend { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
@@ -822,11 +823,13 @@ function migrateBuffer(d) {
 /* One-time migration: ensure every already-finalized month has a contribution entry per its
    snapshot, so derived balances keep the targets that were locked in before this model change. */
 function migrateContribTx(d) {
+  // A pool the user deleted has no goals and no transactions left — never resurrect it from old snapshots.
+  const live = name => !!(d.poolTx && d.poolTx[name]) || Object.values(d.months || {}).some(mm => (mm.savingsGoals || []).some(g => g.name === name));
   Object.keys(d.months || {}).forEach(mkey => {
     const m = d.months[mkey];
     if (!(m.finalized && m.applied && m.applied.contributions)) return;
     for (const name in m.applied.contributions) {
-      const amt = num(m.applied.contributions[name]); if (amt <= 0) continue;
+      const amt = num(m.applied.contributions[name]); if (amt <= 0 || !live(name)) continue;
       d.poolTx = d.poolTx || {}; const arr = d.poolTx[name] = d.poolTx[name] || [];
       if (!arr.some(x => x.t === "contribution" && String(x.d).slice(0,7) === mkey)) arr.push({ d: mkey + "-15", a: amt, t: "contribution", n: "" });
     }
@@ -1118,13 +1121,20 @@ function poolMonthLine(name) {
 }
 function renamePool(oldName, newName) {
   if (!newName || oldName === newName) return;
-  Object.values(data.months).forEach(mm => (mm.savingsGoals||[]).forEach(g => { if (g.name === oldName) g.name = newName; }));
+  Object.values(data.months).forEach(mm => {
+    (mm.savingsGoals||[]).forEach(g => { if (g.name === oldName) g.name = newName; });
+    const c = mm.applied && mm.applied.contributions;
+    if (c && oldName in c) { c[newName] = num(c[newName]) + num(c[oldName]); delete c[oldName]; } // keep closed-month snapshots under the new name
+  });
   if (data.savings[oldName] !== undefined) { data.savings[newName] = num(data.savings[newName]) + num(data.savings[oldName]); delete data.savings[oldName]; }
   if (data.investments[oldName]) { data.investments[newName] = data.investments[oldName]; delete data.investments[oldName]; }
   if (data.poolTx[oldName]) { data.poolTx[newName] = data.poolTx[oldName]; delete data.poolTx[oldName]; }
 }
 function deletePool(name) {
-  Object.values(data.months).forEach(mm => { const i = (mm.savingsGoals||[]).findIndex(g => g.name === name); if (i >= 0) mm.savingsGoals.splice(i, 1); });
+  Object.values(data.months).forEach(mm => {
+    const i = (mm.savingsGoals||[]).findIndex(g => g.name === name); if (i >= 0) mm.savingsGoals.splice(i, 1);
+    const c = mm.applied && mm.applied.contributions; if (c && name in c) delete c[name]; // scrub closed-month snapshots too, or the pool resurrects on the next load
+  });
   delete data.savings[name]; delete data.investments[name]; delete data.poolTx[name];
 }
 
@@ -1324,18 +1334,19 @@ function renderAllocation(m) {
   const rawLeft = Math.max(0, forAllowance - budget);
   const over = Math.max(0, budget - forAllowance) + Math.max(0, carriedDebt - rawLeft); // short in Main (incl. a carried-in shortfall)
   const left = Math.max(0, rawLeft - carriedDebt);                      // left in Main
+  const repaid = Math.min(carriedDebt, rawLeft);                        // last month's shortfall that this month's money actually covered
   // bills by category (+ one-offs), each its own colour
   const cats = m.groups.map(g => ({ name:g.name, val:groupTotal(g, true) })).filter(c => c.val > 0);
   const ooTot = oneOffTotal(m); if (ooTot > 0) cats.push({ name:"One-off", val:ooTot });
   cats.forEach((c, i) => c.color = CAT_COLORS[i % CAT_COLORS.length]);
-  const sum = exp + sav + extra + fit + over + left;
+  const sum = exp + sav + extra + fit + repaid + over + left;
   const den = Math.max(moneyIn, sum, 1), pc = v => Math.max(0, v) / den * 100;
   const seg = (cls, v, color) => v > 0 ? `<span class="${cls}" style="width:${pc(v)}%${color ? ";background:" + color : ""}"></span>` : "";
   $("allocBar").innerHTML =
     cats.map(c => seg("", c.val, c.color)).join("") +
-    seg("seg-sav", sav) + seg("seg-sweep", extra) + seg("seg-allow", fit) + seg("seg-over", over) + seg("seg-left", left);
+    seg("seg-sav", sav) + seg("seg-sweep", extra) + seg("seg-allow", fit) + seg("seg-carry", repaid) + seg("seg-over", over) + seg("seg-left", left);
   // legend: one box per item — colour, then name, then amount
-  const box = (color, name, v, swClass) => `<div class="leg-box"><span class="sw${swClass ? " " + swClass : ""}"${swClass ? "" : ` style="background:${color}"`}></span><span class="leg-name">${name}</span><span class="leg-amt"${swClass === "seg-over" ? ' style="color:var(--over)"' : swClass === "seg-left" ? ' style="color:var(--save)"' : ""}>${eur(v)}</span></div>`;
+  const box = (color, name, v, swClass) => `<div class="leg-box"><span class="sw${swClass ? " " + swClass : ""}"${swClass ? "" : ` style="background:${color}"`}></span><span class="leg-name">${name}</span><span class="leg-amt"${swClass === "seg-over" ? ' style="color:var(--over)"' : ""}>${eur(v)}</span></div>`;
   const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
   const n = legacy ? 0 : allowanceDays(k).length, wk = weeklyAllowance(m);
   $("allocLegend").innerHTML =
@@ -1344,6 +1355,7 @@ function renderAllocation(m) {
     (extra > 0.005 ? box(null, "Extra invested", extra, "seg-sweep") : "") +
     box(null, legacy ? "Spending money" : `Allowance · ${n} × ${eur(wk)}`, budget, "seg-allow") +
     (ci > 0.005 ? box("var(--save)", "Left over from last month", ci) : "") +
+    (repaid > 0.005 ? box(null, "Repaid last month's shortfall", repaid, "seg-carry") : "") +
     (over > 0.005 ? box(null, "Short in Main", over, "seg-over") : "") +
     (left > 0.005 ? box(null, "Left in Main", left, "seg-left") : "");
 }
