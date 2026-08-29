@@ -857,7 +857,7 @@ const invWindow = {}; // per-pool selected return window (months|null)
 function blankMonth() {
   return { income:0, bonus:0, groups:[], oneOff:[], savingsGoals:[], finalized:false, applied:null };
 }
-function normalize(d) { d.settings ??= {}; d.savings ??= {}; d.investments ??= {}; d.poolTx ??= {}; d.months ??= {}; d.accounts ??= []; d.settings.grocPct ??= 70; Object.values(d.months).forEach(m => { m.oneOff ??= []; m.spendLocks ??= {}; (m.groups || []).forEach(g => { g.subgroups ??= []; g.subgroups.forEach(sg => { sg.items ??= []; }); }); }); migrateBuffer(d); migrateContribTx(d); migrateAllowance(d); return d; }
+function normalize(d) { d.settings ??= {}; d.savings ??= {}; d.investments ??= {}; d.poolTx ??= {}; d.months ??= {}; d.accounts ??= []; Object.values(d.months).forEach(m => { m.oneOff ??= []; (m.groups || []).forEach(g => { g.subgroups ??= []; g.subgroups.forEach(sg => { sg.items ??= []; }); }); }); migrateBuffer(d); migrateContribTx(d); migrateAllowance(d); return d; }
 function load() {
   let raw; try { raw = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch {}
   if (raw && raw.months) return normalize(raw);
