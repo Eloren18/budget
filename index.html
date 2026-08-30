@@ -1044,7 +1044,10 @@ function renderSaveMore(m) {
      : open && left > 0.005 ? `<button class="btn primary" data-mainact="invest">Save some of it</button>` : "");
 }
 const totalSaved = () => Object.values(data.savings).reduce((s, v) => s + num(v), 0);
-const monthSaved = m => (m.finalized && m.applied) ? Object.values(m.applied.contributions).reduce((s,v)=>s+v,0) : savingsPlanned(m);
+// What actually went into a pool in a month: monthly transfer + deposits − takeouts ("start" balance corrections excluded).
+const poolMonthNet = (name, mkey) => poolTxOf(name).reduce((s, x) => s + ((txIn(x, mkey) && (x.t === "contribution" || x.t === "deposit" || x.t === "withdraw")) ? num(x.a) : 0), 0);
+// A month's saved total = the net of everything that moved into (or out of) ALL pools that month.
+const monthSaved = m => { const k = mkeyOf(m); let s = 0; for (const n in (data.poolTx || {})) s += poolMonthNet(n, k); return s; };
 
 /* ===== pool transactions ===== */
 const poolTxOf = name => ((data.poolTx || {})[name] || []);
@@ -1870,7 +1873,7 @@ function renderBreakdown() {
   const st = savingsStats(bdFrame);
   const frames = [["Last month","m1"],["3 months","m3"],["6 months","m6"],["Rolling year","y1"],["YTD","ytd"],["All","all"]];
   // savings this month, pool by pool (net of everything added or taken this month)
-  const poolRows = poolList().map(nm => ({ name: nm, val: poolMonthSum(nm, current) })).filter(pr => Math.abs(pr.val) > 0.005).sort((a, b) => b.val - a.val);
+  const poolRows = poolList().map(nm => ({ name: nm, val: poolMonthNet(nm, current) })).filter(pr => Math.abs(pr.val) > 0.005).sort((a, b) => b.val - a.val);
   const savMonth = poolRows.reduce((sum, pr) => sum + pr.val, 0);
   const savHtml = `<div class="set-label">Savings this month</div>
     <div class="kpis" style="margin-top:12px">
