@@ -298,14 +298,6 @@
   .locked { opacity:.5; pointer-events:none; filter:saturate(.7); }
   .hint { color:var(--muted); font-size:13px; }
 
-  /* Breakdown / charts */
-  .rank { display:flex; flex-direction:column; gap:11px; }
-  .rank-row { }
-  .rank-top { display:flex; justify-content:space-between; align-items:baseline; gap:10px; font-size:14px; margin-bottom:5px; }
-  .rank-top .rl { font-weight:600; } .rank-top .rv { font-weight:700; }
-  .rank-top .rp { color:var(--muted); font-size:12px; font-weight:600; }
-  .rbar { height:9px; background:var(--surface-2); border-radius:999px; overflow:hidden; }
-  .rbar > div { height:100%; border-radius:999px; transition:width .6s var(--ease); }
   .kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px; }
   .kpi { background:var(--surface-2); border:1px solid var(--border-soft); border-radius:var(--radius-sm); padding:14px 15px; }
   .kpi .kl { color:var(--muted); font-size:12px; font-weight:600; }
@@ -434,7 +426,6 @@
 
   <nav class="tabs" id="tabBar">
     <button class="tab active" data-tab="budget">📋 Budget</button>
-    <button class="tab" data-tab="breakdown">📊 Breakdown</button>
     <button class="tab" data-tab="invest">📈 Investments</button>
     <button class="tab" data-tab="plan">🧮 Plan</button>
   </nav>
@@ -491,13 +482,6 @@
   </div>
 
   <!-- ============ BREAKDOWN TAB ============ -->
-  <div id="page-breakdown" class="page">
-    <div class="section">
-      <h2><span class="sec-icon" style="background:var(--expense-soft);color:var(--expense)">📊</span>Expense breakdown — <span id="bdMonth"></span></h2>
-      <div id="bdContent"></div>
-    </div>
-  </div>
-
   <!-- ============ INVESTMENTS TAB ============ -->
   <div id="page-invest" class="page">
     <div class="section">
@@ -922,8 +906,7 @@ function switchTab(name) {
   if (name === "budget") render(); else renderTab(name);
 }
 function renderTab(name) {
-  if (name === "breakdown") renderBreakdown();
-  else if (name === "invest") renderInvest();
+  if (name === "invest") renderInvest();
   else if (name === "plan") renderPlan();
 }
 $("tabBar").addEventListener("click", e => { const t = e.target.closest(".tab"); if (t) switchTab(t.dataset.tab); });
@@ -1432,45 +1415,6 @@ $("clearBtn").addEventListener("click", () => {
   if (m && m.finalized) { alert("Re-open the month before clearing it."); return; }
   if (confirm("Clear this month's plan? It pre-fills fresh from the previous month next time. (Savings balances aren't affected.)")) { delete data.months[current]; render(); }
 });
-
-/* ===== BREAKDOWN tab ===== */
-function renderBreakdown() {
-  const m = getMonth(current); $("bdMonth").textContent = monthName(current);
-  const total = expensesEff(m);
-  const ooTot = oneOffTotal(m);
-  const cats = [...m.groups.map(g => ({ name:g.name, val:groupTotal(g, true) })), ...(ooTot > 0 ? [{ name:"One-off ⚡", val:ooTot }] : [])].filter(c => c.val > 0).sort((a,b) => b.val - a.val);
-  const items = [];
-  m.groups.forEach(g => {
-    g.items.forEach(it => { const v = num(it.actual ?? it.planned); if (v > 0) items.push({ name:it.name, cat:g.name, val:v }); });
-    (g.subgroups || []).forEach(sg => sg.items.forEach(it => { const v = num(it.actual ?? it.planned); if (v > 0) items.push({ name:it.name, cat:`${g.name} › ${sg.name}`, val:v }); }));
-  });
-  (m.oneOff || []).forEach(o => { const v = num(o.amount); if (v > 0) items.push({ name:o.name || "One-off", cat:"One-off ⚡", val:v }); });
-  items.sort((a,b) => b.val - a.val);
-  const inc = num(m.income) + num(m.bonus);
-  const colors = ["var(--spend)","var(--save)","var(--primary)","var(--warn)","var(--over)","var(--expense)"];
-  let html = `<div class="kpis">
-      <div class="kpi"><div class="kl">Total expenses</div><div class="kv">${eur(total)}</div></div>
-      <div class="kpi"><div class="kl">% of income</div><div class="kv">${inc ? pct(total/inc*100) : "—"}</div></div>
-      <div class="kpi"><div class="kl">Biggest category</div><div class="kv" style="font-size:18px">${cats[0] ? esc(cats[0].name) : "—"}</div></div>
-      <div class="kpi"><div class="kl">Categories</div><div class="kv">${cats.length}</div></div>
-    </div>`;
-  if (!cats.length) { $("bdContent").innerHTML = html + `<p class="hint">No expenses recorded for this month yet.</p>`; return; }
-  html += `<div class="set-label" style="margin-top:4px">By category</div><div class="rank">`;
-  cats.forEach((c, i) => {
-    const sharePct = total ? c.val/total*100 : 0;
-    html += `<div class="rank-row"><div class="rank-top"><span class="rl">${esc(c.name)}</span><span><span class="rv">${eur(c.val)}</span> <span class="rp">${pct(sharePct)}</span></span></div>
-      <div class="rbar"><div style="width:${sharePct}%;background:${colors[i % colors.length]}"></div></div></div>`;
-  });
-  html += `</div>`;
-  html += `<div class="set-label">Biggest individual costs</div><div class="rank">`;
-  items.slice(0, 8).forEach(it => {
-    const sharePct = total ? it.val/total*100 : 0;
-    html += `<div class="rank-row"><div class="rank-top"><span class="rl">${esc(it.name)} <span class="hint">· ${esc(it.cat)}</span></span><span class="rv">${eur(it.val)}</span></div>
-      <div class="rbar"><div style="width:${sharePct}%;background:var(--expense)"></div></div></div>`;
-  });
-  html += `</div>`;
-  $("bdContent").innerHTML = html;
-}
 
 /* ===== INVESTMENTS tab ===== */
 function allPoolNames() {
