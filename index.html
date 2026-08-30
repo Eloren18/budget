@@ -91,11 +91,11 @@
   [data-theme="synthwave"] h1, [data-theme="synthwave"] .section > h2 { font-family:"Orbitron","Inter",sans-serif; text-transform:uppercase; letter-spacing:.05em; }
   [data-theme="synthwave"] .btn.primary, [data-theme="synthwave"] .tab.active { box-shadow:0 0 14px color-mix(in srgb,var(--primary) 60%,transparent); }
 
-  [data-theme="brutalist"] .card, [data-theme="brutalist"] .section, [data-theme="brutalist"] .kpi, [data-theme="brutalist"] .pool, [data-theme="brutalist"] .inv-card, [data-theme="brutalist"] .group, [data-theme="brutalist"] .modal { box-shadow:4px 4px 0 var(--text) !important; }
+  [data-theme="brutalist"] .card, [data-theme="brutalist"] .section, [data-theme="brutalist"] .kpi, [data-theme="brutalist"] .pool, [data-theme="brutalist"] .group, [data-theme="brutalist"] .modal { box-shadow:4px 4px 0 var(--text) !important; }
   [data-theme="brutalist"] .btn, [data-theme="brutalist"] .chip, [data-theme="brutalist"] .tabs, [data-theme="brutalist"] .seg { box-shadow:3px 3px 0 var(--text); }
   [data-theme="brutalist"] .btn:active, [data-theme="brutalist"] .chip:active { transform:translate(2px,2px); box-shadow:1px 1px 0 var(--text); }
   [data-theme="brutalist"] h1, [data-theme="brutalist"] .section > h2 { text-transform:uppercase; }
-  [data-theme="glass"] .card, [data-theme="glass"] .section, [data-theme="glass"] .modal, [data-theme="glass"] .tabs, [data-theme="glass"] .seg, [data-theme="glass"] .chip, [data-theme="glass"] .badge, [data-theme="glass"] .kpi, [data-theme="glass"] .pool, [data-theme="glass"] .inv-card, [data-theme="glass"] .group, [data-theme="glass"] .btn, [data-theme="glass"] input.text, [data-theme="glass"] input.money, [data-theme="glass"] select.text { backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); }
+  [data-theme="glass"] .card, [data-theme="glass"] .section, [data-theme="glass"] .modal, [data-theme="glass"] .tabs, [data-theme="glass"] .seg, [data-theme="glass"] .chip, [data-theme="glass"] .badge, [data-theme="glass"] .kpi, [data-theme="glass"] .pool, [data-theme="glass"] .group, [data-theme="glass"] .btn, [data-theme="glass"] input.text, [data-theme="glass"] input.money, [data-theme="glass"] select.text { backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); }
 
   * { box-sizing: border-box; }
   html, body { height: 100%; }
@@ -173,6 +173,14 @@
   .seg-bills { background:#991b1b; }
   .seg-oneoff { background:repeating-linear-gradient(45deg,#dc2626,#dc2626 6px,#ffffff55 6px,#ffffff55 12px); }
   .seg-left { background:#eab308; }
+  .seg-st { background:#14b8a6; }
+  .pie-card { background:var(--surface-2); border:1px solid var(--border-soft); border-radius:var(--radius-sm); padding:14px 16px; margin-bottom:12px; }
+  .pie-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .pie-head .pname { font-weight:700; font-size:15px; border:none; background:none; color:var(--text); min-width:120px; flex:1; }
+  .pie-inv { font-weight:750; font-size:17px; letter-spacing:-.02em; }
+  .pie-flows { margin-top:8px; display:flex; flex-direction:column; gap:4px; font-size:12.5px; color:var(--muted); }
+  .pie-flows .pos { color:var(--save); font-weight:650; }
+  .pie-mo { display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:var(--muted); }
   .seg-sweep { background:repeating-linear-gradient(45deg,var(--save),var(--save) 6px,#ffffff44 6px,#ffffff44 12px); }
   .seg-carry { background:repeating-linear-gradient(45deg,var(--faint),var(--faint) 6px,#ffffff33 6px,#ffffff33 12px); }
   .allow-field { flex-wrap:wrap; gap:8px; }
@@ -304,18 +312,6 @@
   .kpi .kv { font-size:22px; font-weight:780; margin-top:4px; letter-spacing:-.02em; }
   .chartwrap { margin-top:6px; }
 
-  /* Investments */
-  .inv-card { border:1px solid var(--border-soft); border-radius:var(--radius); padding:18px; background:var(--surface-2); margin-bottom:14px; }
-  .inv-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
-  .inv-name { font-size:16px; font-weight:700; }
-
-  .inv-val-euro { margin-top:4px; }
-  .inv-val-input { font-size:24px; font-weight:800; letter-spacing:-.02em; width:170px; max-width:100%; }
-  .inv-val-euro::before { font-size:16px; }
-  .inv-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:14px 0; }
-  .inv-stat { background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius-sm); padding:11px 13px; }
-  .inv-stat .sl { color:var(--muted); font-size:11.5px; font-weight:600; }
-  .inv-stat .sv { font-size:18px; font-weight:750; margin-top:3px; }
   .win-chips { display:inline-flex; flex-wrap:wrap; gap:4px; background:var(--surface); border:1px solid var(--border); border-radius:999px; padding:3px; }
   .win-chips button { border:none; background:transparent; color:var(--muted); font-weight:600; font-size:12px; padding:5px 11px; border-radius:999px; cursor:pointer; }
   .win-chips button.on { background:var(--primary); color:var(--primary-ink); }
@@ -361,7 +357,7 @@
     body { padding:18px 14px 48px; }
     .kpis { grid-template-columns:repeat(2,1fr); gap:10px; }
 
-    .pools, .inv-stats { grid-template-columns:1fr; }
+    .pools { grid-template-columns:1fr; }
     .field label { min-width:100%; }
     .theme-grid { grid-template-columns:repeat(2,1fr); }
     .section { padding:16px 15px; }
@@ -449,6 +445,11 @@
       </div>
     </div>
 
+    <div class="section compact" id="savingsLineSection">
+      <h2><span class="sec-icon" style="background:var(--save-soft);color:var(--save)">★</span>Savings</h2>
+      <div class="field allow-field" id="savLine"></div>
+    </div>
+
     <div class="section" id="incomeSection">
       <h2><span class="sec-icon" style="background:color-mix(in srgb,var(--primary) 18%,transparent);color:var(--primary)">↓</span>Income</h2>
       <div class="field"><label for="incomeInput">Monthly income</label><span class="euro"><input class="money" type="number" id="incomeInput" min="0" step="0.01" placeholder="0.00"></span></div>
@@ -486,10 +487,13 @@
   <div id="page-invest" class="page">
     <div class="section">
       <h2><span class="sec-icon" style="background:var(--spend-soft);color:var(--spend)">📈</span>Investments</h2>
-      <div id="saveMoreBox" style="display:none"></div>
       <div id="invSummary"></div>
       <div id="invList"></div>
-      <div id="invConnect" style="margin-top:14px"></div>
+      <div class="add-cat" style="margin-top:14px">
+        <input class="text" type="text" id="newPieName" placeholder="New pie name…" style="flex:2">
+        <span class="euro"><input class="money" type="number" id="newPieMonthly" min="0" step="0.01" placeholder="€/month"></span>
+        <button class="btn-add" id="addPieBtn">+ Pie</button>
+      </div>
     </div>
   </div>
 
@@ -712,18 +716,79 @@ function migrateAllowance(d) {
   Object.values(d.months || {}).forEach(m => { if (!m.finalized && m.allowance == null) m.allowance = num(s.weeklyAllowance); });
 }
 
+/* ===== PIES (long-term investing) + burned short-term =====
+   pie.flows = dated cash flows {d, a, src:"standing"|"extra"|"close"} — standing lands on the 1st.
+   m.stMoves = short-term moves: +a burned into short-term, −a taken back. No balance is tracked. */
+const _mOf = ds => String(ds).slice(0, 7);
+const pieEra = k => !!(data.settings && data.settings.piesFrom) && k >= data.settings.piesFrom;
+const piesMonthly = () => (data.pies || []).reduce((t, pie) => t + num(pie.monthly), 0);
+const pieFlows = (mkey, srcs) => (data.pies || []).reduce((t, pie) => t + (pie.flows || []).reduce((u, f) => u + ((_mOf(f.d) === mkey && srcs.includes(f.src)) ? num(f.a) : 0), 0), 0);
+const pieInvested = pie => (pie.flows || []).reduce((t, f) => t + num(f.a), 0);
+const stNet = mkey => { const m = data.months[mkey]; return (m && m.stMoves || []).reduce((t, x) => t + num(x.a), 0); };
+// Materialize every pie's standing monthly flow for every started month (idempotent).
+function ensurePieFlows() {
+  if (!data.settings || !data.settings.piesFrom) return;
+  const nowKey = monthKey(new Date());
+  (data.pies || []).forEach(pie => {
+    pie.flows = pie.flows || [];
+    let k = pie.createdMonth || data.settings.piesFrom;
+    if (k < data.settings.piesFrom) k = data.settings.piesFrom;
+    let guard = 0;
+    while (k <= nowKey && guard++ < 240) {
+      if (num(pie.monthly) > 0 && !pie.flows.some(f => f.src === "standing" && _mOf(f.d) === k))
+        pie.flows.push({ d: k + "-01", a: num(pie.monthly), src: "standing" });
+      const [yy, mm] = k.split("-").map(Number); k = monthKey(new Date(yy, mm, 1));
+    }
+  });
+}
+// One-time migration: pools become pies (full dated history); short-named pools become burned short-term moves.
+function migratePies(d) {
+  if (!d.settings) d.settings = {};
+  if (d.settings.piesFrom) return;
+  d.settings.piesFrom = monthKey(new Date());
+  d.pies = d.pies || [];
+  const names = new Set();
+  Object.values(d.months || {}).forEach(mm => (mm.savingsGoals || []).forEach(g => names.add(g.name)));
+  Object.keys(d.poolTx || {}).forEach(n => names.add(n));
+  const landed = mkey => { const mm = d.months[mkey]; if (mm && mm.finalized) return true; const from = d.settings.autoCloseFrom; return !!from && mkey >= from && mkey <= d.settings.piesFrom; };
+  names.forEach(name => {
+    const txs = (d.poolTx || {})[name] || [];
+    let monthly = 0;
+    Object.keys(d.months || {}).sort().forEach(mk => { const g = (d.months[mk].savingsGoals || []).find(x => x.name === name); if (g) monthly = num(g.planned); });
+    if (/short/i.test(name)) {
+      txs.forEach(x => {
+        const mk = _mOf(x.d); if (mk < d.settings.piesFrom) return;
+        const mm = d.months[mk]; if (!mm) return;
+        mm.stMoves = mm.stMoves || [];
+        if (x.t === "contribution" && landed(mk)) mm.stMoves.push({ d: mk + "-01", a: num(x.a) });
+        else if (x.t === "deposit" && (x.from === "main" || x.sweep)) mm.stMoves.push({ d: x.d, a: num(x.a) });
+        else if (x.t === "withdraw" && x.dest !== "direct") mm.stMoves.push({ d: x.d, a: num(x.a) });
+      });
+      return;
+    }
+    const flows = [];
+    txs.forEach(x => {
+      if (x.t === "contribution") { if (landed(_mOf(x.d))) flows.push({ d: _mOf(x.d) + "-01", a: num(x.a), src: "standing" }); }
+      else if (x.t === "deposit") flows.push({ d: x.d, a: num(x.a), src: "extra" });
+      else if (x.t === "withdraw") flows.push({ d: x.d, a: num(x.a), src: "extra" });
+    });
+    if (!flows.length && monthly <= 0) return;
+    flows.sort((a, b) => String(a.d).localeCompare(String(b.d)));
+    d.pies.push({ id: "p" + Math.random().toString(36).slice(2, 8), name, monthly, holdings: [], flows, createdMonth: d.settings.piesFrom });
+  });
+}
+
 let data = load();
 let current = monthKey(new Date());
 let booting = true;
 let activeTab = "budget";
 let syncReady = false; // true once this device's data is in sync with the cloud (or it's used signed-out) — gates auto-closing months
-const invWindow = {}; // per-pool selected return window (months|null)
 
 /* ===== storage / migration / seed ===== */
 function blankMonth() {
   return { income:0, bonus:0, groups:[], oneOff:[], savingsGoals:[], finalized:false, applied:null };
 }
-function normalize(d) { d.settings ??= {}; d.savings ??= {}; d.investments ??= {}; d.poolTx ??= {}; d.months ??= {}; Object.values(d.months).forEach(m => { m.oneOff ??= []; (m.groups || []).forEach(g => { g.subgroups ??= []; g.subgroups.forEach(sg => { sg.items ??= []; }); }); }); migrateBuffer(d); migrateContribTx(d); migrateAllowance(d); return d; }
+function normalize(d) { d.settings ??= {}; d.savings ??= {}; d.investments ??= {}; d.poolTx ??= {}; d.months ??= {}; Object.values(d.months).forEach(m => { m.oneOff ??= []; (m.groups || []).forEach(g => { g.subgroups ??= []; g.subgroups.forEach(sg => { sg.items ??= []; }); }); }); migrateBuffer(d); migrateContribTx(d); migrateAllowance(d); migratePies(d); d.pies ??= []; return d; }
 function load() {
   let raw; try { raw = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch {}
   if (raw && raw.months) return normalize(raw);
@@ -795,7 +860,10 @@ const prevKey = k => { const [y,mo] = k.split("-").map(Number); return monthKey(
 const carryIn = k => { const p = data.months[prevKey(k)]; return (p && p.finalized && p.applied) ? num(p.applied.carryover) : 0; };
 // What Main has left after bills & standard investments, BEFORE the weekly allowance:
 // income + bonus + carried-in + pulled from pools + new money − bills − investments − extra invested from Main.
-const discretionary = m => { const k = mkeyOf(m); return num(m.income) + num(m.bonus) + carryIn(k) + pulledToMain(k) + newMoneyToMain(k) - expensesEff(m) - savingsPlanned(m) - investedFromMain(k); };
+const discretionary = m => { const k = mkeyOf(m);
+  if (pieEra(k)) return num(m.income) + num(m.bonus) + carryIn(k) + newMoneyToMain(k) - expensesEff(m) - pieFlows(k, ["standing", "extra", "close"]) - stNet(k);
+  return num(m.income) + num(m.bonus) + carryIn(k) + pulledToMain(k) + newMoneyToMain(k) - expensesEff(m) - savingsPlanned(m) - investedFromMain(k);
+};
 // ----- weekly allowance -----
 // Months closed before the allowance model keep their frozen groceries + out-of-pocket budget.
 const isLegacySpend = m => m.allowance == null && !!m.finalized;
@@ -807,22 +875,6 @@ const spendBudget = m => isLegacySpend(m) ? num(m.grocAmt) + num(m.oopAmt) : wee
 const leftInMain = m => discretionary(m) - spendBudget(m);
 
 /* ===== accounts: which bank account each expense / pool draws from ===== */
-// Spare money in Main — one action to put some of it into a pool (lives on the Pools tab now).
-function renderSaveMore(m) {
-  const box = $("saveMoreBox"); if (!box) return;
-  const k = mkeyOf(m), ci = carryIn(k), left = leftInMain(m), open = !m.finalized;
-  const mainName = "Main", prevName = monthName(prevKey(k)).split(" ")[0];
-  const short = left < -0.005;
-  const carryTxt = ci > 0.005 ? (short ? `Even after the <b>${eur(ci)}</b> left over from ${prevName}.` : `Includes <b>${eur(ci)}</b> left over from ${prevName}.`) : ci < -0.005 ? `Includes the <b>${eur(-ci)}</b> shortfall carried over from ${prevName}.` : "";
-  box.className = "save-more" + (short ? " short" : "");
-  box.style.display = "flex";
-  box.innerHTML = `<div><div class="tlabel">${short ? `Short in ${esc(mainName)} this month` : `Unallocated in ${esc(mainName)} this month`}</div>` +
-      `<div class="tval">${short ? "− " + eur(-left) : eur(left)}</div>` +
-      (carryTxt ? `<div class="hint" style="margin-top:3px">${carryTxt}</div>` : "") + `</div>` +
-    (open && short ? `<button class="btn primary" data-mainact="cover">Cover it from a pool</button>`
-     : open && left > 0.005 ? `<button class="btn primary" data-mainact="invest">Save some of it</button>` : "");
-}
-const totalSaved = () => Object.values(data.savings).reduce((s, v) => s + num(v), 0);
 
 /* ===== pool transactions ===== */
 const poolTxOf = name => ((data.poolTx || {})[name] || []);
@@ -832,13 +884,6 @@ const monthFinalized = mkey => { const mm = data.months[mkey]; return !!(mm && m
 const monthLanded = mkey => { if (monthFinalized(mkey)) return true; const from = data.settings && data.settings.autoCloseFrom; return !!from && mkey >= from && mkey <= monthKey(new Date()); };
 /* A month's target amount (the contribution entry for that month) — frozen for finalized months, live for unfinalized. */
 const monthTarget = (name, mkey) => { const t = poolTxOf(name).find(x => x.t === "contribution" && monthOf(x.d) === mkey); return t ? num(t.a) : 0; };
-function poolList() {
-  const names = [], m = getMonth(current);
-  m.savingsGoals.forEach(g => names.push(g.name));
-  Object.keys(data.savings || {}).forEach(n => { if (!names.includes(n)) names.push(n); });
-  Object.keys(data.poolTx || {}).forEach(n => { if (!names.includes(n)) names.push(n); });
-  return names;
-}
 /* Pool balance is DERIVED. A month's planned target ("contribution") only lands once that month is
    FINALIZED. Deposits and manual balance-sets always count. A withdrawal first cancels that month's
    planned target (so you simply save less that month) and only the EXCESS beyond the plan pulls from
@@ -878,6 +923,7 @@ function setContribution(name, mkey, amount) {
 }
 function syncContributions() {
   Object.keys(data.months).forEach(mkey => {
+    if (pieEra(mkey)) return; // pies materialize their own flows
     const m = data.months[mkey];
     if (m.finalized) return; // frozen — never re-touch a finalized month's target
     (m.savingsGoals || []).forEach(g => setContribution(g.name, mkey, num(g.planned)));
@@ -936,14 +982,16 @@ function render() {
   $("incomeInput").value = m.income || "";
   $("bonusInput").value = m.bonus || "";
 
-  syncContributions(); recomputeSavings();
+  ensurePieFlows(); syncContributions(); recomputeSavings();
   renderGroups(m); renderOneOff(m); renderRecap(m); updateSummary(m);
   if (activeTab !== "budget") renderTab(activeTab);
   save();
+  if (data.pendingAlloc && !coverModal.classList.contains("show") && !document.body.classList.contains("gated")) openAllocModal();
 }
 function updateSummary(m) {
   renderAllocation(m);
   renderAllowanceCard(m);
+  renderSavLine(m);
   renderIncomeWithdrawals(current);
 }
 // Income section: money that came INTO Main this month from pools or from outside (on top of income + bonus).
@@ -968,6 +1016,19 @@ function renderIncomeWithdrawals(mkey) {
   c.innerHTML = html;
 }
 // The weekly-allowance card: amount & day, this month's transfer dates, and what it means for Main.
+function renderSavLine(m) {
+  const el = $("savLine"); if (!el) return;
+  const k = mkeyOf(m);
+  if (!pieEra(k)) { el.innerHTML = `<span class="allow-sum">closed under the old savings model</span>`; return; }
+  const standing = piesMonthly(), extra = Math.max(0, pieFlows(k, ["extra", "close"])), st = stNet(k), left = leftInMain(m);
+  const bits = [`investing <b>${eur(standing)}</b>/mo`];
+  if (extra > 0.005) bits.push(`extra <b>${eur(extra)}</b>`);
+  if (Math.abs(st) > 0.005) bits.push(`short-term <b>${st > 0 ? "+" : "−"}${eur(Math.abs(st))}</b>`);
+  bits.push(left >= -0.005 ? `left to invest <b style="color:var(--save)">${eur(Math.max(0, left))}</b>` : `short <b style="color:var(--over)">${eur(-left)}</b> · rolls into next month`);
+  el.innerHTML = `<span class="allow-sum">${bits.join(" · ")}</span>` +
+    (m.finalized ? "" : `<span style="display:flex;gap:6px;margin-left:auto"><button class="btn sm primary" data-mainact="pieExtra">＋ Invest</button><button class="btn sm" data-mainact="shortTerm">Short-term ±</button></span>`);
+}
+$("savLine") && $("savLine").parentElement.addEventListener("click", e => { const b = e.target.closest("[data-mainact]"); if (b) openMoveModal(b.dataset.mainact, null); });
 function renderAllowanceCard(m) {
   const k = mkeyOf(m), legacy = isLegacySpend(m), budget = spendBudget(m);
   const el = $("allowanceInput"), wk = weeklyAllowance(m), n = legacy ? 0 : allowanceDays(k).length;
@@ -999,25 +1060,33 @@ function liveRecalc() {
 }
 function renderAllocation(m) {
   const k = mkeyOf(m), ci = carryIn(k), legacy = isLegacySpend(m);
-  const exp = expensesEff(m), sav = savingsPlanned(m), budget = spendBudget(m), extra = investedFromMain(k);
+  const exp = expensesEff(m), budget = spendBudget(m);
   const ooTot = oneOffTotal(m), bills = exp - ooTot;
-  const moneyIn = num(m.income) + num(m.bonus) + pulledToMain(k) + newMoneyToMain(k) + Math.max(ci, 0);
+  let sav, extra, stOut, pulledIn;
+  if (pieEra(k)) {
+    sav = pieFlows(k, ["standing"]);
+    extra = Math.max(0, pieFlows(k, ["extra", "close"]));
+    const st = stNet(k); stOut = Math.max(0, st); pulledIn = Math.max(0, -st);
+  } else {
+    sav = savingsPlanned(m); extra = investedFromMain(k); stOut = 0; pulledIn = pulledToMain(k);
+  }
+  const moneyIn = num(m.income) + num(m.bonus) + pulledIn + newMoneyToMain(k) + Math.max(ci, 0);
   const carried = Math.max(0, -ci);            // last month's deficit, shown in full
-  const totals = bills + ooTot + sav + extra + budget + carried;
-  const over = Math.max(0, totals - moneyIn);  // this month's overbudget spending — at close it merges with the carried deficit into ONE number for next month
+  const totals = bills + ooTot + sav + extra + stOut + budget + carried;
+  const over = Math.max(0, totals - moneyIn);  // this month's overbudget — merges with the carried deficit into ONE number at close
   const left = Math.max(0, moneyIn - totals);  // unallocated
   const cats = m.groups.map(g => ({ name: g.name, val: groupTotal(g, true) })).filter(c => c.val > 0);
-  // the shortfall is shaved off the drawn commitments (allowance first) so the bar never double-counts and always fills
-  const drawn = { allow: budget, carry: carried, sav: sav, oo: ooTot, bills: bills, extra: extra };
+  const drawn = { allow: budget, carry: carried, sav: sav, oo: ooTot, bills: bills, extra: extra, st: stOut };
   let shave = over;
-  for (const key of ["allow", "carry", "sav", "oo", "bills", "extra"]) { const t = Math.min(drawn[key], shave); drawn[key] -= t; shave -= t; }
+  for (const key of ["allow", "carry", "sav", "oo", "bills", "extra", "st"]) { const t = Math.min(drawn[key], shave); drawn[key] -= t; shave -= t; }
   const den = Math.max(moneyIn, totals, 1), pc = v => Math.max(0, v) / den * 100;
   const seg = (cls, v) => v > 0 ? `<span class="${cls}" style="width:${pc(v)}%"></span>` : "";
   const billsScale = bills > 0 ? drawn.bills / bills : 0;
   $("allocBar").innerHTML =
     cats.map(c => seg("seg-bills", c.val * billsScale)).join("") +
     seg("seg-allow", drawn.allow) + seg("seg-sav", drawn.sav) + seg("seg-oneoff", drawn.oo) +
-    seg("seg-carry", drawn.carry) + seg("seg-sweep", drawn.extra) + seg("seg-left", left) + seg("seg-over", over);
+    seg("seg-carry", drawn.carry) + seg("seg-sweep", drawn.extra) + seg("seg-st", drawn.st) +
+    seg("seg-left", left) + seg("seg-over", over);
   const box = (name, v, swClass, amtStyle) => `<div class="leg-box"><span class="sw ${swClass}"></span><span class="leg-name">${name}</span><span class="leg-amt"${amtStyle ? ` style="${amtStyle}"` : ""}>${eur(v)}</span></div>`;
   const cap = str => str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
   const n = legacy ? 0 : allowanceDays(k).length, wk = weeklyAllowance(m);
@@ -1028,6 +1097,7 @@ function renderAllocation(m) {
     (ooTot > 0.005 ? box("One-off", ooTot, "seg-oneoff") : "") +
     (carried > 0.005 ? box("Last month's Deficit", carried, "seg-carry") : "") +
     (extra > 0.005 ? box("Extra invested", extra, "seg-sweep") : "") +
+    (stOut > 0.005 ? box("Short-term savings", stOut, "seg-st") : "") +
     (ci > 0.005 ? box("Left over from last month", ci, "seg-sav") : "") +
     (left > 0.005 ? box("Unallocated", left, "seg-left") : "") +
     (over > 0.005 ? box("Overbudget spending", over, "seg-over", "color:var(--over)") : "");
@@ -1035,12 +1105,13 @@ function renderAllocation(m) {
 function renderRecap(m) {
   const r = $("recap");
   if (m.finalized && m.applied) {
-    const toPools = Object.values(m.applied.contributions || {}).reduce((s,v)=>s+num(v),0);
-    const [ny,nm] = mkeyOf(m).split("-").map(Number), nextName = monthName(monthKey(new Date(ny, nm, 1))).split(" ")[0];
+    const k = mkeyOf(m);
+    const [ny, nm] = k.split("-").map(Number), nextName = monthName(monthKey(new Date(ny, nm, 1))).split(" ")[0];
     const co = num(m.applied.carryover);
-    const carryTxt = co > 0.005 ? ` <b>${eur(co)}</b> was left in Main and rolled into ${nextName}.` : co < -0.005 ? ` Main was <b style="color:var(--over)">${eur(-co)} short</b>; the shortfall rolled into ${nextName}.` : ` Main ended exactly even.`;
+    const carryTxt = co > 0.005 ? ` <b>${eur(co)}</b> was left and rolled into ${nextName}.` : co < -0.005 ? ` Main was <b style="color:var(--over)">${eur(-co)} short</b>; the deficit rolled into ${nextName}.` : ` The month ended exactly even.`;
+    const invTxt = pieEra(k) ? `<b>${eur(pieFlows(k, ["standing", "extra", "close"]))}</b> was invested` : `<b>${eur(Object.values(m.applied.contributions || {}).reduce((t, v) => t + num(v), 0))}</b> went to your pools`;
     r.className = "recap show";
-    r.innerHTML = `<span class="ic">✓</span><div>${m.autoClosed ? "Month closed automatically" : "Month closed"} — <b>${eur(toPools)}</b> went to your pools. Total saved is now <b>${eur(totalSaved())}</b>.${carryTxt}</div>`;
+    r.innerHTML = `<span class="ic">✓</span><div>${m.autoClosed ? "Month closed automatically" : "Month closed"} — ${invTxt}.${carryTxt}</div>`;
   } else r.className = "recap";
 }
 function deltaHtml(it) {
@@ -1287,21 +1358,24 @@ function openFinalize(m) {
 }
 function updateModalSummary() {
   const m = getMonth(current), k = mkeyOf(m);
-  const bonus = num($("mBonus").value), exp = expensesEff(m), sav = savingsPlanned(m), pulled = pulledToMain(k), newM = newMoneyToMain(k), ci = carryIn(k), extra = investedFromMain(k), allow = spendBudget(m);
-  const [ny,nm] = current.split("-").map(Number), nextName = monthName(monthKey(new Date(ny, nm, 1))).split(" ")[0];
-  const net = num(m.income) + bonus + ci + pulled + newM - exp - sav - extra - allow;
-  const n = isLegacySpend(m) ? 0 : allowanceDays(k).length, mainName = "Main";
+  const bonus = num($("mBonus").value), exp = expensesEff(m), oo = oneOffTotal(m), ci = carryIn(k), newM = newMoneyToMain(k), allow = spendBudget(m);
+  let sav, extra, st, pulled;
+  if (pieEra(k)) { sav = pieFlows(k, ["standing"]); extra = pieFlows(k, ["extra", "close"]); st = stNet(k); pulled = 0; }
+  else { sav = savingsPlanned(m); extra = investedFromMain(k); st = 0; pulled = pulledToMain(k); }
+  const [ny, nm] = current.split("-").map(Number), nextName = monthName(monthKey(new Date(ny, nm, 1))).split(" ")[0];
+  const net = num(m.income) + bonus + ci + pulled + newM - exp - sav - extra - st - allow;
+  const n = isLegacySpend(m) ? 0 : allowanceDays(k).length;
   $("modalSummary").innerHTML = `
     <div class="mrow"><span>Income</span><span class="num">${eur(m.income)}</span></div>
     <div class="mrow"><span>Bonus / gifts</span><span class="num">+ ${eur(bonus)}</span></div>
     ${ci !== 0 ? `<div class="mrow"><span>Carried in from ${monthName(prevKey(k)).split(" ")[0]}</span><span class="num" style="color:${ci>0?"var(--save)":"var(--over)"}">${ci>0?"+":"−"} ${eur(Math.abs(ci))}</span></div>` : ""}
-    ${pulled > 0 ? `<div class="mrow"><span>Taken out of pools into ${esc(mainName)}</span><span class="num">+ ${eur(pulled)}</span></div>` : ""}
-    ${newM > 0 ? `<div class="mrow"><span>New money into ${esc(mainName)}</span><span class="num">+ ${eur(newM)}</span></div>` : ""}
+    ${pulled > 0 ? `<div class="mrow"><span>Taken out of pools</span><span class="num">+ ${eur(pulled)}</span></div>` : ""}
+    ${newM > 0 ? `<div class="mrow"><span>New money</span><span class="num">+ ${eur(newM)}</span></div>` : ""}
     <div class="mrow"><span>Bills + one-offs</span><span class="num">− ${eur(exp)}</span></div>
-    <div class="mrow"><span>Investments (sent on the 1st)</span><span class="num">− ${eur(sav)}</span></div>
-    ${extra > 0 ? `<div class="mrow"><span>Extra saved from ${esc(mainName)}</span><span class="num">− ${eur(extra)}</span></div>` : ""}
+    <div class="mrow"><span>Investments${extra > 0.005 ? ` <span class="hint">(${eur(sav)} standing + ${eur(extra)} extra)</span>` : ""}</span><span class="num">− ${eur(sav + extra)}</span></div>
+    ${Math.abs(st) > 0.005 ? `<div class="mrow"><span>Short-term savings</span><span class="num">${st > 0 ? "−" : "+"} ${eur(Math.abs(st))}</span></div>` : ""}
     <div class="mrow"><span>${isLegacySpend(m) ? "Spending money" : `Weekly allowance <span class="hint">(${n} × ${eur(weeklyAllowance(m))})</span>`}</span><span class="num">− ${eur(allow)}</span></div>
-    <div class="mrow total"><span>${net >= 0 ? `Left in ${esc(mainName)}` : `Short in ${esc(mainName)}`} → rolls into ${nextName}</span><span class="num" style="color:${net>=0?"var(--save)":"var(--over)"}">${net>=0?"+":"−"} ${eur(Math.abs(net))}</span></div>`;
+    <div class="mrow total"><span>${net >= 0 ? "Left in Main" : "Short in Main"} → rolls into ${nextName}</span><span class="num" style="color:${net>=0?"var(--save)":"var(--over)"}">${net>=0?"+":"−"} ${eur(Math.abs(net))}</span></div>`;
 }
 $("mBonus").addEventListener("input", updateModalSummary);
 $("modalCancel").addEventListener("click", () => overlay.classList.remove("show"));
@@ -1317,10 +1391,17 @@ $("modalConfirm").addEventListener("click", () => {
 function applyFinalize(m, k) {
   if (m.finalized) return;
   k = k || mkeyOf(m);
-  (m.savingsGoals || []).forEach(g => setContribution(g.name, k, num(g.planned)));
-  const snapshot = { contributions:{} };
-  (m.savingsGoals || []).forEach(g => { snapshot.contributions[g.name] = monthTarget(g.name, k); });
-  snapshot.carryover = Math.round(leftInMain(m) * 100) / 100;
+  let snapshot;
+  if (pieEra(k)) {
+    snapshot = { contributions: {} };
+    snapshot.carryover = Math.round(leftInMain(m) * 100) / 100;
+    if (snapshot.carryover > 0.005) data.pendingAlloc = { from: k, amount: snapshot.carryover }; // ask where the leftover goes
+  } else {
+    (m.savingsGoals || []).forEach(g => setContribution(g.name, k, num(g.planned)));
+    snapshot = { contributions: {} };
+    (m.savingsGoals || []).forEach(g => { snapshot.contributions[g.name] = monthTarget(g.name, k); });
+    snapshot.carryover = Math.round(leftInMain(m) * 100) / 100;
+  }
   m.finalized = true; m.reopened = false; m.applied = snapshot;
   recomputeSavings();
 }
@@ -1353,62 +1434,76 @@ function autoCloseMonths() {
 const coverModal = $("coverModal");
 const txDate = () => current === monthKey(new Date()) ? todayStr() : current + "-15";
 function closeMove() { coverModal.classList.remove("show"); }
-function openMoveModal(kind, poolName) {
-  const m = getMonth(current), left = leftInMain(m), short = Math.max(0, -left), pools = poolList();
+function openMoveModal(kind, pieId) {
+  const m = getMonth(current), k = mkeyOf(m), left = leftInMain(m), pies = data.pies || [];
   const body = $("coverBody"), acts = $("coverActions"), h3 = coverModal.querySelector("h3");
-  const mainName = "Main";
   const simple = (title, text) => { h3.textContent = title; body.innerHTML = `<p class="note" style="margin:0">${text}</p>`; acts.innerHTML = `<button class="btn primary" id="mvClose">OK</button>`; $("mvClose").onclick = closeMove; coverModal.classList.add("show"); };
-  if (kind !== "newMain" && !pools.length) return simple("No pools yet", "Create a savings pool first (Pools tab).");
-  if (kind === "cover" && short <= 0.005) return simple("Cover a shortfall", `${esc(mainName)} isn't short this month — nothing to cover. 🎉`);
-  const poolSel = `<div class="field"><label for="mvPool">${kind === "takeout" || kind === "new" ? "Pool" : "Into pool"}</label><select class="text" id="mvPool" style="flex:1">${pools.map(p => `<option value="${esc(p)}" ${p === poolName ? "selected" : ""}>${esc(p)}</option>`).join("")}</select></div>`;
+  if (kind === "pieExtra" && !pies.length) return simple("No pies yet", "Create a pie on the Investments tab first.");
+  const pieSel = `<div class="field"><label for="mvPool">Into pie</label><select class="text" id="mvPool" style="flex:1">${pies.map(pp => `<option value="${pp.id}" ${pp.id === pieId ? "selected" : ""}>${esc(pp.name)}</option>`).join("")}</select></div>`;
   const amtField = (dflt, label) => `<div class="field"><label for="mvAmt">${label}</label><span class="euro"><input class="money" type="number" id="mvAmt" min="0" step="0.01" value="${dflt > 0 ? dflt.toFixed(2) : ""}" placeholder="0.00"></span></div>`;
-  const noteField = `<div class="field"><label for="mvNote">Note <span class="hint">(optional)</span></label><input class="text" type="text" id="mvNote" placeholder="e.g. tax refund" style="width:100%"></div>`;
-  const destField = `<div class="field"><label>Where does it go?</label><div style="display:flex;flex-direction:column;gap:6px;flex:1">
-      <label style="display:flex;gap:8px;align-items:center;font-weight:500"><input type="radio" name="mvDest" value="main" checked> Back into ${esc(mainName)} <span class="hint">— counts as money in this month</span></label>
-      <label style="display:flex;gap:8px;align-items:center;font-weight:500"><input type="radio" name="mvDest" value="direct"> Spent directly from the pool <span class="hint">— ${esc(mainName)} untouched</span></label></div></div>`;
+  const noteField = `<div class="field"><label for="mvNote">Note <span class="hint">(optional)</span></label><input class="text" type="text" id="mvNote" style="width:100%"></div>`;
   const cfg = {
-    invest:  { title: "Save spare money", verb: "Save", fields: poolSel + amtField(Math.max(0, left), "Amount to invest") + noteField,
-               intro: left > 0.005 ? `${esc(mainName)} has <b style="color:var(--save)">${eur(left)}</b> left this month after bills, investments and the allowance. Invest some or all of it — it moves from ${esc(mainName)} into the pool.` : `${esc(mainName)} has nothing left this month${short > 0.005 ? ` (it's ${eur(short)} short)` : ""}. Investing more would leave it short — only do this if you know the money is there.` },
-    new:     { title: "New money into a pool", verb: "Add", fields: poolSel + amtField(0, "Amount") + noteField,
-               intro: `Money from outside your budget (a gift, a refund, cash you found) that goes <b>straight into a pool</b>. ${esc(mainName)} is untouched — it's simply new savings.` },
-    takeout: { title: "Take money out", verb: "Take out", fields: poolSel + amtField(0, "Amount") + destField + noteField,
-               intro: `Take money out of a pool — first this month's transfer, then the saved balance.` },
-    cover:   { title: "Cover the shortfall from a pool", verb: "Cover", fields: poolSel + amtField(short, "Amount to cover"),
-               intro: `${esc(mainName)} is <b style="color:var(--over)">${eur(short)} short</b> this month. Take it out of a pool to cover it — this month's transfer first, then the saved balance.` },
-    newMain: { title: "New money into " + mainName, verb: "Add", fields: amtField(short, "Amount") + noteField,
-               intro: `Money from outside your budget that landed in <b>${esc(mainName)}</b> (a refund, cash you found, a gift) — not income or bonus. It raises what's left in ${esc(mainName)} this month${short > 0.005 ? ` (currently ${eur(short)} short)` : ""}.` },
+    pieExtra: { title: "Invest extra", verb: "Invest", fields: pieSel + amtField(Math.max(0, left), "Amount") + noteField },
+    shortTerm: { title: "Short-term savings", verb: "Move", fields: amtField(0, "Amount") + `<div class="field"><label>Direction</label><div style="display:flex;flex-direction:column;gap:6px;flex:1">
+        <label style="display:flex;gap:8px;align-items:center;font-weight:500"><input type="radio" name="mvDir" value="in" checked> Put into short-term savings</label>
+        <label style="display:flex;gap:8px;align-items:center;font-weight:500"><input type="radio" name="mvDir" value="out"> Take back from short-term savings</label></div></div>` + noteField },
+    newMain: { title: "New money into Main", verb: "Add", fields: amtField(Math.max(0, -left), "Amount") + noteField },
   }[kind];
+  if (!cfg) return;
   h3.textContent = cfg.title;
-  body.innerHTML = `<p class="note" style="margin-top:0">${cfg.intro}</p>${cfg.fields}<p class="hint" id="mvAfter" style="margin:6px 2px 0"></p>`;
+  body.innerHTML = `${cfg.fields}<p class="hint" id="mvAfter" style="margin:6px 2px 0"></p>`;
   acts.innerHTML = `<button class="btn" id="mvCancel">Cancel</button><button class="btn primary" id="mvDo">${cfg.verb}</button>`;
   $("mvCancel").onclick = closeMove;
   const doBtn = $("mvDo"), amtEl = $("mvAmt"), after = $("mvAfter");
-  const destIsMain = () => kind !== "new" && !(kind === "takeout" && (body.querySelector('input[name="mvDest"]:checked') || {}).value === "direct");
   const refresh = () => {
     const a = Math.max(0, num(amtEl.value));
     doBtn.textContent = `${cfg.verb} ${eur(a)}`;
-    const newLeft = left + (kind === "invest" ? -a : (destIsMain() ? a : 0));
-    after.innerHTML = kind === "new" ? "" : `Left in ${esc(mainName)} after this: <b style="color:${newLeft < -0.005 ? "var(--over)" : "var(--save)"}">${newLeft < -0.005 ? eur(-newLeft) + " short" : eur(newLeft)}</b>`;
+    const dirOut = kind === "shortTerm" && (body.querySelector('input[name="mvDir"]:checked') || {}).value === "out";
+    const newLeft = left + (kind === "newMain" || dirOut ? a : -a);
+    after.innerHTML = `Left to invest after this: <b style="color:${newLeft < -0.005 ? "var(--over)" : "var(--save)"}">${newLeft < -0.005 ? eur(-newLeft) + " short" : eur(newLeft)}</b>`;
   };
   body.oninput = refresh; body.onchange = refresh; refresh();
   doBtn.onclick = () => {
     const a = Math.abs(num(amtEl.value)); if (!a) return;
     const note = (($("mvNote") || {}).value || "").trim();
-    if (kind === "newMain") { m.covDeposits = m.covDeposits || []; m.covDeposits.push({ d: txDate(), a, n: note }); }
-    else {
-      const name = $("mvPool").value; data.poolTx[name] = data.poolTx[name] || [];
-      if (kind === "invest") data.poolTx[name].push({ d: txDate(), a, t: "deposit", n: note, from: "main" });
-      else if (kind === "new") data.poolTx[name].push({ d: txDate(), a, t: "deposit", n: note });
-      else if (kind === "takeout") data.poolTx[name].push({ d: txDate(), a: -a, t: "withdraw", n: note, dest: destIsMain() ? "main" : "direct" });
-      else if (kind === "cover") data.poolTx[name].push({ d: txDate(), a: -a, t: "withdraw", n: "", cover: true, dest: "main" });
-      recomputeSavings();
-    }
-    closeMove(); render();
+    if (kind === "pieExtra") { const pie = pies.find(pp => pp.id === $("mvPool").value); if (!pie) return; pie.flows = pie.flows || []; pie.flows.push({ d: txDate(), a, src: "extra", n: note }); }
+    else if (kind === "shortTerm") { const dirOut = (body.querySelector('input[name="mvDir"]:checked') || {}).value === "out"; m.stMoves = m.stMoves || []; m.stMoves.push({ d: txDate(), a: dirOut ? -a : a, n: note }); }
+    else if (kind === "newMain") { m.covDeposits = m.covDeposits || []; m.covDeposits.push({ d: txDate(), a, n: note }); }
+    save(); closeMove(); render();
   };
   coverModal.classList.add("show");
 }
-coverModal.addEventListener("click", e => { if (e.target === coverModal) closeMove(); });
-$("saveMoreBox").addEventListener("click", e => { const b = e.target.closest("[data-mainact]"); if (b) openMoveModal(b.dataset.mainact, null); });
+// End-of-month leftover: ask where it goes (partial allowed; the rest stays as carryover).
+function openAllocModal() {
+  const pa = data.pendingAlloc; if (!pa) return;
+  const [py, pm] = pa.from.split("-").map(Number), nextK = monthKey(new Date(py, pm, 1));
+  const pies = data.pies || [];
+  const body = $("coverBody"), acts = $("coverActions");
+  coverModal.querySelector("h3").textContent = monthName(pa.from) + " closed";
+  body.innerHTML = `<p class="note" style="margin-top:0"><b>${eur(pa.amount)}</b> was left over. Put some of it away — whatever you leave stays in this month's budget.</p>` +
+    (pies.length ? `<div class="field"><label for="alPie">To pie</label><select class="text" id="alPie" style="flex:1">${pies.map(pp => `<option value="${pp.id}">${esc(pp.name)}</option>`).join("")}</select><span class="euro"><input class="money" type="number" id="alPieAmt" min="0" step="0.01" placeholder="0.00"></span></div>` : "") +
+    `<div class="field"><label for="alStAmt">To short-term</label><span class="euro"><input class="money" type="number" id="alStAmt" min="0" step="0.01" placeholder="0.00"></span></div>
+    <p class="hint" id="alLeft" style="margin:6px 2px 0"></p>`;
+  acts.innerHTML = `<button class="btn" id="alSkip">Keep it all</button><button class="btn primary" id="alDo">Allocate</button>`;
+  const refresh = () => {
+    const ap = num(($("alPieAmt") || {}).value), as = num(($("alStAmt") || {}).value);
+    $("alLeft").innerHTML = `Stays in the budget: <b>${eur(Math.max(0, pa.amount - ap - as))}</b>`;
+  };
+  body.oninput = refresh; refresh();
+  const finish = () => { delete data.pendingAlloc; save(); closeMove(); render(); };
+  $("alSkip").onclick = finish;
+  $("alDo").onclick = () => {
+    let ap = Math.max(0, num(($("alPieAmt") || {}).value)), as = Math.max(0, num(($("alStAmt") || {}).value));
+    const total = ap + as;
+    if (total > pa.amount + 0.005) { $("alLeft").innerHTML = `<b style="color:var(--over)">That's more than ${eur(pa.amount)}.</b>`; return; }
+    const mm = getMonth(nextK);
+    if (ap > 0) { const pie = pies.find(pp => pp.id === ($("alPie") || {}).value) || pies[0]; if (pie) { pie.flows = pie.flows || []; pie.flows.push({ d: nextK + "-01", a: ap, src: "close", n: "from " + monthName(pa.from).split(" ")[0] }); } }
+    if (as > 0) { mm.stMoves = mm.stMoves || []; mm.stMoves.push({ d: nextK + "-01", a: as, n: "from " + monthName(pa.from).split(" ")[0] }); }
+    finish();
+  };
+  coverModal.classList.add("show");
+}
+coverModal.addEventListener("click", e => { if (e.target === coverModal) closeMove(); });coverModal.addEventListener("click", e => { if (e.target === coverModal) closeMove(); });
 
 $("clearBtn").addEventListener("click", () => {
   const m = data.months[current];
@@ -1416,171 +1511,52 @@ $("clearBtn").addEventListener("click", () => {
   if (confirm("Clear this month's plan? It pre-fills fresh from the previous month next time. (Savings balances aren't affected.)")) { delete data.months[current]; render(); }
 });
 
-/* ===== INVESTMENTS tab ===== */
-function allPoolNames() {
-  const set = new Set();
-  Object.values(data.months).forEach(m => (m.savingsGoals||[]).forEach(g => set.add(g.name)));
-  Object.keys(data.savings || {}).forEach(n => set.add(n));
-  return [...set];
-}
-function investCashflows(name) {
-  const inv = data.investments[name] || {}, flows = [];
-  if (num(inv.startBasis) > 0 && inv.startDate) flows.push({ date: parseDate(inv.startDate), amount: num(inv.startBasis) });
-  (inv.extra || []).forEach(e => { if (num(e.amount)) flows.push({ date: parseDate(e.date), amount: num(e.amount) }); });
-  // Real money in/out: manual moves always; a monthly target only once its month is finalized.
-  poolTxOf(name).forEach(x => {
-    if (!num(x.a)) return;
-    if (x.t === "contribution" && !monthLanded(monthOf(x.d))) return; // pending plan, not real yet
-    flows.push({ date: parseDate(x.d), amount: num(x.a) });
-  });
-  return flows.sort((a,b) => a.date - b.date);
-}
-function snapshotsOf(name) { return ((data.investments[name] || {}).snapshots || []).map(s => ({ date: parseDate(s.date), value: num(s.value) })).sort((a,b) => a.date - b.date); }
-function currentValue(name) { const s = snapshotsOf(name); return s.length ? s[s.length-1].value : null; }
-function annualReturn(flows, currentVal, asOf) {
-  const invested = flows.reduce((s,f) => s + f.amount, 0);
-  if (!(invested > 0) || !(currentVal > 0) || !flows.length) return null;
-  const asOfT = asOf.getTime(), yrs = f => (asOfT - f.date.getTime()) / (365.25 * 864e5);
-  const fval = r => flows.reduce((s,f) => s + f.amount * Math.pow(1+r, yrs(f)), 0) - currentVal;
-  let lo = -0.9499, hi = 10, flo = fval(lo), fhi = fval(hi);
-  if (flo * fhi > 0) { const t = yrs(flows[0]); return t > 0 ? Math.pow(currentVal/invested, 1/t) - 1 : null; }
-  for (let k = 0; k < 100; k++) { const mid = (lo+hi)/2, fm = fval(mid); if (Math.abs(fm) < 1e-6) return mid; if (flo*fm < 0) { hi = mid; } else { lo = mid; flo = fm; } }
-  return (lo+hi)/2;
-}
-function windowReturn(name, months) {
-  const flowsAll = investCashflows(name), cur = currentValue(name), asOf = new Date();
-  if (cur == null) return null;
-  if (!months) {
-    const invested = flowsAll.reduce((s,f) => s+f.amount, 0);
-    return { rate: annualReturn(flowsAll, cur, asOf), gain: cur - invested, invested, from: flowsAll[0] ? flowsAll[0].date : null };
-  }
-  let start;
-  if (months === "ytd") start = new Date(asOf.getFullYear(), 0, 1);
-  else { start = new Date(asOf); start.setMonth(start.getMonth() - months); }
-  const snaps = snapshotsOf(name); let startSnap = null;
-  for (const s of snaps) if (s.date <= start) startSnap = s;
-  if (!startSnap) return { insufficient: true };
-  const windowFlows = flowsAll.filter(f => f.date > startSnap.date && f.date <= asOf);
-  const investedWin = windowFlows.reduce((s,f) => s+f.amount, 0);
-  return { rate: annualReturn([{ date: startSnap.date, amount: startSnap.value }, ...windowFlows], cur, asOf), gain: cur - startSnap.value - investedWin, invested: investedWin, from: startSnap.date };
-}
-function sparkline(name) {
-  const snaps = snapshotsOf(name); if (snaps.length < 2) return "";
-  const W = 600, H = 70, pad = 4;
-  const xs = snaps.map(s => s.date.getTime()), ys = snaps.map(s => s.value);
-  const minx = Math.min(...xs), maxx = Math.max(...xs), miny = Math.min(...ys), maxy = Math.max(...ys);
-  const X = t => pad + (maxx === minx ? 0 : (t-minx)/(maxx-minx)) * (W-2*pad);
-  const Y = v => H-pad - (maxy === miny ? .5 : (v-miny)/(maxy-miny)) * (H-2*pad);
-  const pts = snaps.map(s => `${X(s.date.getTime()).toFixed(1)},${Y(s.value).toFixed(1)}`).join(" ");
-  const up = ys[ys.length-1] >= ys[0];
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="70" preserveAspectRatio="none" style="margin-top:10px">
-    <polyline points="${pad},${H-pad} ${pts} ${W-pad},${H-pad}" fill="${up ? "color-mix(in srgb,var(--save) 14%,transparent)" : "color-mix(in srgb,var(--over) 14%,transparent)"}" stroke="none"/>
-    <polyline points="${pts}" fill="none" stroke="${up ? "var(--save)" : "var(--over)"}" stroke-width="2"/></svg>`;
-}
+/* ===== INVESTMENTS tab (interim: pies overview + management — market data, exposures & returns arrive with the redesign) ===== */
+const FLOW_LABEL = { standing: "Monthly · 1st", extra: "Extra", close: "Month-close" };
 function renderInvest() {
-  renderSaveMore(getMonth(current));
-  const names = Object.keys(data.investments);
-  // summary
-  let totInv = 0, totVal = 0, anyVal = false;
-  names.forEach(n => { const cv = currentValue(n); if (cv != null) { anyVal = true; totVal += cv; } totInv += investCashflows(n).reduce((s,f)=>s+f.amount,0); });
-  $("invSummary").innerHTML = names.length ? `<div class="kpis">
-      <div class="kpi"><div class="kl">Total invested</div><div class="kv">${eur(totInv)}</div></div>
-      <div class="kpi"><div class="kl">Current value</div><div class="kv">${anyVal ? eur(totVal) : "—"}</div></div>
-      <div class="kpi"><div class="kl">Total earned</div><div class="kv ${totVal-totInv>=0?"pos":"neg"}">${anyVal ? (totVal-totInv>=0?"+":"")+eur(totVal-totInv) : "—"}</div></div>
-      <div class="kpi"><div class="kl">Overall return</div><div class="kv ${totVal-totInv>=0?"pos":"neg"}">${anyVal&&totInv>0 ? (totVal-totInv>=0?"+":"")+pct((totVal-totInv)/totInv*100) : "—"}</div></div>
-    </div>` : "";
-
-  const list = $("invList"); list.innerHTML = "";
-  if (!names.length) list.innerHTML = `<p class="hint">No investments connected yet. Pick a savings pool below to start tracking its returns.</p>`;
-  names.forEach(name => {
-    const win = invWindow[name] ?? null;
-    const cur = currentValue(name), wr = windowReturn(name, win);
-    const totInvested = investCashflows(name).reduce((s,f)=>s+f.amount, 0);
-    const gain = cur != null ? cur - totInvested : null;
-    const div = document.createElement("div"); div.className = "inv-card";
-    const rr = wr && wr.rate != null ? (Math.abs(wr.rate) < 0.0005 ? 0 : wr.rate) : null;
-    const rateTxt = wr && !wr.insufficient && rr != null ? `<span class="${rr>=0?"pos":"neg"}">${rr>=0?"+":""}${pct(rr*100)}<span class="hint" style="font-weight:500"> / yr</span></span>`
-      : wr && wr.insufficient ? `<span class="hint">add a value update from that far back</span>` : "—";
-    const winGainTxt = wr && !wr.insufficient && wr.gain != null ? `<span class="${wr.gain>=0?"pos":"neg"}">${wr.gain>=0?"+":""}${eur(wr.gain)}</span>` : "—";
-    div.innerHTML = `
-      <div class="inv-head">
-        <div><div class="inv-name">📈 ${esc(name)}</div>
-          <div class="hint" style="margin-top:2px">${cur!=null ? "current value · tap to edit" : "no value yet — tap the box to set it"}</div>
-          <span class="euro inv-val-euro"><input class="money inv-val-input" type="number" inputmode="decimal" min="0" step="0.01" value="${cur!=null ? cur : ""}" placeholder="0.00" data-invval="${esc(name)}" aria-label="Current value of ${esc(name)} — tap to edit"></span></div>
-        <div class="win-chips">
-          ${[["1M",1],["3M",3],["6M",6],["YTD","ytd"],["1Y",12],["All",null]].map(([l,mo]) => `<button data-win="${esc(name)}|${mo}" class="${(win??null)===mo?"on":""}">${l}</button>`).join("")}
-        </div>
+  const pies = data.pies || [];
+  $("invSummary").innerHTML = `<div class="save-more"><div><div class="tlabel">Investing monthly</div><div class="tval">${eur(piesMonthly())}</div></div><div style="text-align:right"><div class="tlabel">Put in all-time</div><div class="tval">${eur(pies.reduce((t, pp) => t + pieInvested(pp), 0))}</div></div></div>`;
+  $("invList").innerHTML = pies.length ? pies.map(pie => {
+    const recent = (pie.flows || []).slice().sort((a, b) => String(b.d).localeCompare(String(a.d))).slice(0, 5);
+    return `<div class="pie-card" data-pie="${pie.id}">
+      <div class="pie-head">
+        <input class="pname" type="text" value="${esc(pie.name)}" data-pie-name="${pie.id}" aria-label="Pie name">
+        <span class="pie-mo">monthly <span class="euro"><input class="mini-amt money" type="number" min="0" step="0.01" value="${num(pie.monthly) || ""}" data-pie-mo="${pie.id}" style="width:90px"></span> on the 1st</span>
+        <span class="pie-inv">${eur(pieInvested(pie))}</span>
       </div>
-      <div class="inv-stats">
-        <div class="inv-stat"><div class="sl">Invested (you put in)</div><div class="sv">${eur(totInvested)}</div></div>
-        <div class="inv-stat"><div class="sl">Earned all-time</div><div class="sv ${gain>=0?"pos":"neg"}">${gain!=null ? (gain>=0?"+":"")+eur(gain) : "—"}</div></div>
-        <div class="inv-stat"><div class="sl">Return rate (${win?({1:"1 mo",3:"3 mo",6:"6 mo",12:"1 yr",ytd:"YTD"})[win]:"all-time"})</div><div class="sv">${rateTxt}</div></div>
+      <div class="pie-flows">${recent.map(f => `<div><span>${parseDate(f.d).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })} · ${FLOW_LABEL[f.src] || f.src}${f.n ? " · " + esc(f.n) : ""}</span> <span class="${num(f.a) >= 0 ? "pos" : ""}">${num(f.a) >= 0 ? "+" : "−"}${eur(Math.abs(num(f.a)))}</span></div>`).join("") || '<div>No money in yet.</div>'}</div>
+      <div class="inv-actions" style="margin-top:10px">
+        <button class="btn sm primary" data-pie-extra="${pie.id}">＋ Invest extra</button>
+        <button class="btn sm danger" data-pie-del="${pie.id}">Delete</button>
       </div>
-      <div class="hint">${win ? `Change over ${({1:"the last month",3:"the last 3 months",6:"the last 6 months",12:"the last year",ytd:"the year so far"})[win]}: ${winGainTxt}` : `Money-weighted annual return since your first investment (${wr&&wr.from?wr.from.toLocaleDateString(undefined,{month:"short",year:"numeric"}):"—"}).`}</div>
-      ${sparkline(name)}
-      <div class="inv-actions">
-        <button class="btn sm" data-invlog="${esc(name)}">Log an extra investment</button>
-        <button class="btn sm danger" data-invremove="${esc(name)}">Disconnect</button>
-      </div>`;
-    list.appendChild(div);
-  });
-
-  // connect selector
-  const free = allPoolNames().filter(n => !data.investments[n]);
-  $("invConnect").innerHTML = free.length
-    ? `<div class="field" style="margin:0"><label style="min-width:auto">Connect a savings pool:</label>
-        <select id="invPoolSel" class="text">${free.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join("")}</select>
-        <button class="btn sm primary" id="invConnectBtn">Track as investment</button></div>`
-    : `<p class="hint">All your pools are connected. Add a new savings pool on the Budget tab to track another investment.</p>`;
+    </div>`;
+  }).join("") : `<p class="hint">No pies yet — create one below. Each pie invests its monthly amount on the 1st.</p>`;
 }
-// Edit an investment's current value inline (records/updates today's value snapshot).
-$("invList").addEventListener("change", e => {
-  const t = e.target; if (t.dataset.invval === undefined) return;
-  const name = t.dataset.invval, inv = data.investments[name]; if (!inv) return;
-  if (t.value.trim() === "") { renderInvest(); return; } // nothing entered — restore the shown value
-  inv.snapshots = inv.snapshots || [];
-  const today = todayStr(), val = num(t.value), existing = inv.snapshots.find(s => s.date === today);
-  if (existing) existing.value = val; else inv.snapshots.push({ date: today, value: val });
-  save(); renderInvest();
+$("invList").addEventListener("input", e => {
+  const t = e.target;
+  if (t.dataset.pieMo !== undefined) { const pie = (data.pies || []).find(pp => pp.id === t.dataset.pieMo); if (pie) { pie.monthly = Math.max(0, num(t.value)); save(); } }
+  else if (t.dataset.pieName !== undefined) { const pie = (data.pies || []).find(pp => pp.id === t.dataset.pieName); if (pie && t.value.trim()) { pie.name = t.value.trim(); save(); } }
 });
 $("invList").addEventListener("click", e => {
-  const t = e.target;
-  if (t.dataset.win !== undefined) { const [name, mo] = t.dataset.win.split("|"); invWindow[name] = mo === "null" ? null : (mo === "ytd" ? "ytd" : Number(mo)); renderInvest(); return; }
-  if (t.dataset.invupdate !== undefined) {
-    const name = t.dataset.invupdate, cur = currentValue(name);
-    const v = prompt(`Current total value of "${name}" today:`, cur != null ? cur.toFixed(2) : "");
-    if (v == null || v.trim() === "") return;
-    const inv = data.investments[name]; inv.snapshots = inv.snapshots || [];
-    const today = todayStr(); const existing = inv.snapshots.find(s => s.date === today);
-    if (existing) existing.value = num(v); else inv.snapshots.push({ date: today, value: num(v) });
-    save(); renderInvest();
-  } else if (t.dataset.invlog !== undefined) {
-    const name = t.dataset.invlog;
-    const amt = prompt(`Extra one-off amount invested into "${name}" (e.g. a lump sum outside your monthly plan):`, "");
-    if (amt == null || !num(amt)) return;
-    const when = prompt("Date of this investment (YYYY-MM-DD):", todayStr());
-    if (when == null) return;
-    const inv = data.investments[name]; inv.extra = inv.extra || []; inv.extra.push({ date: when.trim() || todayStr(), amount: num(amt) });
-    save(); renderInvest();
-  } else if (t.dataset.invremove !== undefined) {
-    const name = t.dataset.invremove;
-    if (confirm(`Stop tracking "${name}" as an investment? Your value history and return insights for it will be removed (the savings pool itself stays).`)) { delete data.investments[name]; save(); renderInvest(); render(); }
+  const t = e.target.closest("button"); if (!t) return;
+  if (t.dataset.pieExtra !== undefined) openMoveModal("pieExtra", t.dataset.pieExtra);
+  else if (t.dataset.pieDel !== undefined) {
+    const pie = (data.pies || []).find(pp => pp.id === t.dataset.pieDel); if (!pie) return;
+    if (!confirm(`Delete pie "${pie.name}" and its whole contribution history (${eur(pieInvested(pie))} recorded)? This cannot be undone.`)) return;
+    data.pies = data.pies.filter(pp => pp.id !== pie.id);
+    save(); render(); renderInvest();
   }
 });
-$("invConnect").addEventListener("click", e => {
-  if (e.target.id !== "invConnectBtn") return;
-  const name = $("invPoolSel").value; if (!name) return;
-  const inv = { snapshots:[], extra:[], startBasis:0, startDate:"" };
-  const already = prompt(`Optional: how much was already invested in "${name}" before you started tracking? (Leave blank if none.)`, "");
-  if (already != null && num(already)) {
-    inv.startBasis = num(already);
-    const when = prompt("Roughly when was that invested? (YYYY-MM)", monthKey(new Date()));
-    inv.startDate = (when && when.trim()) ? when.trim() : monthKey(new Date());
-  }
-  const val = prompt(`What is "${name}" worth right now? (current market value — you can update it anytime)`, "");
-  if (val != null && val.trim() !== "") inv.snapshots.push({ date: todayStr(), value: num(val) });
-  data.investments[name] = inv; save(); renderInvest(); render();
-});
+function addPie() {
+  const nameEl = $("newPieName"), moEl = $("newPieMonthly");
+  const name = nameEl.value.trim(); if (!name) return;
+  data.pies = data.pies || [];
+  data.pies.push({ id: "p" + Math.random().toString(36).slice(2, 8), name, monthly: Math.max(0, num(moEl.value)), holdings: [], flows: [], createdMonth: monthKey(new Date()) });
+  nameEl.value = ""; moEl.value = "";
+  ensurePieFlows(); save(); render(); renderInvest();
+}
+$("addPieBtn").addEventListener("click", addPie);
+$("newPieName").addEventListener("keydown", e => { if (e.key === "Enter") addPie(); });
 
 /* ===== PLAN tab (calculators — not linked to real data) ===== */
 let ptMode = "pct";
