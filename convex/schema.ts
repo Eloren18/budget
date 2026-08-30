@@ -25,6 +25,13 @@ export default defineSchema({
     sentAt: v.number(),
   }).index("by_email", ["email"]),
 
+  // Market-data cache (Yahoo proxy): quote:SYM / hist:SYM / profile:SYM / search:Q / yahoo:session.
+  market: defineTable({
+    key: v.string(),
+    json: v.string(),
+    fetchedAt: v.number(),
+  }).index("by_key", ["key"]),
+
   // Signed-in devices. Token lives in the browser's localStorage.
   sessions: defineTable({
     token: v.string(),

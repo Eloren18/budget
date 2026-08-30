@@ -13,6 +13,7 @@ import type * as admin from "../admin.js";
 import type * as auth from "../auth.js";
 import type * as budget from "../budget.js";
 import type * as lib from "../lib.js";
+import type * as market from "../market.js";
 
 import type {
   ApiFromModules,
@@ -26,6 +27,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   budget: typeof budget;
   lib: typeof lib;
+  market: typeof market;
 }>;
 
 /**
