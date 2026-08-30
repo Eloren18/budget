@@ -12,8 +12,8 @@ One equation runs each month:
 
    money in  = income + bonus + anything left over from last month
                + "new money" (refunds, gifts)
-   goes out  = bills + one-offs + investing (monthly + extra)
-               + short-term savings put away + the weekly allowance
+   goes out  = bills + one-offs + savings (automatic + extras)
+               + the weekly allowance
                (+ a deficit carried over from last month)
 
 WEEKLY ALLOWANCE
@@ -22,40 +22,23 @@ WEEKLY ALLOWANCE
   Change the amount on the Budget tab; it applies to that month and every
   later open month. A 5-Monday month costs one extra allowance.
 
-INVESTING (PIES)
-  Long-term investing is organised in "pies" (like Trading 212). Each
-  pie invests a fixed amount on the 1st of every month, automatically;
-  you can also put extra in any time. Every euro in is recorded as a
-  dated cash flow. A pie holds ETFs and stocks by ticker with % weights
-  (add them by searching a name on the Investments tab). The app then
-  simulates the buys: each contribution buys the holdings at that
-  month's price, so the tab shows what you put in, what it is worth
-  now, the return, and the money-weighted yearly return - plus industry
-  and country exposure for each holding, each pie, and the whole
-  portfolio, and PE / forward PE for stocks. Prices, fundamentals and
-  history come from Yahoo Finance through the app's own backend and are
-  cached there; ETF country splits are typed in once per ETF (Yahoo
-  does not publish them).
-
-SHORT-TERM SAVINGS
-  Money put into short-term savings is treated as burned: the budget
-  has less money, and nothing else is tracked. Taking money back out
-  simply gives the month that money again.
+SAVINGS
+  One automatic amount goes to savings on the 1st of every month - set
+  it on the Budget tab's Savings line. Extra can be saved (or taken
+  back) any time with the + Extra button there. That is all the app
+  tracks: saved money simply left the budget.
 
 MONTHS CLOSE THEMSELVES
-  Once a month is over it closes automatically. If money was left over,
-  the app asks how much of it to invest long-term and how much to put
-  in short-term savings - the rest (or a deficit) rolls into the next
-  month as ONE number. A re-opened past month stays open until you
-  close it by hand.
+  Once a month is over it closes automatically: whatever is left in
+  Main (or the deficit) rolls into the next month as ONE number. A
+  re-opened past month stays open until you close it by hand.
 
 THE ALLOCATION BAR (Budget tab)
   Fixed order and colours: bills (dark red) - allowance (purple) -
-  investments (light green) - one-offs (striped red) - last month
-  deficit (striped grey) - extra invested (striped green) - short-term
-  savings (teal) - unallocated (yellow) or overbudget spending (striped
-  black). It always sums to 100% of the larger of money-in and
-  commitments.
+  savings (light green) - one-offs (striped red) - last month deficit
+  (striped grey) - extra saved (striped green) - unallocated (yellow)
+  or overbudget spending (striped black). It always sums to 100% of
+  the larger of money-in and commitments.
 
 BACKUPS
   Settings -> Backup -> "Export data" downloads the whole budget as a
@@ -69,9 +52,7 @@ BACKUPS
              repo    https://github.com/Eloren18/budget
              live    https://eloren18.github.io/budget/
 
-  BACKEND    convex/ folder  ->  Convex (database + sign-in + the
-             Yahoo Finance market-data proxy the Investments tab uses;
-             prices are cached there for ~12h, fundamentals ~24h)
+  BACKEND    convex/ folder  ->  Convex (database + sign-in)
              dashboard  https://dashboard.convex.dev
              team kerem-ekdal / project claude-budget-app
              production  https://enduring-hare-88.convex.cloud
