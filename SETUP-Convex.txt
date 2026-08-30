@@ -13,47 +13,39 @@ One equation runs each month:
    money in  = income + bonus + anything left over from last month
                + money taken out of a pool + "new money" (refunds, gifts)
    goes out  = bills + one-offs + investments + the weekly allowance
-               (+ anything extra you chose to save, + a shortfall carried
+               (+ anything extra you chose to save, + a deficit carried
                 over from last month)
 
 WEEKLY ALLOWANCE
   A fixed amount (default EUR 150) leaves your main account every Monday
-  and is ALL your day-to-day money - groceries, going out, everything.
-  It counts as spent: there is nothing to tick or track.
-  Change the amount or the weekday on the Budget tab; the change applies
-  to that month and every later open month. A month with 5 Mondays costs
-  one extra allowance - the app flags it.
+  and is ALL your day-to-day money. It counts as spent - nothing to track.
+  Change the amount on the Budget tab; it applies to that month and every
+  later open month. A 5-Monday month costs one extra allowance.
 
 INVESTMENTS / SAVINGS POOLS
   Each pool has a monthly amount that goes out on the 1st automatically
-  and counts in the pool's balance from then on ("sent on the 1st").
-  Pools are NOT tied to a bank account - only the amount matters.
-  Ways to move money (each opens the same small popup):
-    - "Save some of it"   (Savings section)  main account -> a pool.
-                          Shows what is unallocated this month and how
-                          much of it was left over from last month.
-    - "Cover it from a pool" (same spot, when the month is short)
-                          pool -> main account, prefilled with the gap.
-    - "New money"         (on a pool)        a windfall straight into it.
-    - "Take out"          (on a pool)        back to main, or spent
-                          directly from the pool.
+  and counts in the pool balance from then on. Pools are not tied to any
+  bank account. Spare money left in Main can be saved into a pool, and a
+  short month can be covered from one, via the box on the Investments
+  tab ("Save some of it" / "Cover it from a pool"). The Investments tab
+  is being redesigned; pool creation and renaming return with it.
 
 MONTHS CLOSE THEMSELVES
   Once a month is over it closes automatically: investments land in the
-  pools and whatever is left in your main account (or the shortfall)
-  rolls into the next month. Nothing to remember. You can re-open a past
-  month to edit it - it then stays open until you close it by hand.
+  pools and whatever is left in Main (or the deficit) rolls into the
+  next month as ONE number. A re-opened past month stays open until you
+  close it by hand.
 
-BANK-ACCOUNT TAGS (optional)
-  Expense categories, items and one-offs can be tagged with an account,
-  so the "Put your money in this month" list tells you what each account
-  needs. Accounts that need nothing are not listed. Savings pools are
-  deliberately not tagged.
+THE ALLOCATION BAR (Budget tab)
+  Fixed order and colours: bills (dark red) - allowance (purple) -
+  investments (light green) - one-offs (striped red) - last month
+  deficit (striped grey) - extra invested (striped green) - unallocated
+  (grey) or overbudget spending (striped black). It always sums to 100%
+  of the larger of money-in and commitments.
 
 BACKUPS
-  Settings -> Backup -> "Export data" downloads your whole budget as a
-  JSON file; "Import data..." restores one. Do an export now and then,
-  and always before a big change.
+  Settings -> Backup -> "Export data" downloads the whole budget as a
+  JSON file; "Import data..." restores one.
 
 
 ----------------------------------------------------------
