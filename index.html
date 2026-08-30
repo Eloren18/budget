@@ -443,6 +443,7 @@
         <span class="allow-sum" id="savSum"></span>
         <button class="btn sm primary" id="savExtraBtn" style="margin-left:auto">＋ Extra</button>
       </div>
+      <div id="savExtraList" style="display:flex;flex-direction:column;gap:6px;margin-top:8px"></div>
     </div>
 
     <div class="section" id="incomeSection">
@@ -1008,12 +1009,32 @@ function renderSavLine(m) {
   const era = savEra(k);
   inp.parentElement.style.display = era ? "" : "none";
   btn.style.display = era && !m.finalized ? "" : "none";
-  if (!era) { $("savSum").innerHTML = "closed under the old savings model"; return; }
+  if (!era) { $("savSum").innerHTML = "closed under the old savings model"; $("savExtraList").innerHTML = ""; return; }
   if (document.activeElement !== inp) inp.value = num(m.savMonthly) ? num(m.savMonthly) : "";
   inp.disabled = !!m.finalized;
+  renderSavExtras(m);
   const extra = savExtraNet(k), left = leftInMain(m);
   $("savSum").innerHTML = `/ month${Math.abs(extra) > 0.005 ? ` · extra <b>${extra >= 0 ? "" : "−"}${eur(Math.abs(extra))}</b>` : ""} · ${left >= -0.005 ? `left to save <b style="color:var(--save)">${eur(Math.max(0, left))}</b>` : `short <b style="color:var(--over)">${eur(-left)}</b> · rolls into next month`}`;
 }
+// Every extra move is adjustable in place until the month closes.
+function renderSavExtras(m, force) {
+  const box = $("savExtraList"); if (!box) return;
+  if (!force && box.contains(document.activeElement)) return; // don't rebuild under the user's cursor
+  const dt = d => parseDate(d).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  box.innerHTML = (m.savExtra || []).map((x, i) => `<div class="inc-wd-row"><span>${dt(x.d)} · ${num(x.a) >= 0 ? "saved" : "taken back"}${x.n ? ` · ${esc(x.n)}` : ""}</span><span class="pos" style="display:flex;align-items:center;gap:6px${num(x.a) < 0 ? ";color:var(--over)" : ""}">${m.finalized ? `${num(x.a) >= 0 ? "+" : "−"} ${eur(Math.abs(num(x.a)))}` : `<span class="euro"><input class="money" type="number" step="0.01" value="${num(x.a)}" data-savx="${i}" style="width:110px" aria-label="Extra amount"></span><button class="lnk-x" data-savxdel="${i}" title="Remove">✕</button>`}</span></div>`).join("");
+}
+$("savExtraList").addEventListener("input", e => {
+  const t = e.target; if (t.dataset.savx === undefined) return;
+  const m = getMonth(current); if (m.finalized || !m.savExtra) return;
+  m.savExtra[t.dataset.savx].a = num(t.value);
+  updateSummary(m); save();
+});
+$("savExtraList").addEventListener("click", e => {
+  const b = e.target.closest("[data-savxdel]"); if (!b) return;
+  const m = getMonth(current); if (m.finalized || !m.savExtra) return;
+  m.savExtra.splice(+b.dataset.savxdel, 1);
+  save(); updateSummary(m); renderSavExtras(m, true);
+});
 function renderAllowanceCard(m) {
   const k = mkeyOf(m), legacy = isLegacySpend(m), budget = spendBudget(m);
   const el = $("allowanceInput"), wk = weeklyAllowance(m), n = legacy ? 0 : allowanceDays(k).length;
