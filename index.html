@@ -172,7 +172,7 @@
   .seg-allow { background:#8b5cf6; }
   .seg-bills { background:#991b1b; }
   .seg-oneoff { background:repeating-linear-gradient(45deg,#dc2626,#dc2626 6px,#ffffff55 6px,#ffffff55 12px); }
-  .seg-left { background:var(--faint); }
+  .seg-left { background:#eab308; }
   .seg-sweep { background:repeating-linear-gradient(45deg,var(--save),var(--save) 6px,#ffffff44 6px,#ffffff44 12px); }
   .seg-carry { background:repeating-linear-gradient(45deg,var(--faint),var(--faint) 6px,#ffffff33 6px,#ffffff33 12px); }
   .allow-field { flex-wrap:wrap; gap:8px; }
@@ -186,14 +186,7 @@
   .oo-row .cell.name { flex:1; min-width:0; }
   .oo-row .euro { width:120px; flex:none; }
   .section.compact .add-cat { flex-wrap:wrap; }
-  .main-card { padding-bottom:4px; }
-  .main-row { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--border-soft); font-size:14px; flex-wrap:wrap; }
-  .main-row > span:first-child { display:flex; flex-direction:column; gap:2px; }
-  .main-row .hint { font-size:11.5px; font-weight:500; }
-  .main-row .num { font-weight:750; letter-spacing:-.01em; white-space:nowrap; }
-  .main-row.pos .num { color:var(--save); } .main-row.neg .num { color:var(--over); }
-  .main-row.total { border-bottom:none; font-size:15px; }
-  .main-row .btn.sm { margin-top:4px; align-self:flex-start; }
+
   .save-more { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
     padding:14px 18px; border-radius:var(--radius-sm); margin-bottom:16px; background:var(--surface-2); border:1px solid var(--border-soft); }
   .save-more .tlabel { color:var(--muted); font-size:13px; font-weight:600; }
@@ -280,9 +273,6 @@
   .btn-x { border:none; background:transparent; color:var(--faint); cursor:pointer; border-radius:7px; width:28px; height:28px;
     display:grid; place-items:center; transition:background .15s,color .15s; }
   .btn-x:hover { background:var(--over); color:#fff; }
-
-  .acct-summary { background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius); padding:15px 18px; margin-bottom:16px; box-shadow:var(--shadow); }
-  .acct-sum-head { font-weight:700; font-size:15px; margin-bottom:4px; display:flex; align-items:center; gap:8px; }
 
   #incomeWithdrawals { display:flex; flex-direction:column; gap:6px; margin-top:10px; }
   .inc-wd-head { font-size:13px; color:var(--muted); font-weight:600; }
@@ -453,7 +443,6 @@
   <!-- ============ BUDGET TAB ============ -->
   <div id="page-budget" class="page active">
     <div class="recap" id="recap" role="status"></div>
-    <div id="acctSummary" class="acct-summary" style="display:none"></div>
 
     <div class="section">
       <h2><span class="sec-icon" style="background:var(--spend-soft);color:var(--spend)">◧</span>Where this month's money goes</h2>
@@ -835,32 +824,6 @@ const spendBudget = m => isLegacySpend(m) ? num(m.grocAmt) + num(m.oopAmt) : wee
 const leftInMain = m => discretionary(m) - spendBudget(m);
 
 /* ===== accounts: which bank account each expense / pool draws from ===== */
-function renderAccountSummary(m) {
-  const box = $("acctSummary"); if (!box) return;
-  const k = mkeyOf(m), ci = carryIn(k), prevName = monthName(prevKey(k)).split(" ")[0];
-  const bills = expensesEff(m) - oneOffTotal(m), oo = oneOffTotal(m), inv = savingsPlanned(m), allow = spendBudget(m), extra = investedFromMain(k), newM = newMoneyToMain(k), pulled = pulledToMain(k);
-  const moneyIn = num(m.income) + num(m.bonus) + pulled + newM + Math.max(ci, 0);
-  const out = bills + oo + inv + allow + extra + Math.max(0, -ci);
-  const left = leftInMain(m), legacy = isLegacySpend(m), n = legacy ? 0 : allowanceDays(k).length, wk = weeklyAllowance(m);
-  const row = (label, sub, val, cls) => `<div class="main-row${cls ? " " + cls : ""}"><span><span>${label}</span>${sub ? `<span class="hint">${sub}</span>` : ""}</span><span class="num">${val}</span></div>`;
-  const inParts = ["income" + (num(m.bonus) ? " + bonus" : "")];
-  if (ci > 0.005) inParts.push(`left over from ${prevName} ${eur(ci)}`);
-  if (pulled > 0.005) inParts.push(`taken out of pools ${eur(pulled)}`);
-  if (newM > 0.005) inParts.push(`new money ${eur(newM)}`);
-  const outParts = [`bills ${eur(bills)}`];
-  if (oo > 0.005) outParts.push(`one-offs ${eur(oo)}`);
-  outParts.push(`investments ${eur(inv)}`, legacy ? `spending money ${eur(allow)}` : `allowance ${n} × ${eur(wk)}`);
-  if (extra > 0.005) outParts.push(`extra saved ${eur(extra)}`);
-  if (ci < -0.005) outParts.push(`deficit carried from ${prevName} ${eur(-ci)}`);
-  const tail = m.finalized ? "rolled into next month" : "";
-  box.style.display = "block";
-  box.innerHTML = `<div class="main-card"><div class="acct-sum-head">Main this month</div>` +
-    row("Money in", inParts.join(" · "), eur(moneyIn)) +
-    row("Goes out", outParts.join(" · "), "− " + eur(out)) +
-    (left >= -0.005
-      ? row("Left in Main", tail, "+ " + eur(Math.max(0, left)), "pos total")
-      : row("Short in Main", tail, "− " + eur(-left), "neg total")) + `</div>`;
-}
 // Spare money in Main — one action to put some of it into a pool (lives on the Pools tab now).
 function renderSaveMore(m) {
   const box = $("saveMoreBox"); if (!box) return;
@@ -1004,7 +967,6 @@ function updateSummary(m) {
   renderAllocation(m);
   renderAllowanceCard(m);
   renderIncomeWithdrawals(current);
-  renderAccountSummary(m);
 }
 // Income section: money that came INTO Main this month from pools or from outside (on top of income + bonus).
 function renderIncomeWithdrawals(mkey) {
