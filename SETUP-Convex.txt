@@ -1,6 +1,6 @@
 ==========================================================
   BUDGET APP — HOW IT WORKS, WHERE IT LIVES, HOW TO UPDATE
-  (last updated 2026-08-22)
+  (last updated 2026-08-30)
 ==========================================================
 
 ----------------------------------------------------------
@@ -11,10 +11,10 @@ One equation runs each month:
    money in  -  goes out  =  left in your main account
 
    money in  = income + bonus + anything left over from last month
-               + money taken out of a pool + "new money" (refunds, gifts)
-   goes out  = bills + one-offs + investments + the weekly allowance
-               (+ anything extra you chose to save, + a deficit carried
-                over from last month)
+               + "new money" (refunds, gifts)
+   goes out  = bills + one-offs + investing (monthly + extra)
+               + short-term savings put away + the weekly allowance
+               (+ a deficit carried over from last month)
 
 WEEKLY ALLOWANCE
   A fixed amount (default EUR 150) leaves your main account every Monday
@@ -22,26 +22,40 @@ WEEKLY ALLOWANCE
   Change the amount on the Budget tab; it applies to that month and every
   later open month. A 5-Monday month costs one extra allowance.
 
-INVESTMENTS / SAVINGS POOLS
-  Each pool has a monthly amount that goes out on the 1st automatically
-  and counts in the pool balance from then on. Pools are not tied to any
-  bank account. Spare money left in Main can be saved into a pool, and a
-  short month can be covered from one, via the box on the Investments
-  tab ("Save some of it" / "Cover it from a pool"). The Investments tab
-  is being redesigned; pool creation and renaming return with it.
+INVESTING (PIES)
+  Long-term investing is organised in "pies" (like Trading 212). Each
+  pie invests a fixed amount on the 1st of every month, automatically;
+  you can also put extra in any time. Every euro in is recorded as a
+  dated cash flow. A pie holds ETFs and stocks by ticker with % weights
+  (add them by searching a name on the Investments tab). The app then
+  simulates the buys: each contribution buys the holdings at that
+  month's price, so the tab shows what you put in, what it is worth
+  now, the return, and the money-weighted yearly return - plus industry
+  and country exposure for each holding, each pie, and the whole
+  portfolio, and PE / forward PE for stocks. Prices, fundamentals and
+  history come from Yahoo Finance through the app's own backend and are
+  cached there; ETF country splits are typed in once per ETF (Yahoo
+  does not publish them).
+
+SHORT-TERM SAVINGS
+  Money put into short-term savings is treated as burned: the budget
+  has less money, and nothing else is tracked. Taking money back out
+  simply gives the month that money again.
 
 MONTHS CLOSE THEMSELVES
-  Once a month is over it closes automatically: investments land in the
-  pools and whatever is left in Main (or the deficit) rolls into the
-  next month as ONE number. A re-opened past month stays open until you
+  Once a month is over it closes automatically. If money was left over,
+  the app asks how much of it to invest long-term and how much to put
+  in short-term savings - the rest (or a deficit) rolls into the next
+  month as ONE number. A re-opened past month stays open until you
   close it by hand.
 
 THE ALLOCATION BAR (Budget tab)
   Fixed order and colours: bills (dark red) - allowance (purple) -
   investments (light green) - one-offs (striped red) - last month
-  deficit (striped grey) - extra invested (striped green) - unallocated
-  (grey) or overbudget spending (striped black). It always sums to 100%
-  of the larger of money-in and commitments.
+  deficit (striped grey) - extra invested (striped green) - short-term
+  savings (teal) - unallocated (yellow) or overbudget spending (striped
+  black). It always sums to 100% of the larger of money-in and
+  commitments.
 
 BACKUPS
   Settings -> Backup -> "Export data" downloads the whole budget as a
@@ -55,7 +69,9 @@ BACKUPS
              repo    https://github.com/Eloren18/budget
              live    https://eloren18.github.io/budget/
 
-  BACKEND    convex/ folder  ->  Convex (database + sign-in)
+  BACKEND    convex/ folder  ->  Convex (database + sign-in + the
+             Yahoo Finance market-data proxy the Investments tab uses;
+             prices are cached there for ~12h, fundamentals ~24h)
              dashboard  https://dashboard.convex.dev
              team kerem-ekdal / project claude-budget-app
              production  https://enduring-hare-88.convex.cloud
