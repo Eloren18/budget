@@ -90,12 +90,12 @@
   /* theme-specific styling beyond colors */
   [data-theme="synthwave"] h1, [data-theme="synthwave"] .section > h2 { font-family:"Orbitron","Inter",sans-serif; text-transform:uppercase; letter-spacing:.05em; }
   [data-theme="synthwave"] .btn.primary, [data-theme="synthwave"] .tab.active { box-shadow:0 0 14px color-mix(in srgb,var(--primary) 60%,transparent); }
-  [data-theme="synthwave"] .total-saved .tval { text-shadow:0 0 16px color-mix(in srgb,var(--save) 55%,transparent); }
-  [data-theme="brutalist"] .card, [data-theme="brutalist"] .section, [data-theme="brutalist"] .kpi, [data-theme="brutalist"] .pool, [data-theme="brutalist"] .inv-card, [data-theme="brutalist"] .group, [data-theme="brutalist"] .total-saved, [data-theme="brutalist"] .modal { box-shadow:4px 4px 0 var(--text) !important; }
+
+  [data-theme="brutalist"] .card, [data-theme="brutalist"] .section, [data-theme="brutalist"] .kpi, [data-theme="brutalist"] .pool, [data-theme="brutalist"] .inv-card, [data-theme="brutalist"] .group, [data-theme="brutalist"] .modal { box-shadow:4px 4px 0 var(--text) !important; }
   [data-theme="brutalist"] .btn, [data-theme="brutalist"] .chip, [data-theme="brutalist"] .tabs, [data-theme="brutalist"] .seg { box-shadow:3px 3px 0 var(--text); }
   [data-theme="brutalist"] .btn:active, [data-theme="brutalist"] .chip:active { transform:translate(2px,2px); box-shadow:1px 1px 0 var(--text); }
   [data-theme="brutalist"] h1, [data-theme="brutalist"] .section > h2 { text-transform:uppercase; }
-  [data-theme="glass"] .card, [data-theme="glass"] .section, [data-theme="glass"] .modal, [data-theme="glass"] .tabs, [data-theme="glass"] .seg, [data-theme="glass"] .chip, [data-theme="glass"] .badge, [data-theme="glass"] .kpi, [data-theme="glass"] .pool, [data-theme="glass"] .inv-card, [data-theme="glass"] .group, [data-theme="glass"] .total-saved, [data-theme="glass"] .btn, [data-theme="glass"] input.text, [data-theme="glass"] input.money, [data-theme="glass"] select.text { backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); }
+  [data-theme="glass"] .card, [data-theme="glass"] .section, [data-theme="glass"] .modal, [data-theme="glass"] .tabs, [data-theme="glass"] .seg, [data-theme="glass"] .chip, [data-theme="glass"] .badge, [data-theme="glass"] .kpi, [data-theme="glass"] .pool, [data-theme="glass"] .inv-card, [data-theme="glass"] .group, [data-theme="glass"] .btn, [data-theme="glass"] input.text, [data-theme="glass"] input.money, [data-theme="glass"] select.text { backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); }
 
   * { box-sizing: border-box; }
   html, body { height: 100%; }
@@ -161,16 +161,18 @@
   .section { background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius); padding:20px;
     box-shadow:var(--shadow); margin-bottom:16px; }
   .section > h2 { font-size:16px; margin:0; letter-spacing:-.01em; display:flex; align-items:center; gap:9px; }
-  .section .desc { color:var(--muted); font-size:13px; margin:6px 0 16px; max-width:64ch; }
+
   .sec-icon { width:26px; height:26px; border-radius:8px; display:grid; place-items:center; flex:none; }
 
   .alloc-bar { height:16px; border-radius:999px; overflow:hidden; display:flex; background:var(--surface-2); border:1px solid var(--border-soft); }
   .alloc-bar > span { display:block; transition:width .55s var(--ease); }
 
- .seg-sav { background:var(--save); }
+  .seg-sav { background:#5fd0a5; }
 
-  .seg-allow { background:var(--spend); }
-  .seg-left { background:color-mix(in srgb,var(--faint) 55%,transparent); }
+  .seg-allow { background:#8b5cf6; }
+  .seg-bills { background:#991b1b; }
+  .seg-oneoff { background:repeating-linear-gradient(45deg,#dc2626,#dc2626 6px,#ffffff55 6px,#ffffff55 12px); }
+  .seg-left { background:var(--faint); }
   .seg-sweep { background:repeating-linear-gradient(45deg,var(--save),var(--save) 6px,#ffffff44 6px,#ffffff44 12px); }
   .seg-carry { background:repeating-linear-gradient(45deg,var(--faint),var(--faint) 6px,#ffffff33 6px,#ffffff33 12px); }
   .allow-field { flex-wrap:wrap; gap:8px; }
@@ -179,11 +181,7 @@
   .section.compact h2 { margin-bottom:10px; flex-wrap:wrap; }
   .allow-field .euro { width:120px; }
   .allow-sum { margin-left:auto; font-weight:750; letter-spacing:-.01em; font-size:14px; }
-  .allow-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
-  .allow-chip { font-size:12.5px; padding:3px 10px; border-radius:999px; background:var(--surface-2); border:1px solid var(--border-soft); color:var(--muted); font-weight:600; white-space:nowrap; }
-  .allow-chip.done { opacity:.55; }
-  .allow-chip.cur { background:var(--spend-soft); color:var(--spend); border-color:transparent; font-weight:750; }
-  .allow-chip.next { border-style:dashed; color:var(--text); }
+
   .oo-row { display:flex; align-items:center; gap:8px; padding:4px 0; }
   .oo-row .cell.name { flex:1; min-width:0; }
   .oo-row .euro { width:120px; flex:none; }
@@ -201,7 +199,7 @@
   .save-more .tlabel { color:var(--muted); font-size:13px; font-weight:600; }
   .save-more .tval { font-size:26px; font-weight:800; letter-spacing:-.025em; margin-top:2px; }
   .save-more.short .tval { color:var(--over); }
-  .seg-over { background:repeating-linear-gradient(45deg,var(--over),var(--over) 6px,#00000022 6px,#00000022 12px); }
+  .seg-over { background:repeating-linear-gradient(45deg,#1f2937,#1f2937 6px,#9ca3af 6px,#9ca3af 12px); }
   .legend { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
   .leg-box { display:inline-flex; align-items:center; gap:7px; font-size:12.5px; background:var(--surface-2); border:1px solid var(--border-soft); border-radius:var(--radius-sm); padding:5px 11px; }
   .leg-box .sw { width:12px; height:12px; border-radius:4px; flex:none; }
@@ -283,22 +281,8 @@
     display:grid; place-items:center; transition:background .15s,color .15s; }
   .btn-x:hover { background:var(--over); color:#fff; }
 
-  /* accounts */
-  .acct-row { display:flex; gap:8px; align-items:center; margin-bottom:6px; }
-  .acct-row .acct-name { flex:1; }
-  .acct-sel { font-size:11px; font-weight:600; color:var(--muted); background:var(--surface-2); border:1px solid var(--border-soft); border-radius:999px; padding:3px 8px; max-width:150px; cursor:pointer; }
-  .acct-sel.inherited { color:var(--faint); font-style:italic; }
-  .acct-sel:hover { border-color:var(--primary); }
-  .acct-line { display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:12.5px; color:var(--muted); flex-wrap:wrap; }
-  .acct-line-label { font-weight:600; }
   .acct-summary { background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius); padding:15px 18px; margin-bottom:16px; box-shadow:var(--shadow); }
   .acct-sum-head { font-weight:700; font-size:15px; margin-bottom:4px; display:flex; align-items:center; gap:8px; }
-  .acct-sum-row { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--border-soft); font-size:14px; font-weight:600; }
-  .acct-sum-row:last-of-type { border-bottom:none; }
-  .acct-sum-row .num { font-weight:750; letter-spacing:-.01em; }
-  .acct-sum-row.unassigned { color:var(--muted); }
-
-  .acct-sum-row .num.pos { color:var(--save); }
 
   #incomeWithdrawals { display:flex; flex-direction:column; gap:6px; margin-top:10px; }
   .inc-wd-head { font-size:13px; color:var(--muted); font-weight:600; }
@@ -307,30 +291,10 @@
   .lnk-x { border:none; background:none; color:var(--muted); cursor:pointer; font-size:12px; padding:0 2px; margin-left:4px; line-height:1; }
   .lnk-x:hover { color:var(--over); }
 
-  .total-saved { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:8px;
-    padding:16px 18px; border-radius:var(--radius-sm); margin-bottom:16px;
-    background:linear-gradient(135deg,var(--save-soft),transparent); border:1px solid var(--border-soft); }
-  .total-saved .tlabel { color:var(--muted); font-size:13px; font-weight:600; }
-  .total-saved .tval { font-size:30px; font-weight:800; color:var(--save); letter-spacing:-.025em; }
-  .total-saved .tbreak { font-size:12.5px; color:var(--muted); }
   .pools { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
   .pool { border:1px solid var(--border-soft); border-radius:var(--radius-sm); padding:14px 15px; background:var(--surface-2);
     transition:border-color .2s,transform .2s var(--ease); }
   .pool:hover { transform:translateY(-2px); border-color:var(--border); }
-  .pool.reached { border-color:var(--save); background:var(--save-soft); }
-  .pool-top { display:flex; align-items:center; gap:8px; }
-  .pname { flex:1; font-weight:650; background:transparent; border:1px solid transparent; border-radius:7px; padding:4px 6px; min-width:60px; }
-  .pname:hover, .pname:focus-visible { background:var(--surface); }
-  .inv-tag { font-size:10.5px; font-weight:700; color:var(--spend); background:var(--spend-soft); padding:2px 7px; border-radius:999px; }
-  .pbal { font-size:22px; font-weight:780; margin:8px 0 2px; letter-spacing:-.02em; }
-  .ptarget { font-size:12.5px; color:var(--muted); }
-  .pbar { height:7px; background:var(--border); border-radius:999px; overflow:hidden; margin:9px 0; }
-  .pbar > div { height:100%; border-radius:999px; background:linear-gradient(90deg,var(--save),#6ee7b7); transition:width .6s var(--ease); }
-  .pool-controls { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:6px; }
-  .pool-controls .mini { font-size:12px; color:var(--muted); display:inline-flex; align-items:center; gap:5px; }
-  .pool-controls input.mini-amt { width:78px; text-align:right; padding:6px 8px; border-radius:8px; border:1px solid var(--border); background:var(--surface); }
-
-  .reached-tag { font-size:11px; font-weight:700; color:var(--save); }
 
   footer { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:26px; }
   .btn { border:1px solid var(--border); background:var(--surface); border-radius:var(--radius-sm); padding:11px 18px;
@@ -340,7 +304,7 @@
   .btn.primary:hover { filter:brightness(1.06); background:var(--primary); }
   .btn.danger { color:var(--over); }
   .btn.sm { padding:7px 13px; font-size:13px; }
-  .foot-note { text-align:center; color:var(--muted); font-size:12.5px; margin-top:12px; }
+
   .locked { opacity:.5; pointer-events:none; filter:saturate(.7); }
   .hint { color:var(--muted); font-size:13px; }
 
@@ -402,29 +366,9 @@
 
   /* per-pool float + count-up */
   .pool { position:relative; }
-  .pool-float { position:absolute; right:16px; top:42px; font-weight:800; font-size:16px; color:var(--save); opacity:0; pointer-events:none; }
-  .pool-float.neg { color:var(--over); }
-  .pool-float.go { animation:floatUp 1.05s var(--ease) forwards; }
-  @keyframes floatUp { 0% {opacity:0; transform:translateY(12px) scale(.8);} 20% {opacity:1; transform:translateY(2px) scale(1.08);} 65% {opacity:1; transform:translateY(-16px) scale(1);} 100% {opacity:0; transform:translateY(-38px) scale(1);} }
-  .pmonth { font-size:12.5px; font-weight:650; margin-top:3px; }
-  .pmonth.pos { color:var(--save); } .pmonth.neg { color:var(--over); } .pmonth.zero { color:var(--muted); }
-  .ptx-list { display:flex; flex-direction:column; gap:4px; margin:8px 0 4px; }
-  .ptx-item { display:flex; align-items:center; gap:8px; font-size:12.5px; flex-wrap:wrap; }
-  .ptx-item .tx-when { color:var(--muted); flex:1; min-width:120px; }
-  .ptx-item input.mini-amt { width:92px; text-align:right; padding:5px 7px; border-radius:8px; border:1px solid var(--border); background:var(--surface); }
-  .ptx-item input.mini-amt.locked { border-style:dashed; color:var(--save); -webkit-text-fill-color:var(--save); font-weight:650; background:color-mix(in srgb,var(--save) 8%,transparent); cursor:default; }
-  .btn-x.lock { cursor:default; color:var(--faint); font-size:13px; }
-  .btn-x.lock:hover { background:transparent; color:var(--faint); }
-  .pending-tag { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--muted); background:var(--surface-2); border:1px solid var(--border-soft); padding:1px 6px; border-radius:999px; }
 
-  /* pool history (Pools tab) */
-  .ph-card { border:1px solid var(--border-soft); border-radius:var(--radius); background:var(--surface-2); padding:16px 18px; margin-bottom:14px; }
-  .ph-head { display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; }
-  .ph-name { font-weight:700; font-size:15px; }
-  .ph-bal { font-size:22px; font-weight:800; letter-spacing:-.02em; }
-  .ph-tx td { padding:7px 6px; font-size:13.5px; border-top:1px solid var(--border-soft); }
-  .tx-amt.pos { color:var(--save); font-weight:700; } .tx-amt.neg { color:var(--over); font-weight:700; }
-  .tx-when { color:var(--muted); font-size:12px; }
+  @keyframes floatUp { 0% {opacity:0; transform:translateY(12px) scale(.8);} 20% {opacity:1; transform:translateY(2px) scale(1.08);} 65% {opacity:1; transform:translateY(-16px) scale(1);} 100% {opacity:0; transform:translateY(-38px) scale(1);} }
+
   #ptMode button, #lsUnit { padding:6px 12px; }
 
   @keyframes rise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
@@ -455,8 +399,7 @@
     .tab { padding:8px 12px; font-size:13px; }
 
     .card { padding:13px; }
-    .section { padding:14px 13px; } .section > h2 { font-size:15px; } .section .desc { font-size:12.5px; }
-    .total-saved .tval { font-size:26px; }
+    .section { padding:14px 13px; } .section > h2 { font-size:15px; }
 
     /* data-entry tables: shrink amounts, drop the Δ column so item names get real room */
     th, td { padding:7px 4px; }
@@ -502,7 +445,6 @@
   <nav class="tabs" id="tabBar">
     <button class="tab active" data-tab="budget">📋 Budget</button>
     <button class="tab" data-tab="breakdown">📊 Breakdown</button>
-    <button class="tab" data-tab="pools">🏦 Pools</button>
     <button class="tab" data-tab="invest">📈 Investments</button>
     <button class="tab" data-tab="plan">🧮 Plan</button>
   </nav>
@@ -515,22 +457,16 @@
 
     <div class="section">
       <h2><span class="sec-icon" style="background:var(--spend-soft);color:var(--spend)">◧</span>Where this month's money goes</h2>
-      <p class="desc">Every euro of this month's money, given a job — bills, investments, the weekly allowance — and what's left in your main account (or how short it is).</p>
       <div class="alloc-bar" id="allocBar" role="img" aria-label="Income allocation breakdown"></div>
       <div class="legend" id="allocLegend"></div>
     </div>
 
     <div class="section compact" id="allowanceSection">
-      <h2><span class="sec-icon" style="background:var(--spend-soft);color:var(--spend)">◷</span>Weekly allowance <span class="hint" style="font-weight:500;font-size:12px">· all your day-to-day money, every <b id="allowDayName">Monday</b> · counts as spent</span></h2>
+      <h2><span class="sec-icon" style="background:var(--spend-soft);color:var(--spend)">◷</span>Weekly allowance</h2>
       <div class="field allow-field">
         <span class="euro"><input class="money" type="number" id="allowanceInput" min="0" step="0.01" placeholder="150.00" aria-label="Allowance per week"></span>
-        <span class="hint">every</span>
-        <select class="text" id="allowanceDaySel" aria-label="Transfer day"></select>
-        <span id="allowAcctWrap"></span>
         <span class="allow-sum" id="allowSum"></span>
       </div>
-      <div class="allow-chips" id="allowSchedule"></div>
-      <p class="hint" id="allowHint" style="margin:8px 0 0"></p>
     </div>
 
     <div class="section" id="incomeSection">
@@ -542,23 +478,11 @@
 
     <div class="section" id="expenseSection">
       <h2><span class="sec-icon" style="background:var(--expense-soft);color:var(--expense)">≡</span>Expense categories</h2>
-      <p class="desc">Group related costs (e.g. <em>Subscriptions</em>, <em>Housing</em>). The <strong>Actual</strong> column is optional — leave it blank and the planned amount is assumed. Want the deep view of where money goes? Open the <strong>Breakdown</strong> tab.</p>
       <div id="groupsContainer"></div>
       <div class="add-cat">
         <input class="text" type="text" id="newGroup" placeholder="New category name…">
         <button class="btn-add" id="addGroupBtn">+ Add category</button>
       </div>
-    </div>
-
-    <div class="section" id="savingsSection">
-      <h2><span class="sec-icon" style="background:var(--save-soft);color:var(--save)">★</span>Savings pools</h2>
-      <p class="desc">Each pool's monthly amount goes out on the <strong>1st</strong> automatically. Use <strong>Save some of it</strong> for spare money left in your main account, <strong>New money</strong> for a windfall, <strong>Take out</strong> to bring money back. Manage pools, amounts &amp; goals on the <strong>Pools</strong> tab.</p>
-      <div class="total-saved" id="totalSavedBox">
-        <div><div class="tlabel">Total saved across all pools</div><div class="tval" id="totalSaved">€0</div></div>
-        <div class="tbreak" id="savedBreak"></div>
-      </div>
-      <div id="saveMoreBox" style="display:none"></div>
-      <div class="pools" id="poolsContainer"></div>
     </div>
 
     <div class="section compact" id="oneOffSection">
@@ -568,7 +492,6 @@
         <input class="text" type="text" id="newOneOffName" placeholder="What was it?" style="flex:2">
         <span class="euro"><input class="money" type="number" id="newOneOffAmt" min="0" step="0.01" placeholder="0.00"></span>
         <button class="btn-add" id="addOneOffBtn">+ Add</button>
-        <span id="oneOffAcctLine" class="acct-line" style="display:none"></span>
       </div>
     </div>
 
@@ -576,14 +499,12 @@
       <button class="btn primary" id="finalizeBtn">✓ Finalize month</button>
       <button class="btn danger" id="clearBtn">Clear this month</button>
     </footer>
-    <p class="foot-note">Saves automatically as you type · New months pre-fill from the previous one</p>
   </div>
 
   <!-- ============ BREAKDOWN TAB ============ -->
   <div id="page-breakdown" class="page">
     <div class="section">
       <h2><span class="sec-icon" style="background:var(--expense-soft);color:var(--expense)">📊</span>Expense breakdown — <span id="bdMonth"></span></h2>
-      <p class="desc">Where your money actually goes this month, biggest first. The home page stays simple — this is the deep dive.</p>
       <div id="bdContent"></div>
     </div>
   </div>
@@ -592,7 +513,7 @@
   <div id="page-invest" class="page">
     <div class="section">
       <h2><span class="sec-icon" style="background:var(--spend-soft);color:var(--spend)">📈</span>Investments</h2>
-      <p class="desc">Connect a savings pool to track it as an investment. The app already knows how much you put in and when (from your finalized months) — you just keep its <strong>current value</strong> up to date, and it works out your real returns.</p>
+      <div id="saveMoreBox" style="display:none"></div>
       <div id="invSummary"></div>
       <div id="invList"></div>
       <div id="invConnect" style="margin-top:14px"></div>
@@ -600,23 +521,10 @@
   </div>
 
   <!-- ============ POOLS TAB ============ -->
-  <div id="page-pools" class="page">
-    <div class="section">
-      <h2><span class="sec-icon" style="background:var(--save-soft);color:var(--save)">🏦</span>Pools — manage &amp; history</h2>
-      <p class="desc">Create pools, set their monthly target and end goal (or leave it indefinite), set a starting balance, and see every transaction across all time. Day-to-day deposits and withdrawals for a month are done on the <strong>Budget</strong> tab.</p>
-      <div id="poolsTabContent"></div>
-      <div class="add-cat" style="margin-top:14px">
-        <input class="text" type="text" id="newPool" placeholder="New pool (e.g. Emergency fund)…">
-        <button class="btn-add" id="addPoolBtn">+ Add pool</button>
-      </div>
-    </div>
-  </div>
-
   <!-- ============ PLAN TAB ============ -->
   <div id="page-plan" class="page">
     <div class="section">
       <h2><span class="sec-icon" style="background:color-mix(in srgb,var(--primary) 18%,transparent);color:var(--primary)">🎯</span>Savings target</h2>
-      <p class="desc">A quick calculator — <strong>not linked to your real budget</strong>. Try an income and a savings rate to see the target. (Your real per-pool targets stay on the Budget tab.)</p>
       <div class="field"><label for="ptIncome">Monthly income</label><span class="euro"><input class="money" type="number" id="ptIncome" min="0" step="0.01" placeholder="2600"></span></div>
       <div class="field"><label>Save as</label><div class="win-chips" id="ptMode"><button class="on" data-pm="pct">% of income</button><button data-pm="amt">fixed amount</button></div></div>
       <div class="field" id="ptPctRow"><label for="ptPct">Save this % of income</label><input class="text" type="number" id="ptPct" min="0" max="100" step="1" value="20" style="width:110px;text-align:right">&nbsp;%</div>
@@ -626,7 +534,6 @@
 
     <div class="section">
       <h2><span class="sec-icon" style="background:var(--spend-soft);color:var(--spend)">💰</span>Projection · lump sum</h2>
-      <p class="desc">Invest one amount and let it grow at a yearly return.</p>
       <div class="field"><label for="lsAmt">Lump sum invested</label><span class="euro"><input class="money" type="number" id="lsAmt" min="0" step="0.01" placeholder="10000"></span></div>
       <div class="field"><label for="lsRate">Yearly return</label><input class="text" type="number" id="lsRate" step="0.1" value="7" style="width:110px;text-align:right">&nbsp;%</div>
       <div class="field"><label for="lsDur">Time</label><input class="text" type="number" id="lsDur" min="0" step="1" value="10" style="width:110px;text-align:right">
@@ -637,7 +544,6 @@
 
     <div class="section">
       <h2><span class="sec-icon" style="background:var(--save-soft);color:var(--save)">📅</span>Projection · invest every month</h2>
-      <p class="desc">Add a fixed amount each month (optionally starting from a lump sum) and watch it compound.</p>
       <div class="field"><label for="rcMonthly">Invested each month</label><span class="euro"><input class="money" type="number" id="rcMonthly" min="0" step="0.01" placeholder="300"></span></div>
       <div class="field"><label for="rcStart">Starting lump (optional)</label><span class="euro"><input class="money" type="number" id="rcStart" min="0" step="0.01" placeholder="0"></span></div>
       <div class="field"><label for="rcRate">Yearly return</label><input class="text" type="number" id="rcRate" step="0.1" value="7" style="width:110px;text-align:right">&nbsp;%</div>
@@ -653,7 +559,6 @@
   <div class="modal">
     <h3>Close <span id="modalMonth"></span></h3>
     <div class="field"><label for="mBonus">Bonus / gifts received</label><span class="euro"><input class="money" type="number" id="mBonus" min="0" step="0.01"></span></div>
-    <p class="note">Months close themselves once they're over — this just closes a month you re-opened. What's left in Main (or the shortfall) rolls into the next month; closing locks it.</p>
     <div id="modalSummary"></div>
     <div class="actions">
       <button class="btn" id="modalCancel">Cancel</button>
@@ -679,15 +584,8 @@
     <div class="theme-grid" id="themeGrid"></div>
     <div class="set-label">Currency</div>
     <select id="currencySelect" class="text" style="width:100%"></select>
-    <p class="note">Currency changes how amounts are displayed everywhere. It doesn't convert existing numbers — it relabels them.</p>
-    <div class="set-label" style="margin-top:18px">Bank accounts</div>
-    <p class="note">Name the accounts your money lives in (bank, sub-account, credit card…). Then tag categories, items, the weekly allowance &amp; one-offs with an account to see how much to put where each month. (Savings pools aren't tagged — what matters is the amount, not which account it sits in.)</p>
-    <div id="acctList" style="margin:8px 0"></div>
-    <div class="field"><input class="text" type="text" id="acctAddName" placeholder="e.g. Main bank, Bills account, Credit card" autocomplete="off" style="flex:1;min-width:160px"><button class="btn primary" id="acctAddBtn">Add</button></div>
-    <div class="field" style="margin-top:8px"><label style="min-width:auto">Default account</label><select id="acctDefaultSel" class="text" style="flex:1"></select></div>
     <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px">
       <div class="set-label">Backup</div>
-      <p class="note">Download a full copy of your budget as a file, or restore from one. Keep a backup before any big change.</p>
       <div class="field">
         <button class="btn" id="exportDataBtn">Export data</button>
         <button class="btn" id="importDataBtn">Import data…</button>
@@ -697,7 +595,6 @@
     </div>
     <div id="adminAccessSection" style="display:none;margin-top:18px;border-top:1px solid var(--border);padding-top:14px">
       <div class="set-label">🔒 Manage access (invite-only)</div>
-      <p class="note">Only people whose email is on this list can use the app. You're always allowed. Changes take effect immediately.</p>
       <div id="accessList" style="margin:10px 0"></div>
       <div class="field"><input class="text" type="email" id="accessAddEmail" placeholder="friend@example.com" autocomplete="off" style="flex:1;min-width:160px"><button class="btn primary" id="accessAddBtn">Add</button></div>
       <p class="note" id="accessMsg" style="display:none"></p>
@@ -798,10 +695,8 @@ const monthName = key => { const [y,mo]=key.split("-"); return new Date(y,mo-1,1
 const parseDate = s => { const p=String(s).split("-").map(Number); return new Date(p[0],(p[1]||1)-1,p[2]||15); };
 const todayStr = () => { const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); };
 // Groceries % is now DERIVED from the month's fixed groceries/out-of-pocket amounts (falls back to the saved default split for a fresh month).
-const monthDayCount = key => { const [y,mo]=key.split("-").map(Number); return new Date(y, mo, 0).getDate(); };
 /* Weekly-allowance model: a fixed amount leaves the main account on a fixed weekday (every Monday by default)
    and is ALL the day-to-day spending money. Nothing is tracked per week — it counts as spent. */
-const WEEKDAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 const allowanceWeekday = () => { const v = data.settings && data.settings.allowanceWeekday; const n = Number(v); return (v == null || isNaN(n)) ? 1 : Math.min(6, Math.max(0, Math.round(n))); };
 // The days of a month on which the allowance transfer happens (e.g. every Monday → 4 or 5 dates).
 function allowanceDays(key) {
@@ -841,7 +736,6 @@ function migrateAllowance(d) {
   const s = d.settings;
   if (s.weeklyAllowance == null) s.weeklyAllowance = 150;
   if (s.allowanceWeekday == null) s.allowanceWeekday = 1;
-  if (!s.allowanceAccount && (s.grocAccount || s.oopAccount)) s.allowanceAccount = s.grocAccount || s.oopAccount;
   if (!s.autoCloseFrom) s.autoCloseFrom = monthKey(new Date());
   Object.values(d.months || {}).forEach(m => { if (!m.finalized && m.allowance == null) m.allowance = num(s.weeklyAllowance); });
 }
@@ -857,7 +751,7 @@ const invWindow = {}; // per-pool selected return window (months|null)
 function blankMonth() {
   return { income:0, bonus:0, groups:[], oneOff:[], savingsGoals:[], finalized:false, applied:null };
 }
-function normalize(d) { d.settings ??= {}; d.savings ??= {}; d.investments ??= {}; d.poolTx ??= {}; d.months ??= {}; d.accounts ??= []; Object.values(d.months).forEach(m => { m.oneOff ??= []; (m.groups || []).forEach(g => { g.subgroups ??= []; g.subgroups.forEach(sg => { sg.items ??= []; }); }); }); migrateBuffer(d); migrateContribTx(d); migrateAllowance(d); return d; }
+function normalize(d) { d.settings ??= {}; d.savings ??= {}; d.investments ??= {}; d.poolTx ??= {}; d.months ??= {}; Object.values(d.months).forEach(m => { m.oneOff ??= []; (m.groups || []).forEach(g => { g.subgroups ??= []; g.subgroups.forEach(sg => { sg.items ??= []; }); }); }); migrateBuffer(d); migrateContribTx(d); migrateAllowance(d); return d; }
 function load() {
   let raw; try { raw = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch {}
   if (raw && raw.months) return normalize(raw);
@@ -939,100 +833,39 @@ const weeklyAllowance = m => isLegacySpend(m) ? 0 : num(m.allowance ?? (data.set
 const spendBudget = m => isLegacySpend(m) ? num(m.grocAmt) + num(m.oopAmt) : weeklyAllowance(m) * allowanceDays(mkeyOf(m)).length;
 // Left in Main at the end of the month (+) or short (−). The allowance counts as spent, so this is the month's net — it rolls into next month.
 const leftInMain = m => discretionary(m) - spendBudget(m);
-// How short Main is this month (0 when there's money left). Includes any carried-in shortfall.
-// Human label for a pool transaction.
-function txLabel(x) {
-  if (x.t === "contribution") return "Monthly transfer";
-  if (x.t === "deposit") return (x.from === "main" || x.sweep) ? "Invested from Main" : "New money";
-  if (x.t === "withdraw") return ("cover" in x) ? "Covered shortfall" : (x.dest === "direct" ? "Taken out · spent directly" : "Taken out → Main");
-  if (x.t === "start") return "Balance set";
-  return x.t;
-}
 
 /* ===== accounts: which bank account each expense / pool draws from ===== */
-const uid = () => "a" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-const acctById = id => (data.accounts || []).find(a => a.id === id) || null;
-const acctName = id => { const a = acctById(id); return a ? a.name : ""; };
-// Walk the inherit chain (item → subcategory → category → global default); return the first real account id, else "".
-function resolveAcct(...ids) {
-  for (const id of ids) if (id && acctById(id)) return id;
-  const d = data.settings && data.settings.defaultAccount;
-  return (d && acctById(d)) ? d : "";
-}
-const inhLabel = name => name ? "↳ " + name : "— no account —";
-// A compact account picker. currentId = the raw stored tag (blank = inherit); inheritLabel names what it falls back to.
-function acctSelectHtml(currentId, attr, inheritLabel) {
-  const accts = data.accounts || [], set = currentId && acctById(currentId);
-  return `<select class="acct-sel${set ? "" : " inherited"}" ${attr}>` +
-    `<option value="">${esc(inheritLabel)}</option>` +
-    accts.map(a => `<option value="${a.id}" ${a.id === currentId ? "selected" : ""}>${esc(a.name)}</option>`).join("") +
-    `</select>`;
-}
-// Paint the account pickers that live in static HTML (the weekly allowance, one-offs). They all inherit the global default.
-function paintAcctPickers() {
-  const has = (data.accounts || []).length > 0, s = data.settings, dflt = inhLabel(acctName(resolveAcct()));
-  const aw = $("allowAcctWrap"), oo = $("oneOffAcctLine");
-  if (aw) aw.innerHTML = has ? `<span class="hint">→ lands in</span> ${acctSelectHtml(s.allowanceAccount, 'data-allowacct', dflt)}` : "";
-  if (oo) { oo.style.display = has ? "flex" : "none"; oo.innerHTML = has ? `<span class="acct-line-label">Draw all one-offs from:</span> ${acctSelectHtml(s.oneOffAccount, 'data-ooacct', dflt)}` : ""; }
-}
-// How much to set aside in each account this month = everything drawn from it (bills, one-offs, the weekly allowance), minus cash taken out of a pool back into it. Savings pools carry no account.
-function accountSetAside(m) {
-  const totals = {}, add = (id, amt) => { const kk = id || ""; totals[kk] = (totals[kk] || 0) + amt; };
-  const k = mkeyOf(m);
-  m.groups.forEach(g => {
-    g.items.forEach(it => add(resolveAcct(it.account, g.account), num(it.actual ?? it.planned)));
-    (g.subgroups || []).forEach(sg => sg.items.forEach(it => add(resolveAcct(it.account, sg.account, g.account), num(it.actual ?? it.planned))));
-  });
-  const ooTot = oneOffTotal(m); if (ooTot) add(resolveAcct(data.settings.oneOffAccount), ooTot);
-  const allow = spendBudget(m); if (allow) add(resolveAcct(data.settings.allowanceAccount), allow);
-  for (const n in (data.poolTx || {})) (data.poolTx[n] || []).forEach(x => {
-    if (!txIn(x, k)) return;
-    if (x.t === "withdraw" && x.dest !== "direct") add(resolveAcct(x.acct), num(x.a));               // cash back into Main (x.a is negative)
-  });
-  return totals;
-}
-// The headline "Main this month" card (needs / money in / left or short, with the Invest / Cover actions) + the per-account set-aside rows.
 function renderAccountSummary(m) {
   const box = $("acctSummary"); if (!box) return;
-  const accts = data.accounts || [], k = mkeyOf(m), ci = carryIn(k), prevName = monthName(prevKey(k)).split(" ")[0];
-  const bills = expensesEff(m), inv = savingsPlanned(m), allow = spendBudget(m), extra = investedFromMain(k), newM = newMoneyToMain(k), pulled = pulledToMain(k);
+  const k = mkeyOf(m), ci = carryIn(k), prevName = monthName(prevKey(k)).split(" ")[0];
+  const bills = expensesEff(m) - oneOffTotal(m), oo = oneOffTotal(m), inv = savingsPlanned(m), allow = spendBudget(m), extra = investedFromMain(k), newM = newMoneyToMain(k), pulled = pulledToMain(k);
   const moneyIn = num(m.income) + num(m.bonus) + pulled + newM + Math.max(ci, 0);
-  const out = bills + inv + allow + extra + Math.max(0, -ci);
+  const out = bills + oo + inv + allow + extra + Math.max(0, -ci);
   const left = leftInMain(m), legacy = isLegacySpend(m), n = legacy ? 0 : allowanceDays(k).length, wk = weeklyAllowance(m);
-  const mainName = acctName(resolveAcct()) || "Main account";
   const row = (label, sub, val, cls) => `<div class="main-row${cls ? " " + cls : ""}"><span><span>${label}</span>${sub ? `<span class="hint">${sub}</span>` : ""}</span><span class="num">${val}</span></div>`;
   const inParts = ["income" + (num(m.bonus) ? " + bonus" : "")];
   if (ci > 0.005) inParts.push(`left over from ${prevName} ${eur(ci)}`);
   if (pulled > 0.005) inParts.push(`taken out of pools ${eur(pulled)}`);
   if (newM > 0.005) inParts.push(`new money ${eur(newM)}`);
-  const outParts = [`bills ${eur(bills)}`, `investments ${eur(inv)}`, legacy ? `spending money ${eur(allow)}` : `allowance ${n} × ${eur(wk)}`];
+  const outParts = [`bills ${eur(bills)}`];
+  if (oo > 0.005) outParts.push(`one-offs ${eur(oo)}`);
+  outParts.push(`investments ${eur(inv)}`, legacy ? `spending money ${eur(allow)}` : `allowance ${n} × ${eur(wk)}`);
   if (extra > 0.005) outParts.push(`extra saved ${eur(extra)}`);
-  if (ci < -0.005) outParts.push(`shortfall carried from ${prevName} ${eur(-ci)}`);
+  if (ci < -0.005) outParts.push(`deficit carried from ${prevName} ${eur(-ci)}`);
   const tail = m.finalized ? "rolled into next month" : "";
-  const main = `<div class="acct-sum-head">${esc(mainName)} this month</div>` +
+  box.style.display = "block";
+  box.innerHTML = `<div class="main-card"><div class="acct-sum-head">Main this month</div>` +
     row("Money in", inParts.join(" · "), eur(moneyIn)) +
     row("Goes out", outParts.join(" · "), "− " + eur(out)) +
     (left >= -0.005
-      ? row(`Left in ${esc(mainName)}`, tail, "+ " + eur(Math.max(0, left)), "pos total")
-      : row(`Short in ${esc(mainName)}`, tail, "− " + eur(-left), "neg total"));
-  // per-account rows — only accounts that actually need money this month
-  let acctHtml = "";
-  if (accts.length) {
-    const totals = accountSetAside(m);
-    const mkRow = (name, id, un) => { const amt = totals[id] || 0; return `<div class="acct-sum-row${un ? " unassigned" : ""}"><span>${esc(name)}</span><span class="num${amt < 0 ? " pos" : ""}">${amt < 0 ? eur(-amt) + " spare" : eur(amt)}</span></div>`; };
-    const rows = accts.filter(a => Math.abs(totals[a.id] || 0) > 0.005).map(a => mkRow(a.name, a.id, false)).join("") +
-      (Math.abs(totals[""] || 0) > 0.005 ? mkRow("Unassigned", "", true) : "");
-    if (rows) acctHtml = `<div class="acct-sum-head" style="margin-top:16px">Put your money in this month</div>` + rows +
-      `<p class="hint" style="margin:8px 0 0">What each account needs for its bills, one-offs &amp; the weekly allowance.</p>`;
-  }
-  box.style.display = "block";
-  box.innerHTML = `<div class="main-card">${main}</div>${acctHtml}`;
+      ? row("Left in Main", tail, "+ " + eur(Math.max(0, left)), "pos total")
+      : row("Short in Main", tail, "− " + eur(-left), "neg total")) + `</div>`;
 }
-// Spare money in Main this month + the one action to put some of it into a pool (lives in the Savings section).
+// Spare money in Main — one action to put some of it into a pool (lives on the Pools tab now).
 function renderSaveMore(m) {
   const box = $("saveMoreBox"); if (!box) return;
   const k = mkeyOf(m), ci = carryIn(k), left = leftInMain(m), open = !m.finalized;
-  const mainName = acctName(resolveAcct()) || "Main", prevName = monthName(prevKey(k)).split(" ")[0];
+  const mainName = "Main", prevName = monthName(prevKey(k)).split(" ")[0];
   const short = left < -0.005;
   const carryTxt = ci > 0.005 ? (short ? `Even after the <b>${eur(ci)}</b> left over from ${prevName}.` : `Includes <b>${eur(ci)}</b> left over from ${prevName}.`) : ci < -0.005 ? `Includes the <b>${eur(-ci)}</b> shortfall carried over from ${prevName}.` : "";
   box.className = "save-more" + (short ? " short" : "");
@@ -1055,14 +888,6 @@ const monthOf = dateStr => String(dateStr).slice(0, 7);
 const monthFinalized = mkey => { const mm = data.months[mkey]; return !!(mm && mm.finalized); };
 // A month's investments count in pool balances ("landed") once the month has started — they go out on the 1st — or once it's closed. Months before the allowance model land only when closed.
 const monthLanded = mkey => { if (monthFinalized(mkey)) return true; const from = data.settings && data.settings.autoCloseFrom; return !!from && mkey >= from && mkey <= monthKey(new Date()); };
-function logPoolTx(name, amount, type, note, dateStr) {
-  data.poolTx = data.poolTx || {};
-  data.poolTx[name] = data.poolTx[name] || [];
-  data.poolTx[name].push({ d: dateStr || todayStr(), a: amount, t: type, n: note || "" });
-  recomputeSavings();
-}
-const poolMonthSum = (name, mkey) => poolTxOf(name).reduce((s, x) => s + (String(x.d).startsWith(mkey + "-") ? num(x.a) : 0), 0);
-const indefiniteGoal = g => g ? (g.indefinite !== undefined ? !!g.indefinite : !(num(g.target) > 0)) : true;
 /* A month's target amount (the contribution entry for that month) — frozen for finalized months, live for unfinalized. */
 const monthTarget = (name, mkey) => { const t = poolTxOf(name).find(x => x.t === "contribution" && monthOf(x.d) === mkey); return t ? num(t.a) : 0; };
 function poolList() {
@@ -1116,57 +941,6 @@ function syncContributions() {
     (m.savingsGoals || []).forEach(g => setContribution(g.name, mkey, num(g.planned)));
   });
 }
-function poolMonthLine(name) {
-  const mc = poolMonthSum(name, current), planned = monthTarget(name, current), verb = monthFinalized(current) ? "saved" : monthLanded(current) ? "sent" : "planned";
-  const text = `${monthName(current).split(" ")[0]}: ${(mc>=0?"+":"−")}${eur(Math.abs(mc))} ${verb}`;
-  const cls = "pmonth " + (planned>0 ? (mc>=planned?"pos":"neg") : (mc>0?"pos":mc<0?"neg":"zero"));
-  return { text, cls };
-}
-function renamePool(oldName, newName) {
-  if (!newName || oldName === newName) return;
-  Object.values(data.months).forEach(mm => {
-    (mm.savingsGoals||[]).forEach(g => { if (g.name === oldName) g.name = newName; });
-    const c = mm.applied && mm.applied.contributions;
-    if (c && oldName in c) { c[newName] = num(c[newName]) + num(c[oldName]); delete c[oldName]; } // keep closed-month snapshots under the new name
-  });
-  if (data.savings[oldName] !== undefined) { data.savings[newName] = num(data.savings[newName]) + num(data.savings[oldName]); delete data.savings[oldName]; }
-  if (data.investments[oldName]) { data.investments[newName] = data.investments[oldName]; delete data.investments[oldName]; }
-  if (data.poolTx[oldName]) { data.poolTx[newName] = data.poolTx[oldName]; delete data.poolTx[oldName]; }
-}
-function deletePool(name) {
-  Object.values(data.months).forEach(mm => {
-    const i = (mm.savingsGoals||[]).findIndex(g => g.name === name); if (i >= 0) mm.savingsGoals.splice(i, 1);
-    const c = mm.applied && mm.applied.contributions; if (c && name in c) delete c[name]; // scrub closed-month snapshots too, or the pool resurrects on the next load
-  });
-  delete data.savings[name]; delete data.investments[name]; delete data.poolTx[name];
-}
-
-/* ===== savings count-up + scroll-triggered animation ===== */
-let savAnimPlayed = false;
-function countUp(el, from, to, ms) {
-  const t0 = performance.now();
-  (function step(t) {
-    const k = Math.min(1, (t - t0) / ms), e = 1 - Math.pow(1 - k, 3);
-    el.textContent = eur(from + (to - from) * e);
-    if (k < 1) requestAnimationFrame(step); else el.textContent = eur(to);
-  })(t0);
-  setTimeout(() => { el.textContent = eur(to); }, ms + 80); // guarantee the final balance even if rAF stalls
-}
-function animateSavings() {
-  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  document.querySelectorAll("#poolsContainer .pool[data-pool]").forEach(card => {
-    const name = card.dataset.pool, bal = num(data.savings[name]);
-    // animate only what actually entered the pool this month (matches the derived balance: pending targets
-    // don't count, and a withdrawal cancels the pending target before touching the saved balance)
-    const change = poolMonthDelta(poolTxOf(name).filter(x => String(x.d).startsWith(current + "-")), monthFinalized(current));
-    const balEl = card.querySelector(".pbal"), fl = card.querySelector(".pool-float");
-    if (!balEl) return;
-    if (reduce || !change) { balEl.textContent = eur(bal); if (fl) fl.className = "pool-float"; return; }
-    if (fl) { fl.textContent = (change > 0 ? "+" : "−") + eur(Math.abs(change)); fl.className = "pool-float" + (change < 0 ? " neg" : ""); void fl.offsetWidth; fl.classList.add("go"); }
-    countUp(balEl, bal - change, bal, 850);
-  });
-}
-function playSavingsAnim() { savAnimPlayed = true; animateSavings(); }
 
 /* ===== theme + currency ===== */
 function applyTheme() {
@@ -1191,7 +965,6 @@ function switchTab(name) {
 }
 function renderTab(name) {
   if (name === "breakdown") renderBreakdown();
-  else if (name === "pools") renderPoolsTab();
   else if (name === "invest") renderInvest();
   else if (name === "plan") renderPlan();
 }
@@ -1217,13 +990,13 @@ function render() {
   const fb = $("finalizeBtn");
   fb.style.display = (locked || isPast) ? "" : "none"; // the current & future months close themselves once they're over
   fb.textContent = locked ? "↩ Re-open month" : "✓ Close month";
-  ["incomeSection","expenseSection","oneOffSection","savingsSection","allowanceSection"].forEach(id => $(id).classList.toggle("locked", locked));
+  ["incomeSection","expenseSection","oneOffSection","allowanceSection"].forEach(id => $(id).classList.toggle("locked", locked));
 
   $("incomeInput").value = m.income || "";
   $("bonusInput").value = m.bonus || "";
 
   syncContributions(); recomputeSavings();
-  renderGroups(m); renderOneOff(m); renderPools(m); renderRecap(m); updateSummary(m);
+  renderGroups(m); renderOneOff(m); renderRecap(m); updateSummary(m);
   if (activeTab !== "budget") renderTab(activeTab);
   save();
 }
@@ -1231,19 +1004,8 @@ function updateSummary(m) {
   renderAllocation(m);
   renderAllowanceCard(m);
   renderIncomeWithdrawals(current);
-  const ts = totalSaved(), np = Object.keys(data.savings).length;
-  $("totalSaved").textContent = eur(ts);
-  $("savedBreak").innerHTML = `across ${np} pool${np === 1 ? "" : "s"}`;
-  paintAcctPickers();
   renderAccountSummary(m);
-  renderSaveMore(m);
 }
-// Account tags for the allowance / one-offs / pools (all live inside the Budget page).
-$("page-budget").addEventListener("change", e => {
-  const d = e.target.dataset;
-  if (d.allowacct !== undefined) { data.settings.allowanceAccount = e.target.value; save(); updateSummary(getMonth(current)); }
-  else if (d.ooacct !== undefined) { data.settings.oneOffAccount = e.target.value; save(); updateSummary(getMonth(current)); }
-});
 // Income section: money that came INTO Main this month from pools or from outside (on top of income + bonus).
 function renderIncomeWithdrawals(mkey) {
   const c = $("incomeWithdrawals"); if (!c) return;
@@ -1262,39 +1024,16 @@ function renderIncomeWithdrawals(mkey) {
   const newTot = deps.reduce((s, x) => s + num(x.a), 0);
   html += `<div class="inc-wd-head" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">＋ New money into Main this month: <b>${eur(newTot)}</b><button class="btn sm" id="addCovDep" style="margin-left:auto">＋ New money</button></div>` +
     deps.map((x, i) => `<div class="inc-wd-row"><span>${dt(x.d)} · New money${x.n ? ` · ${esc(x.n)}` : ""}</span><span class="pos">+ ${eur(num(x.a))} <button class="lnk-x" data-rmdep="${i}" title="Remove">✕</button></span></div>`).join("") +
-    `<p class="hint" style="margin:2px 0 0">Money from outside your budget that landed in Main (a refund, cash you found, a gift) — not income or bonus. It raises what's left in Main this month.</p>`;
+    ``;
   c.innerHTML = html;
 }
 // The weekly-allowance card: amount & day, this month's transfer dates, and what it means for Main.
 function renderAllowanceCard(m) {
-  const k = mkeyOf(m), legacy = isLegacySpend(m), budget = spendBudget(m), dim = monthDayCount(k);
-  const setIf = (id, val) => { const el = $(id); if (el && document.activeElement !== el) el.value = val; }; // don't clobber the field being typed in
-  const wd = allowanceWeekday(), wk = weeklyAllowance(m), days = legacy ? [] : allowanceDays(k);
-  $("allowDayName").textContent = WEEKDAYS[wd];
-  const sel = $("allowanceDaySel");
-  if (!sel.options.length) sel.innerHTML = WEEKDAYS.map((nme, i) => `<option value="${i}">${nme}</option>`).join("");
-  sel.value = String(wd);
-  setIf("allowanceInput", wk ? wk : "");
-  $("allowanceInput").disabled = legacy || !!m.finalized; sel.disabled = legacy || !!m.finalized;
-  $("allowSum").textContent = legacy ? `${eur(budget)} spending money (old model)` : `${days.length} × ${eur(wk)} = ${eur(budget)} this month · ${eur(budget / dim)}/day`;
-  const now = new Date(), nowKey = monthKey(now), isThisMonth = k === nowKey, isPast = k < nowKey, today = now.getDate();
-  const [y, mo] = k.split("-").map(Number);
-  const curIdx = isThisMonth ? days.reduce((a, d, i) => d <= today ? i : a, -1) : -1; // the transfer you're currently living on
-  const nextIdx = isThisMonth ? days.findIndex(d => d > today) : -1;
-  $("allowSchedule").innerHTML = legacy
-    ? `<span class="allow-chip">${eur(num(m.grocAmt))} groceries</span><span class="allow-chip">${eur(num(m.oopAmt))} out-of-pocket</span>`
-    : days.map((d, i) => {
-        const date = new Date(y, mo-1, d), done = isPast || (isThisMonth && i < curIdx), isCur = i === curIdx, isNext = i === nextIdx;
-        const label = date.toLocaleDateString(undefined, { day:"numeric", month:"short" });
-        const tag = done ? " ✓" : isCur ? ` · ${d === today ? "today" : "this week"}` : isNext ? " · next" : "";
-        return `<span class="allow-chip${done ? " done" : ""}${isCur ? " cur" : ""}${isNext ? " next" : ""}" title="${eur(wk)} on ${date.toLocaleDateString(undefined, { weekday:"long", day:"numeric", month:"long" })}">${label}${tag}</span>`;
-      }).join("");
-  const left = leftInMain(m), many = days.length >= 5;
-  $("allowHint").innerHTML = legacy ? "Closed under the old groceries / out-of-pocket model." :
-    (many ? `<b>${days.length}-${WEEKDAYS[wd]} month</b> — ${eur(wk)} more than usual. ` : "") +
-    (left < -0.005
-      ? `Main is <b style="color:var(--over)">${eur(-left)} short</b> after bills, investments &amp; allowance — cover it from a pool, or it rolls into next month.`
-      : `<b style="color:var(--save)">${eur(left)}</b> left in Main after bills, investments &amp; allowance${left > 0.005 ? " — invest it, or let it roll into next month" : ""}.`);
+  const k = mkeyOf(m), legacy = isLegacySpend(m), budget = spendBudget(m);
+  const el = $("allowanceInput"), wk = weeklyAllowance(m), n = legacy ? 0 : allowanceDays(k).length;
+  if (document.activeElement !== el) el.value = wk ? wk : "";
+  el.disabled = legacy || !!m.finalized;
+  $("allowSum").innerHTML = legacy ? `= <b>${eur(budget)}</b> this month` : `× ${n} = <b>${eur(budget)}</b> this month`;
 }
 function liveRecalc() {
   const m = getMonth(current);
@@ -1316,51 +1055,42 @@ function liveRecalc() {
       });
     });
   });
-  m.savingsGoals.forEach((g, si) => {
-    const p = pools.querySelector(`.pool[data-si="${si}"]`); if (!p) return;
-    const bal = num(data.savings[g.name]), target = num(g.target), pc = target > 0 ? Math.min(100, bal/target*100) : 0;
-    const bar = p.querySelector(".pbar > div"); if (bar) bar.style.width = pc + "%";
-    const tt = p.querySelector(".ptarget"); if (tt) tt.textContent = target > 0 ? `${Math.round(pc)}% of ${eur(target)} goal` : "no target set";
-    p.classList.toggle("reached", target > 0 && bal >= target);
-  });
   save();
 }
-// Distinct colours for expense categories in the allocation bar (chosen to avoid clashing with savings/groceries/OOP/over).
-const CAT_COLORS = ["#8b5cf6","#ec4899","#14b8a6","#f97316","#64748b","#a855f7","#d946ef","#0891b2","#e11d48","#7c3aed","#db2777","#4f8a4f"];
 function renderAllocation(m) {
   const k = mkeyOf(m), ci = carryIn(k), legacy = isLegacySpend(m);
   const exp = expensesEff(m), sav = savingsPlanned(m), budget = spendBudget(m), extra = investedFromMain(k);
+  const ooTot = oneOffTotal(m), bills = exp - ooTot;
   const moneyIn = num(m.income) + num(m.bonus) + pulledToMain(k) + newMoneyToMain(k) + Math.max(ci, 0);
-  const carriedDebt = Math.max(0, -ci);
-  const forAllowance = Math.max(0, moneyIn - exp - sav - extra);     // what money-in leaves for the weekly allowance
-  const fit = Math.min(budget, forAllowance);                          // allowance that's funded
-  const rawLeft = Math.max(0, forAllowance - budget);
-  const over = Math.max(0, budget - forAllowance) + Math.max(0, carriedDebt - rawLeft); // short in Main (incl. a carried-in shortfall)
-  const left = Math.max(0, rawLeft - carriedDebt);                      // left in Main
-  const repaid = Math.min(carriedDebt, rawLeft);                        // last month's shortfall that this month's money actually covered
-  // bills by category (+ one-offs), each its own colour
-  const cats = m.groups.map(g => ({ name:g.name, val:groupTotal(g, true) })).filter(c => c.val > 0);
-  const ooTot = oneOffTotal(m); if (ooTot > 0) cats.push({ name:"One-off", val:ooTot });
-  cats.forEach((c, i) => c.color = CAT_COLORS[i % CAT_COLORS.length]);
-  const sum = exp + sav + extra + fit + repaid + over + left;
-  const den = Math.max(moneyIn, sum, 1), pc = v => Math.max(0, v) / den * 100;
-  const seg = (cls, v, color) => v > 0 ? `<span class="${cls}" style="width:${pc(v)}%${color ? ";background:" + color : ""}"></span>` : "";
+  const carried = Math.max(0, -ci);            // last month's deficit, shown in full
+  const totals = bills + ooTot + sav + extra + budget + carried;
+  const over = Math.max(0, totals - moneyIn);  // this month's overbudget spending — at close it merges with the carried deficit into ONE number for next month
+  const left = Math.max(0, moneyIn - totals);  // unallocated
+  const cats = m.groups.map(g => ({ name: g.name, val: groupTotal(g, true) })).filter(c => c.val > 0);
+  // the shortfall is shaved off the drawn commitments (allowance first) so the bar never double-counts and always fills
+  const drawn = { allow: budget, carry: carried, sav: sav, oo: ooTot, bills: bills, extra: extra };
+  let shave = over;
+  for (const key of ["allow", "carry", "sav", "oo", "bills", "extra"]) { const t = Math.min(drawn[key], shave); drawn[key] -= t; shave -= t; }
+  const den = Math.max(moneyIn, totals, 1), pc = v => Math.max(0, v) / den * 100;
+  const seg = (cls, v) => v > 0 ? `<span class="${cls}" style="width:${pc(v)}%"></span>` : "";
+  const billsScale = bills > 0 ? drawn.bills / bills : 0;
   $("allocBar").innerHTML =
-    cats.map(c => seg("", c.val, c.color)).join("") +
-    seg("seg-sav", sav) + seg("seg-sweep", extra) + seg("seg-allow", fit) + seg("seg-carry", repaid) + seg("seg-over", over) + seg("seg-left", left);
-  // legend: one box per item — colour, then name, then amount
-  const box = (color, name, v, swClass) => `<div class="leg-box"><span class="sw${swClass ? " " + swClass : ""}"${swClass ? "" : ` style="background:${color}"`}></span><span class="leg-name">${name}</span><span class="leg-amt"${swClass === "seg-over" ? ' style="color:var(--over)"' : ""}>${eur(v)}</span></div>`;
-  const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+    cats.map(c => seg("seg-bills", c.val * billsScale)).join("") +
+    seg("seg-allow", drawn.allow) + seg("seg-sav", drawn.sav) + seg("seg-oneoff", drawn.oo) +
+    seg("seg-carry", drawn.carry) + seg("seg-sweep", drawn.extra) + seg("seg-left", left) + seg("seg-over", over);
+  const box = (name, v, swClass, amtStyle) => `<div class="leg-box"><span class="sw ${swClass}"></span><span class="leg-name">${name}</span><span class="leg-amt"${amtStyle ? ` style="${amtStyle}"` : ""}>${eur(v)}</span></div>`;
+  const cap = str => str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
   const n = legacy ? 0 : allowanceDays(k).length, wk = weeklyAllowance(m);
   $("allocLegend").innerHTML =
-    cats.map(c => box(c.color, esc(cap(c.name)), c.val)).join("") +
-    box("var(--save)", "Investments", sav) +
-    (extra > 0.005 ? box(null, "Extra invested", extra, "seg-sweep") : "") +
-    box(null, legacy ? "Spending money" : `Allowance · ${n} × ${eur(wk)}`, budget, "seg-allow") +
-    (ci > 0.005 ? box("var(--save)", "Left over from last month", ci) : "") +
-    (repaid > 0.005 ? box(null, "Repaid last month's shortfall", repaid, "seg-carry") : "") +
-    (over > 0.005 ? box(null, "Short in Main", over, "seg-over") : "") +
-    (left > 0.005 ? box(null, "Left in Main", left, "seg-left") : "");
+    cats.map(c => box(esc(cap(c.name)), c.val, "seg-bills")).join("") +
+    box(legacy ? "Spending money" : `Allowance · ${n} × ${eur(wk)}`, budget, "seg-allow") +
+    box("Investments", sav, "seg-sav") +
+    (ooTot > 0.005 ? box("One-off", ooTot, "seg-oneoff") : "") +
+    (carried > 0.005 ? box("Last month's Deficit", carried, "seg-carry") : "") +
+    (extra > 0.005 ? box("Extra invested", extra, "seg-sweep") : "") +
+    (ci > 0.005 ? box("Left over from last month", ci, "seg-sav") : "") +
+    (left > 0.005 ? box("Unallocated", left, "seg-left") : "") +
+    (over > 0.005 ? box("Overbudget spending", over, "seg-over", "color:var(--over)") : "");
 }
 function renderRecap(m) {
   const r = $("recap");
@@ -1380,21 +1110,20 @@ function deltaHtml(it) {
 }
 // One expense row. sgi === null for a category's own items; otherwise the item lives in subcategory sgi.
 // parentAcct = the account this item inherits if it isn't tagged itself.
-function itemRowHtml(gi, sgi, ii, it, parentAcct) {
+function itemRowHtml(gi, sgi, ii, it) {
   const addr = sgi == null ? `data-gi="${gi}" data-ii="${ii}"` : `data-gi="${gi}" data-sgi="${sgi}" data-ii="${ii}"`;
   const dkey = sgi == null ? `${gi}:${ii}` : `${gi}:${sgi}:${ii}`;
   const del = sgi == null ? `data-delitem="${gi}:${ii}"` : `data-delsgitem="${gi}:${sgi}:${ii}"`;
-  const acctSel = (data.accounts || []).length ? acctSelectHtml(it.account, `data-iacct="${dkey}"`, inhLabel(acctName(parentAcct))) : "";
   return `<tr data-rowidx="${ii}">
-      <td><div class="name-wrap"><span class="drag-handle" data-drag="${dkey}" title="Drag to move to another category" aria-label="Drag to move">⠿</span><input class="cell name" type="text" value="${esc(it.name)}" ${addr} data-f="name" aria-label="Item name">${acctSel}</div></td>
+      <td><div class="name-wrap"><span class="drag-handle" data-drag="${dkey}" title="Drag to move to another category" aria-label="Drag to move">⠿</span><input class="cell name" type="text" value="${esc(it.name)}" ${addr} data-f="name" aria-label="Item name"></div></td>
       <td class="r"><input class="cell r amt" type="number" inputmode="decimal" min="0" step="0.01" value="${it.planned ?? ""}" ${addr} data-f="planned" aria-label="Planned"></td>
       <td class="r"><input class="cell r amt actual" type="number" inputmode="decimal" min="0" step="0.01" value="${it.actual ?? ""}" placeholder="${num(it.planned).toFixed(2)}" ${addr} data-f="actual" aria-label="Actual"></td>
       <td class="r" data-delta="${dkey}">${deltaHtml(it)}</td>
       <td class="r"><button class="btn-x" ${del} aria-label="Delete item">✕</button></td></tr>`;
 }
-function itemsTableHtml(gi, sgi, items, addName, parentAcct) {
+function itemsTableHtml(gi, sgi, items, addName) {
   const dropKey = sgi == null ? `${gi}` : `${gi}:${sgi}`;
-  const rows = items.map((it, ii) => itemRowHtml(gi, sgi, ii, it, parentAcct)).join("");
+  const rows = items.map((it, ii) => itemRowHtml(gi, sgi, ii, it)).join("");
   const addAttr = sgi == null ? `data-additem="${gi}"` : `data-addsgitem="${gi}:${sgi}"`;
   const addBtn = sgi == null ? `data-additembtn="${gi}"` : `data-addsgitembtn="${gi}:${sgi}"`;
   return `<div class="items-drop" data-drop="${dropKey}"><table><thead><tr><th>Item</th><th class="r">Planned</th><th class="r">Actual</th><th class="r">Δ</th><th></th></tr></thead>
@@ -1404,39 +1133,32 @@ function itemsTableHtml(gi, sgi, items, addName, parentAcct) {
 function renderGroups(m) {
   const c = $("groupsContainer"), totalExp = expensesEff(m) || 1; c.innerHTML = "";
   if (!m.groups.length) c.innerHTML = `<p class="hint" style="padding:6px 2px">No categories yet — add one below.</p>`;
-  const hasAccts = (data.accounts || []).length > 0;
   m.groups.forEach((g, gi) => {
     const gt = groupTotal(g, true);
-    const gParent = resolveAcct(g.account); // account this category's own items inherit
     const subHtml = (g.subgroups || []).map((sg, sgi) => {
       const sgt = itemsTotal(sg.items, true);
-      const sgParent = resolveAcct(sg.account, g.account); // account this subcategory's items inherit
-      const sgAcctSel = hasAccts ? acctSelectHtml(sg.account, `data-sgacct="${gi}:${sgi}"`, inhLabel(acctName(gParent))) : "";
       return `<div class="subgroup${sg.collapsed ? " collapsed" : ""}">
         <div class="subgroup-head">
           <span class="sg-handle" data-sgtoggle="${gi}:${sgi}" role="button" aria-label="Collapse subcategory" tabindex="0">▾</span>
           <input class="sgname" type="text" value="${esc(sg.name)}" data-sgname="${gi}:${sgi}" aria-label="Subcategory name">
-          ${sgAcctSel}
           <div class="sgtotal num" data-sgtotal="${gi}:${sgi}">${eur(sgt)}</div>
           <button class="btn-x" data-delsg="${gi}:${sgi}" aria-label="Delete subcategory">✕</button>
         </div>
-        <div class="sgbody" style="max-height:${sg.collapsed ? 0 : 2000}px">${itemsTableHtml(gi, sgi, sg.items, sg.name, sgParent)}</div>
+        <div class="sgbody" style="max-height:${sg.collapsed ? 0 : 2000}px">${itemsTableHtml(gi, sgi, sg.items, sg.name)}</div>
       </div>`;
     }).join("");
-    const gAcctSel = hasAccts ? acctSelectHtml(g.account, `data-gacct="${gi}"`, inhLabel(acctName(resolveAcct()))) : "";
     const div = document.createElement("div");
     div.className = "group" + (g.collapsed ? " collapsed" : "");
     div.innerHTML = `
       <div class="group-head">
         <span class="ghandle" data-toggle="${gi}" role="button" aria-label="Collapse category" tabindex="0">▾</span>
         <input class="gname" type="text" value="${esc(g.name)}" data-gname="${gi}" aria-label="Category name">
-        ${gAcctSel}
         <div class="gmeta"><div class="gtotal num" data-gtotal="${gi}">${eur(gt)}</div>
           <div class="gshare"><div data-gshare="${gi}" style="width:${Math.min(100, gt/totalExp*100)}%"></div></div></div>
         <button class="btn-x" data-delgroup="${gi}" aria-label="Delete category">✕</button>
       </div>
       <div class="gbody" style="max-height:${g.collapsed ? 0 : 6000}px">
-        ${itemsTableHtml(gi, null, g.items, g.name, gParent)}
+        ${itemsTableHtml(gi, null, g.items, g.name)}
         ${subHtml}
         <div class="add-sg"><input class="text" type="text" placeholder="New subcategory in ${esc(g.name)}…" data-addsg="${gi}"><button class="btn-add" data-addsgbtn="${gi}">+ Subcategory</button></div>
       </div>`;
@@ -1454,55 +1176,6 @@ function renderOneOff(m) {
     : `<p class="hint" style="margin:0">None this month — add one below (a gift, a repair, tickets…).</p>`;
 }
 
-function renderPools(m) {
-  const c = $("poolsContainer"); c.innerHTML = "";
-  const names = poolList();
-  if (!names.length) { c.innerHTML = `<p class="hint">No pools yet — add one on the <b>Pools</b> tab.</p>`; return; }
-  const monLabel = monthName(current).split(" ")[0];
-  names.forEach(name => {
-    const goal = m.savingsGoals.find(g => g.name === name);
-    const indef = indefiniteGoal(goal);
-    const bal = num(data.savings[name]), target = (goal && !indef) ? num(goal.target) : 0;
-    const planned = monthTarget(name, current);
-    const pc = target > 0 ? Math.min(100, bal/target*100) : 0, reached = target > 0 && bal >= target;
-    const isInv = !!data.investments[name], mChange = poolMonthSum(name, current), mLine = poolMonthLine(name);
-    const monthItems = (data.poolTx[name] || []).map((x, idx) => ({ x, idx })).filter(o => String(o.x.d).startsWith(current + "-"));
-    const itemsHtml = monthItems.length ? monthItems.map(({ x, idx }) => x.t === "contribution"
-      ? `<div class="ptx-item">
-          <span class="tx-when">${parseDate(x.d).toLocaleDateString(undefined,{day:"numeric",month:"short"})} · Monthly transfer${monthLanded(current) ? (m.finalized ? "" : ` <span class="pending-tag" style="background:var(--save);color:#fff;border-color:transparent">sent on the 1st</span>`) : ` <span class="pending-tag">pending</span>`}</span>
-          <span class="euro"><input class="mini-amt locked" type="number" value="${num(x.a)}" readonly tabindex="-1" aria-label="Monthly target — set on the Pools tab"></span>
-          <span class="btn-x lock" title="${m.finalized ? "Locked — this month is closed." : monthLanded(current) ? "Sent on the 1st — already counted in the pool balance. Change the monthly amount on the Pools tab." : "Planned — it lands in the pool on the 1st of this month. Change it on the Pools tab."}">🔒</span>
-        </div>`
-      : `<div class="ptx-item">
-          <span class="tx-when">${parseDate(x.d).toLocaleDateString(undefined,{day:"numeric",month:"short"})} · ${txLabel(x)}</span>
-          <span class="euro"><input class="mini-amt ptx-in" type="number" step="0.01" value="${num(x.a)}" data-ptx="${idx}" aria-label="Amount"></span>
-          <button class="btn-x" data-ptxdel="${idx}" aria-label="Delete">✕</button>
-        </div>`).join("") : `<div class="hint" style="padding:2px 0">No changes logged for ${monLabel} yet.</div>`;
-    const goalTxt = (!indef && target > 0) ? `${Math.round(pc)}% of ${eur(target)} goal` : "";
-    const targetInfo = [planned ? `${eur(planned)}/month on the 1st` : "", goalTxt].filter(Boolean).join(" · ") || "no monthly amount set";
-    const div = document.createElement("div");
-    div.className = "pool" + (reached ? " reached" : "");
-    div.dataset.pool = name;
-    div.innerHTML = `
-      <div class="pool-float"></div>
-      <div class="pool-top">
-        <span class="pname" style="font-weight:650">${esc(name)}</span>
-        ${isInv ? `<span class="inv-tag">📈 invested</span>` : ""}
-        ${reached ? `<span class="reached-tag">✓ reached</span>` : ""}
-      </div>
-      <div class="pbal num">${eur(bal)}</div>
-      <div class="ptarget">${targetInfo}</div>
-      ${target > 0 ? `<div class="pbar"><div style="width:${pc}%"></div></div>` : `<div style="height:6px"></div>`}
-      <div class="${mLine.cls}">${mLine.text}</div>
-      <div class="ptx-list">${itemsHtml}</div>
-      <div class="inv-actions">
-        <button class="btn sm" data-pnew="${esc(name)}">＋ New money</button>
-        <button class="btn sm" data-pwd="${esc(name)}">− Take out</button>
-      </div>`;
-    c.appendChild(div);
-  });
-}
-
 /* ===== editing events ===== */
 $("incomeInput").addEventListener("input", e => { getMonth(current).income = num(e.target.value); liveRecalc(); });
 $("bonusInput").addEventListener("input", e => { getMonth(current).bonus = num(e.target.value); liveRecalc(); });
@@ -1514,7 +1187,6 @@ $("allowanceInput").addEventListener("input", e => {
   Object.keys(data.months).forEach(k => { const mm = data.months[k]; if (k > current && !mm.finalized) mm.allowance = v; });
   updateSummary(m); save();
 });
-$("allowanceDaySel").addEventListener("change", e => { data.settings.allowanceWeekday = Math.min(6, Math.max(0, num(e.target.value))); save(); render(); });
 function addGroup() { const inp = $("newGroup"), name = inp.value.trim(); if (!name) return; getMonth(current).groups.push({ name, collapsed:false, items:[] }); inp.value = ""; render(); }
 $("addGroupBtn").addEventListener("click", addGroup);
 $("newGroup").addEventListener("keydown", e => { if (e.key === "Enter") addGroup(); });
@@ -1550,13 +1222,6 @@ groups.addEventListener("keydown", e => {
   else if (d.addsgitem !== undefined) addSubItem(d.addsgitem);
   else if (d.addsg !== undefined) addSubgroup(d.addsg);
   else if (d.toggle !== undefined || d.sgtoggle !== undefined) e.target.click();
-});
-// Tag a category / subcategory / item with a bank account (blank = inherit from parent).
-groups.addEventListener("change", e => {
-  const d = e.target.dataset, m = getMonth(current);
-  if (d.gacct !== undefined) { m.groups[d.gacct].account = e.target.value; render(); }
-  else if (d.sgacct !== undefined) { const [gi, sgi] = d.sgacct.split(":"); m.groups[gi].subgroups[sgi].account = e.target.value; render(); }
-  else if (d.iacct !== undefined) { const p = d.iacct.split(":"); if (p.length === 2) m.groups[p[0]].items[p[1]].account = e.target.value; else m.groups[p[0]].subgroups[p[1]].items[p[2]].account = e.target.value; render(); }
 });
 function addItem(gi) { const inp = groups.querySelector(`[data-additem="${gi}"]`), name = inp.value.trim(); if (!name) return; getMonth(current).groups[gi].items.push({ name, planned:0, actual:null }); render(); }
 function addSubItem(key) { const [gi, sgi] = key.split(":"), inp = groups.querySelector(`[data-addsgitem="${key}"]`), name = inp.value.trim(); if (!name) return; getMonth(current).groups[gi].subgroups[sgi].items.push({ name, planned:0, actual:null }); render(); }
@@ -1634,33 +1299,6 @@ groups.addEventListener("pointerup", e => {
   if (active && zone) commitDrag(dkey, zone, y);
 });
 groups.addEventListener("pointercancel", endDrag);
-function addPool() { const inp = $("newPool"), name = inp.value.trim(); if (!name) return; getMonth(current).savingsGoals.push({ name, planned:0, target:0 }); inp.value = ""; render(); }
-$("addPoolBtn").addEventListener("click", addPool);
-$("newPool").addEventListener("keydown", e => { if (e.key === "Enter") addPool(); });
-const pools = $("poolsContainer");
-pools.addEventListener("input", e => {
-  const t = e.target; if (t.dataset.ptx === undefined) return;
-  const card = t.closest("[data-pool]"); if (!card) return;
-  const name = card.dataset.pool, idx = +t.dataset.ptx, tx = data.poolTx[name][idx];
-  if (!tx) return;
-  tx.a = num(t.value); recomputeSavings();
-  const balEl = card.querySelector(".pbal"); if (balEl) balEl.textContent = eur(num(data.savings[name]));
-  const mEl = card.querySelector(".pmonth"), mLine = poolMonthLine(name);
-  if (mEl) { mEl.textContent = mLine.text; mEl.className = mLine.cls; }
-  updateSummary(getMonth(current)); save();
-});
-pools.addEventListener("click", e => {
-  const t = e.target.closest("button"); if (!t) return;
-  if (t.dataset.pinvest !== undefined) openMoveModal("invest", t.dataset.pinvest);
-  else if (t.dataset.pnew !== undefined) openMoveModal("new", t.dataset.pnew);
-  else if (t.dataset.pwd !== undefined) openMoveModal("takeout", t.dataset.pwd);
-  else if (t.dataset.ptxdel !== undefined) {
-    const card = t.closest("[data-pool]"); if (!card) return;
-    const name = card.dataset.pool, idx = +t.dataset.ptxdel;
-    if (data.poolTx[name] && data.poolTx[name][idx]) data.poolTx[name].splice(idx, 1);
-    render();
-  }
-});
 // Income section: new money that landed in Main (not income / bonus)
 $("incomeWithdrawals").addEventListener("click", e => {
   const t = e.target;
@@ -1712,7 +1350,7 @@ function updateModalSummary() {
   const bonus = num($("mBonus").value), exp = expensesEff(m), sav = savingsPlanned(m), pulled = pulledToMain(k), newM = newMoneyToMain(k), ci = carryIn(k), extra = investedFromMain(k), allow = spendBudget(m);
   const [ny,nm] = current.split("-").map(Number), nextName = monthName(monthKey(new Date(ny, nm, 1))).split(" ")[0];
   const net = num(m.income) + bonus + ci + pulled + newM - exp - sav - extra - allow;
-  const n = isLegacySpend(m) ? 0 : allowanceDays(k).length, mainName = acctName(resolveAcct()) || "Main";
+  const n = isLegacySpend(m) ? 0 : allowanceDays(k).length, mainName = "Main";
   $("modalSummary").innerHTML = `
     <div class="mrow"><span>Income</span><span class="num">${eur(m.income)}</span></div>
     <div class="mrow"><span>Bonus / gifts</span><span class="num">+ ${eur(bonus)}</span></div>
@@ -1778,7 +1416,7 @@ function closeMove() { coverModal.classList.remove("show"); }
 function openMoveModal(kind, poolName) {
   const m = getMonth(current), left = leftInMain(m), short = Math.max(0, -left), pools = poolList();
   const body = $("coverBody"), acts = $("coverActions"), h3 = coverModal.querySelector("h3");
-  const mainName = acctName(resolveAcct()) || "Main";
+  const mainName = "Main";
   const simple = (title, text) => { h3.textContent = title; body.innerHTML = `<p class="note" style="margin:0">${text}</p>`; acts.innerHTML = `<button class="btn primary" id="mvClose">OK</button>`; $("mvClose").onclick = closeMove; coverModal.classList.add("show"); };
   if (kind !== "newMain" && !pools.length) return simple("No pools yet", "Create a savings pool first (Pools tab).");
   if (kind === "cover" && short <= 0.005) return simple("Cover a shortfall", `${esc(mainName)} isn't short this month — nothing to cover. 🎉`);
@@ -1825,7 +1463,7 @@ function openMoveModal(kind, poolName) {
       else if (kind === "cover") data.poolTx[name].push({ d: txDate(), a: -a, t: "withdraw", n: "", cover: true, dest: "main" });
       recomputeSavings();
     }
-    closeMove(); render(); playSavingsAnim();
+    closeMove(); render();
   };
   coverModal.classList.add("show");
 }
@@ -1981,6 +1619,7 @@ function sparkline(name) {
     <polyline points="${pts}" fill="none" stroke="${up ? "var(--save)" : "var(--over)"}" stroke-width="2"/></svg>`;
 }
 function renderInvest() {
+  renderSaveMore(getMonth(current));
   const names = Object.keys(data.investments);
   // summary
   let totInv = 0, totVal = 0, anyVal = false;
@@ -2084,75 +1723,6 @@ $("invConnect").addEventListener("click", e => {
   data.investments[name] = inv; save(); renderInvest(); render();
 });
 
-/* ===== POOLS tab (full history) ===== */
-function renderPoolsTab() {
-  const c = $("poolsTabContent"), m = getMonth(current);
-  const names = poolList();
-  if (!names.length) { c.innerHTML = `<p class="hint">No pools yet — add one below.</p>`; return; }
-  c.innerHTML = names.map(name => {
-    const goal = m.savingsGoals.find(g => g.name === name), si = m.savingsGoals.indexOf(goal);
-    const bal = num(data.savings[name]), target = goal ? num(goal.target) : 0, isInv = !!data.investments[name], indef = indefiniteGoal(goal);
-    const txs = poolTxOf(name).filter(x => !(x.t === "contribution" && !monthLanded(monthOf(x.d)))).slice().sort((a,b) => String(b.d).localeCompare(String(a.d)));
-    const rows = txs.length ? txs.map(x => `<tr>
-        <td class="tx-when">${parseDate(x.d).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"})}</td>
-        <td>${txLabel(x)}${x.n && x.n !== "Deficit cover" && x.n !== "Covered shortfall" ? ` <span class="hint">· ${esc(x.n)}</span>` : ""}</td>
-        <td class="r tx-amt ${num(x.a)>=0?"pos":"neg"}">${num(x.a)>=0?"+":"−"}${eur(Math.abs(num(x.a)))}</td></tr>`).join("")
-      : `<tr><td colspan="3" class="hint">No logged activity yet.</td></tr>`;
-    return `<div class="ph-card" data-pt="${esc(name)}">
-      <div class="ph-head">
-        <div style="flex:1">${goal
-            ? `<input class="pname" type="text" value="${esc(name)}" data-pt-name="${si}" style="font-weight:700;font-size:15px;min-width:140px">`
-            : `<span class="ph-name">${isInv?"📈 ":"🏦 "}${esc(name)} <small class="hint">(inactive — not in this month)</small></span>`}
-          <div class="hint" style="margin-top:3px">${txs.length} entr${txs.length===1?"y":"ies"}${isInv?" · 📈 investment":""}</div></div>
-        <div class="ph-bal">${eur(bal)}</div></div>
-      ${goal ? `<div class="pool-controls" style="margin:12px 0 8px">
-          <span class="mini">target/mo <span class="euro"><input class="mini-amt" type="number" min="0" step="0.01" value="${goal.planned ?? ""}" data-pt-mo="${si}"></span></span>
-          <span class="mini">end goal <span class="euro"><input class="mini-amt" type="number" min="0" step="0.01" value="${target || ""}" data-pt-goal="${si}" ${indef?"disabled":""}></span></span>
-          <label class="mini" style="cursor:pointer;gap:5px"><input type="checkbox" data-pt-indef="${si}" ${indef?"checked":""}> indefinite (no goal)</label>
-        </div>` : ""}
-      <div class="inv-actions" style="margin-bottom:8px">
-        <button class="btn sm" data-pt-setbal="${esc(name)}">Set balance</button>
-        <button class="btn sm danger" data-pt-del="${esc(name)}">Delete pool</button>
-      </div>
-      <table class="ph-tx"><tbody>${rows}</tbody></table></div>`;
-  }).join("");
-}
-const poolsTabC = $("poolsTabContent");
-poolsTabC.addEventListener("input", e => {
-  const t = e.target, m = getMonth(current);
-  if (t.dataset.ptMo !== undefined) {
-    const g = m.savingsGoals[t.dataset.ptMo]; g.planned = num(t.value);
-    if (!m.finalized) setContribution(g.name, current, num(g.planned)); // updates this month's target entry; balance is unaffected until you finalize
-    save();
-  }
-  else if (t.dataset.ptGoal !== undefined) { m.savingsGoals[t.dataset.ptGoal].target = num(t.value); save(); }
-});
-poolsTabC.addEventListener("change", e => {
-  const t = e.target, m = getMonth(current);
-  if (t.dataset.ptName !== undefined) {
-    const g = m.savingsGoals[t.dataset.ptName], nn = t.value.trim();
-    if (nn && nn !== g.name) renamePool(g.name, nn);
-    render(); renderPoolsTab();
-  } else if (t.dataset.ptIndef !== undefined) {
-    const g = m.savingsGoals[t.dataset.ptIndef];
-    g.indefinite = t.checked;          // explicit flag — unchecking now lets you type an end goal
-    save(); render(); renderPoolsTab();
-  }
-});
-poolsTabC.addEventListener("click", e => {
-  const t = e.target;
-  if (t.dataset.ptSetbal !== undefined) {
-    const name = t.dataset.ptSetbal, cur = num(data.savings[name]);
-    const v = prompt(`Set the current balance for "${name}" (now ${eur(cur)}):`, cur.toFixed(2));
-    if (v == null) return; const delta = num(v) - cur; if (delta !== 0) logPoolTx(name, delta, "start", "Balance set");
-    render(); renderPoolsTab();
-  } else if (t.dataset.ptDel !== undefined) {
-    const name = t.dataset.ptDel, bal = num(data.savings[name]);
-    if (!confirm(`Delete "${name}"${bal?` and discard its ${eur(bal)} balance`:""}? This removes it everywhere.`)) return;
-    deletePool(name); render(); renderPoolsTab();
-  }
-});
-
 /* ===== PLAN tab (calculators — not linked to real data) ===== */
 let ptMode = "pct";
 function planChart(values, invested) {
@@ -2226,31 +1796,7 @@ function renderSettings() {
       <div class="tn">${t.name}</div></div>`).join("");
   const cur = (data.settings.currency) || "EUR";
   $("currencySelect").innerHTML = Object.keys(CURRENCIES).map(code => `<option value="${code}" ${code === cur ? "selected" : ""}>${code} — ${CURRENCIES[code].sym}</option>`).join("");
-  const accts = data.accounts || [];
-  $("acctList").innerHTML = accts.length
-    ? accts.map(a => `<div class="acct-row"><input class="text acct-name" data-acctid="${a.id}" value="${esc(a.name)}" aria-label="Account name"><button class="btn-x" data-acctdel="${a.id}" aria-label="Delete account">✕</button></div>`).join("")
-    : `<p class="hint" style="margin:0">No accounts yet — add one below.</p>`;
-  $("acctDefaultSel").innerHTML = `<option value="">— none —</option>` + accts.map(a => `<option value="${a.id}" ${data.settings.defaultAccount === a.id ? "selected" : ""}>${esc(a.name)}</option>`).join("");
 }
-function addAccount() { const inp = $("acctAddName"), name = inp.value.trim(); if (!name) return; data.accounts = data.accounts || []; data.accounts.push({ id: uid(), name }); inp.value = ""; save(); renderSettings(); if (activeTab === "budget") render(); }
-$("acctAddBtn").addEventListener("click", addAccount);
-$("acctAddName").addEventListener("keydown", e => { if (e.key === "Enter") addAccount(); });
-$("acctList").addEventListener("input", e => { const t = e.target; if (t.dataset.acctid === undefined) return; const a = acctById(t.dataset.acctid); if (a) { a.name = t.value; save(); if (activeTab === "budget") render(); } });
-$("acctList").addEventListener("click", e => {
-  const t = e.target.closest("[data-acctdel]"); if (!t) return;
-  const id = t.dataset.acctdel;
-  if (!confirm("Delete this account? Anything tagged with it becomes untagged.")) return;
-  data.accounts = (data.accounts || []).filter(a => a.id !== id);
-  if (data.settings.defaultAccount === id) data.settings.defaultAccount = "";
-  ["oneOffAccount", "allowanceAccount", "grocAccount", "oopAccount"].forEach(kk => { if (data.settings[kk] === id) data.settings[kk] = ""; });
-  Object.values(data.months).forEach(m => (m.groups || []).forEach(g => {
-    if (g.account === id) g.account = "";
-    (g.items || []).forEach(it => { if (it.account === id) it.account = ""; });
-    (g.subgroups || []).forEach(sg => { if (sg.account === id) sg.account = ""; (sg.items || []).forEach(it => { if (it.account === id) it.account = ""; }); });
-  }));
-  save(); renderSettings(); render();
-});
-$("acctDefaultSel").addEventListener("change", e => { data.settings.defaultAccount = e.target.value; save(); if (activeTab === "budget") render(); });
 $("settingsBtn").addEventListener("click", () => { renderSettings(); settingsModal.classList.add("show"); });
 $("settingsClose").addEventListener("click", () => settingsModal.classList.remove("show"));
 settingsModal.addEventListener("click", e => { if (e.target === settingsModal) settingsModal.classList.remove("show"); });
@@ -2439,13 +1985,6 @@ function updateAdminUI() {
 /* ===== init ===== */
 applyTheme(); applyCurrency(); render();
 bindPlan();
-const savObserver = new IntersectionObserver(entries => {
-  entries.forEach(en => {
-    if (en.isIntersecting) { if (!savAnimPlayed) { savAnimPlayed = true; animateSavings(); } }
-    else savAnimPlayed = false;
-  });
-}, { threshold: 0.3 });
-savObserver.observe($("savingsSection"));
 booting = false;
 if (sessionToken) {
   // Returning device: validate the stored session, then start live sync.
