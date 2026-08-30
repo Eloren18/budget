@@ -277,6 +277,8 @@
   #incomeWithdrawals { display:flex; flex-direction:column; gap:6px; margin-top:10px; }
   .inc-wd-head { font-size:13px; color:var(--muted); font-weight:600; }
   .inc-wd-row { display:flex; justify-content:space-between; gap:10px; align-items:center; background:var(--surface-2); border:1px solid var(--border-soft); border-radius:var(--radius-sm); padding:8px 12px; font-size:14px; }
+  .sav-glabel { font-weight:650; font-size:13px; min-width:74px; }
+  .sav-gsel { padding:4px 6px; font-size:12.5px; border:1px solid var(--border); border-radius:8px; background:var(--surface); color:var(--text); }
   .inc-wd-row .pos { color:var(--save); font-weight:750; white-space:nowrap; }
   .lnk-x { border:none; background:none; color:var(--muted); cursor:pointer; font-size:12px; padding:0 2px; margin-left:4px; line-height:1; }
   .lnk-x:hover { color:var(--over); }
@@ -438,12 +440,20 @@
 
     <div class="section compact" id="savingsLineSection">
       <h2><span class="sec-icon" style="background:var(--save-soft);color:var(--save)">★</span>Savings</h2>
-      <div class="field allow-field" id="savLine">
-        <span class="euro"><input class="money" type="number" id="savMonthlyInput" min="0" step="0.01" placeholder="0.00" aria-label="Automatic savings per month"></span>
-        <span class="allow-sum" id="savSum"></span>
-        <button class="btn sm primary" id="savExtraBtn" style="margin-left:auto">＋ Extra</button>
+      <div class="field allow-field" id="savLineLT">
+        <span class="sav-glabel">Long term</span>
+        <span class="euro"><input class="money" type="number" id="savMonthlyLT" min="0" step="0.01" placeholder="0.00" aria-label="Automatic long-term savings per month"></span>
+        <span class="allow-sum" id="savSumLT"></span>
+        <button class="btn sm primary" id="savExtraBtnLT" style="margin-left:auto">＋ Extra</button>
+      </div>
+      <div class="field allow-field" id="savLineST">
+        <span class="sav-glabel">Short term</span>
+        <span class="euro"><input class="money" type="number" id="savMonthlyST" min="0" step="0.01" placeholder="0.00" aria-label="Automatic short-term savings per month"></span>
+        <span class="allow-sum" id="savSumST"></span>
+        <button class="btn sm primary" id="savExtraBtnST" style="margin-left:auto">＋ Extra</button>
       </div>
       <div id="savExtraList" style="display:flex;flex-direction:column;gap:6px;margin-top:8px"></div>
+      <div class="allow-sum" id="savLeft" style="margin-top:8px"></div>
     </div>
 
     <div class="section" id="incomeSection">
@@ -697,13 +707,19 @@ function migrateAllowance(d) {
 }
 
 /* ===== SAVINGS =====
-   m.savMonthly = this month's automatic savings (materialized per month, like the allowance).
-   m.savExtra   = dated extra moves {d, a, n} — +a saved, −a taken back. No balance is tracked. */
+   Two groups: long term ("lt") and short term ("st").
+   m.savMonthlyLT / m.savMonthlyST = this month's automatic amounts (materialized per month, like the allowance).
+   m.savExtra = dated extra moves {d, a, n, g:"lt"|"st"} — +a saved, −a taken back. No balance is tracked. */
 const _mOf = ds => String(ds).slice(0, 7);
 const savEra = k => !!(data.settings && data.settings.piesFrom) && k >= data.settings.piesFrom; // era key kept from the pies model
-const savMonthlyOf = m => num(m.savMonthly);
+const savMonthlyOf = m => num(m.savMonthlyLT) + num(m.savMonthlyST);
 const savExtraNet = mkey => { const m = data.months[mkey]; return (m && m.savExtra || []).reduce((t, x) => t + num(x.a), 0); };
-function ensureSavMonthly(m) { if (m.savMonthly == null && !m.finalized) m.savMonthly = num((data.settings && data.settings.savMonthly) ?? 0); }
+const savExtraNetG = (mkey, g) => { const m = data.months[mkey]; return (m && m.savExtra || []).reduce((t, x) => t + ((x.g || "lt") === g ? num(x.a) : 0), 0); };
+function ensureSavMonthly(m) {
+  if (m.finalized) return;
+  if (m.savMonthlyLT == null) m.savMonthlyLT = num((data.settings && data.settings.savMonthlyLT) ?? 0);
+  if (m.savMonthlyST == null) m.savMonthlyST = num((data.settings && data.settings.savMonthlyST) ?? 0);
+}
 // One-time migration (old pool data): pools become pies; /short/i-named pools become short-term moves.
 function migratePies(d) {
   if (!d.settings) d.settings = {};
@@ -755,9 +771,9 @@ function migrateSavings(d) {
     pies.forEach(pie => (pie.flows || []).forEach(f => {
       if (_mOf(f.d) !== k) return;
       if (f.src === "standing") standing += num(f.a);
-      else extra.push({ d: f.d, a: num(f.a), n: f.n || "" });
+      else extra.push({ d: f.d, a: num(f.a), n: f.n || "", g: "lt" });
     }));
-    (m.stMoves || []).forEach(x => extra.push({ d: x.d, a: num(x.a), n: x.n || "" }));
+    (m.stMoves || []).forEach(x => extra.push({ d: x.d, a: num(x.a), n: x.n || "", g: "st" }));
     extra.sort((a, b) => String(a.d).localeCompare(String(b.d)));
     m.savMonthly = standing;
   });
@@ -766,6 +782,15 @@ function migrateSavings(d) {
   Object.values(months).forEach(m => { delete m.stMoves; });
   delete d.pies;
   delete d.pendingAlloc;
+}
+// One-time migration: the single savings stream splits into long-term / short-term groups.
+function migrateSavGroups(d) {
+  const st = d.settings || (d.settings = {});
+  if (st.savMonthly != null) { st.savMonthlyLT = num(st.savMonthly); if (st.savMonthlyST == null) st.savMonthlyST = 0; delete st.savMonthly; }
+  Object.values(d.months || {}).forEach(m => {
+    if (m.savMonthly != null) { m.savMonthlyLT = num(m.savMonthly); if (m.savMonthlyST == null) m.savMonthlyST = 0; delete m.savMonthly; }
+    (m.savExtra || []).forEach(x => { if (x.g !== "lt" && x.g !== "st") x.g = "lt"; });
+  });
 }
 
 let data = load();
@@ -778,7 +803,7 @@ let syncReady = false; // true once this device's data is in sync with the cloud
 function blankMonth() {
   return { income:0, bonus:0, groups:[], oneOff:[], savingsGoals:[], finalized:false, applied:null };
 }
-function normalize(d) { d.settings ??= {}; d.savings ??= {}; d.investments ??= {}; d.poolTx ??= {}; d.months ??= {}; Object.values(d.months).forEach(m => { m.oneOff ??= []; (m.groups || []).forEach(g => { g.subgroups ??= []; g.subgroups.forEach(sg => { sg.items ??= []; }); }); }); migrateBuffer(d); migrateContribTx(d); migrateAllowance(d); migratePies(d); migrateSavings(d); return d; }
+function normalize(d) { d.settings ??= {}; d.savings ??= {}; d.investments ??= {}; d.poolTx ??= {}; d.months ??= {}; Object.values(d.months).forEach(m => { m.oneOff ??= []; (m.groups || []).forEach(g => { g.subgroups ??= []; g.subgroups.forEach(sg => { sg.items ??= []; }); }); }); migrateBuffer(d); migrateContribTx(d); migrateAllowance(d); migratePies(d); migrateSavings(d); migrateSavGroups(d); return d; }
 function load() {
   let raw; try { raw = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch {}
   if (raw && raw.months) return normalize(raw);
@@ -1003,30 +1028,37 @@ function renderIncomeWithdrawals(mkey) {
     ``;
   c.innerHTML = html;
 }
-// The savings line: automatic monthly amount (editable) + this month's extras.
+// The savings section: long-term and short-term groups, each with an automatic monthly amount + extras.
 function renderSavLine(m) {
-  const k = mkeyOf(m), inp = $("savMonthlyInput"), btn = $("savExtraBtn"); if (!inp) return;
-  const era = savEra(k);
-  inp.parentElement.style.display = era ? "" : "none";
-  btn.style.display = era && !m.finalized ? "" : "none";
-  if (!era) { $("savSum").innerHTML = "closed under the old savings model"; $("savExtraList").innerHTML = ""; return; }
-  if (document.activeElement !== inp) inp.value = num(m.savMonthly) ? num(m.savMonthly) : "";
-  inp.disabled = !!m.finalized;
+  const k = mkeyOf(m), era = savEra(k);
+  ["LT", "ST"].forEach(G => { const line = $("savLine" + G); if (line) line.style.display = era ? "" : "none"; });
+  if (!era) { $("savExtraList").innerHTML = ""; $("savLeft").innerHTML = "closed under the old savings model"; return; }
+  ["LT", "ST"].forEach(G => {
+    const g = G.toLowerCase(), inp = $("savMonthly" + G), btn = $("savExtraBtn" + G);
+    if (document.activeElement !== inp) inp.value = num(m["savMonthly" + G]) ? num(m["savMonthly" + G]) : "";
+    inp.disabled = !!m.finalized;
+    btn.style.display = m.finalized ? "none" : "";
+    const extra = savExtraNetG(k, g);
+    $("savSum" + G).innerHTML = `/ month${Math.abs(extra) > 0.005 ? ` · extra <b${extra < 0 ? ' style="color:var(--over)"' : ""}>${extra >= 0 ? "" : "−"}${eur(Math.abs(extra))}</b>` : ""}`;
+  });
   renderSavExtras(m);
-  const extra = savExtraNet(k), left = leftInMain(m);
-  $("savSum").innerHTML = `/ month${Math.abs(extra) > 0.005 ? ` · extra <b>${extra >= 0 ? "" : "−"}${eur(Math.abs(extra))}</b>` : ""} · ${left >= -0.005 ? `left to save <b style="color:var(--save)">${eur(Math.max(0, left))}</b>` : `short <b style="color:var(--over)">${eur(-left)}</b> · rolls into next month`}`;
+  const left = leftInMain(m);
+  $("savLeft").innerHTML = left >= -0.005 ? `left to save <b style="color:var(--save)">${eur(Math.max(0, left))}</b>` : `short <b style="color:var(--over)">${eur(-left)}</b> · rolls into next month`;
 }
-// Every extra move is adjustable in place until the month closes.
+// Every extra move is adjustable in place until the month closes — amount, group, or gone.
 function renderSavExtras(m, force) {
   const box = $("savExtraList"); if (!box) return;
   if (!force && box.contains(document.activeElement)) return; // don't rebuild under the user's cursor
   const dt = d => parseDate(d).toLocaleDateString(undefined, { day: "numeric", month: "short" });
-  box.innerHTML = (m.savExtra || []).map((x, i) => `<div class="inc-wd-row"><span>${dt(x.d)} · ${num(x.a) >= 0 ? "saved" : "taken back"}${x.n ? ` · ${esc(x.n)}` : ""}</span><span class="pos" style="display:flex;align-items:center;gap:6px${num(x.a) < 0 ? ";color:var(--over)" : ""}">${m.finalized ? `${num(x.a) >= 0 ? "+" : "−"} ${eur(Math.abs(num(x.a)))}` : `<span class="euro"><input class="money" type="number" step="0.01" value="${num(x.a)}" data-savx="${i}" style="width:110px" aria-label="Extra amount"></span><button class="lnk-x" data-savxdel="${i}" title="Remove">✕</button>`}</span></div>`).join("");
+  const gName = x => (x.g || "lt") === "st" ? "Short term" : "Long term";
+  box.innerHTML = (m.savExtra || []).map((x, i) => `<div class="inc-wd-row"><span>${dt(x.d)} · ${num(x.a) >= 0 ? "saved" : "taken back"}${x.n ? ` · ${esc(x.n)}` : ""}${m.finalized ? ` · ${gName(x)}` : ""}</span><span class="pos" style="display:flex;align-items:center;gap:6px${num(x.a) < 0 ? ";color:var(--over)" : ""}">${m.finalized ? `${num(x.a) >= 0 ? "+" : "−"} ${eur(Math.abs(num(x.a)))}` : `<select class="sav-gsel" data-savxg="${i}" aria-label="Savings group"><option value="lt" ${(x.g || "lt") === "lt" ? "selected" : ""}>Long term</option><option value="st" ${x.g === "st" ? "selected" : ""}>Short term</option></select><span class="euro"><input class="money" type="number" step="0.01" value="${num(x.a)}" data-savx="${i}" style="width:110px" aria-label="Extra amount"></span><button class="lnk-x" data-savxdel="${i}" title="Remove">✕</button>`}</span></div>`).join("");
 }
 $("savExtraList").addEventListener("input", e => {
-  const t = e.target; if (t.dataset.savx === undefined) return;
-  const m = getMonth(current); if (m.finalized || !m.savExtra) return;
-  m.savExtra[t.dataset.savx].a = num(t.value);
+  const t = e.target, m = getMonth(current);
+  if (m.finalized || !m.savExtra) return;
+  if (t.dataset.savx !== undefined) m.savExtra[t.dataset.savx].a = num(t.value);
+  else if (t.dataset.savxg !== undefined) m.savExtra[t.dataset.savxg].g = t.value;
+  else return;
   updateSummary(m); save();
 });
 $("savExtraList").addEventListener("click", e => {
@@ -1203,15 +1235,17 @@ $("allowanceInput").addEventListener("input", e => {
   Object.keys(data.months).forEach(k => { const mm = data.months[k]; if (k > current && !mm.finalized) mm.allowance = v; });
   updateSummary(m); save();
 });
-// Edit the automatic monthly savings — applies from this month onward and becomes the default for new months.
-$("savMonthlyInput").addEventListener("input", e => {
-  const m = getMonth(current); if (m.finalized) return;
-  const v = Math.max(0, num(e.target.value));
-  m.savMonthly = v; data.settings.savMonthly = v;
-  Object.keys(data.months).forEach(k => { const mm = data.months[k]; if (k > current && !mm.finalized) mm.savMonthly = v; });
-  updateSummary(m); save();
+// Edit an automatic monthly savings amount — applies from this month onward and becomes the default for new months.
+["LT", "ST"].forEach(G => {
+  $("savMonthly" + G).addEventListener("input", e => {
+    const m = getMonth(current); if (m.finalized) return;
+    const v = Math.max(0, num(e.target.value));
+    m["savMonthly" + G] = v; data.settings["savMonthly" + G] = v;
+    Object.keys(data.months).forEach(k => { const mm = data.months[k]; if (k > current && !mm.finalized) mm["savMonthly" + G] = v; });
+    updateSummary(m); save();
+  });
+  $("savExtraBtn" + G).addEventListener("click", () => openMoveModal("savExtra", G.toLowerCase()));
 });
-$("savExtraBtn").addEventListener("click", () => openMoveModal("savExtra"));
 function addGroup() { const inp = $("newGroup"), name = inp.value.trim(); if (!name) return; getMonth(current).groups.push({ name, collapsed:false, items:[] }); inp.value = ""; render(); }
 $("addGroupBtn").addEventListener("click", addGroup);
 $("newGroup").addEventListener("keydown", e => { if (e.key === "Enter") addGroup(); });
@@ -1443,13 +1477,13 @@ function autoCloseMonths() {
 const coverModal = $("coverModal");
 const txDate = () => current === monthKey(new Date()) ? todayStr() : current + "-15";
 function closeMove() { coverModal.classList.remove("show"); }
-function openMoveModal(kind) {
+function openMoveModal(kind, grp) {
   const m = getMonth(current), left = leftInMain(m);
   const body = $("coverBody"), acts = $("coverActions"), h3 = coverModal.querySelector("h3");
   const amtField = (dflt, label) => `<div class="field"><label for="mvAmt">${label}</label><span class="euro"><input class="money" type="number" id="mvAmt" min="0" step="0.01" value="${dflt > 0 ? dflt.toFixed(2) : ""}" placeholder="0.00"></span></div>`;
   const noteField = `<div class="field"><label for="mvNote">Note <span class="hint">(optional)</span></label><input class="text" type="text" id="mvNote" style="width:100%"></div>`;
   const cfg = {
-    savExtra: { title: "Extra savings", verb: "Move", fields: amtField(Math.max(0, left), "Amount") + `<div class="field"><label>Direction</label><div style="display:flex;flex-direction:column;gap:6px;flex:1">
+    savExtra: { title: "Extra savings · " + (grp === "st" ? "Short term" : "Long term"), verb: "Move", fields: amtField(Math.max(0, left), "Amount") + `<div class="field"><label>Direction</label><div style="display:flex;flex-direction:column;gap:6px;flex:1">
         <label style="display:flex;gap:8px;align-items:center;font-weight:500"><input type="radio" name="mvDir" value="in" checked> Save it</label>
         <label style="display:flex;gap:8px;align-items:center;font-weight:500"><input type="radio" name="mvDir" value="out"> Take back from savings</label></div></div>` + noteField },
     newMain: { title: "New money into Main", verb: "Add", fields: amtField(Math.max(0, -left), "Amount") + noteField },
@@ -1471,7 +1505,7 @@ function openMoveModal(kind) {
   doBtn.onclick = () => {
     const a = Math.abs(num(amtEl.value)); if (!a) return;
     const note = (($("mvNote") || {}).value || "").trim();
-    if (kind === "savExtra") { const dirOut = (body.querySelector('input[name="mvDir"]:checked') || {}).value === "out"; m.savExtra = m.savExtra || []; m.savExtra.push({ d: txDate(), a: dirOut ? -a : a, n: note }); }
+    if (kind === "savExtra") { const dirOut = (body.querySelector('input[name="mvDir"]:checked') || {}).value === "out"; m.savExtra = m.savExtra || []; m.savExtra.push({ d: txDate(), a: dirOut ? -a : a, n: note, g: grp === "st" ? "st" : "lt" }); }
     else if (kind === "newMain") { m.covDeposits = m.covDeposits || []; m.covDeposits.push({ d: txDate(), a, n: note }); }
     save(); closeMove(); render();
   };
